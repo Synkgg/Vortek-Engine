@@ -58,9 +58,9 @@ header {
 }
 
 .logo {
-  height: 60px;
-  width: 60px;
-  object-fit: contain;
+  max-height: 100px;
+  width: auto;
+  height: auto;
 }
 
 .header-right {
