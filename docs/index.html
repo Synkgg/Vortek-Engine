@@ -6,7 +6,7 @@
   <title>Vortek Engine</title>
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Prism.js for code highlighting -->
+  <!-- Prism.js for syntax highlighting -->
   <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-lua.min.js"></script>
@@ -19,12 +19,28 @@
       overflow-x: auto;
       font-family: "Fira Code", monospace;
       box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      position: relative;
     }
     code {
       font-size: 0.95em;
     }
     .code-example {
       margin-top: 2em;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0.3em 0.7em;
+      cursor: pointer;
+      font-size: 0.8em;
+    }
+    .copy-btn:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
@@ -63,12 +79,12 @@
   <!-- Lua Code Example Block -->
   <section class="code-example">
     <h2>Example: Adding a Texture with Lua</h2>
-    <pre><code class="language-lua">
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code class="language-lua">
 -- Add the hero texture to the asset manager
-if AssetManager.add_texture("hero", "./assets/hero.png", true) then
-    print("Added texture [hero] successfully")
+if AssetManager.add_texture("Fezqi", "./assets/fezi.png", true) then
+    print("Added texture [Fezqi] successfully")
 else
-    print("Failed to add the [hero] texture")
+    print("Failed to add the [Fezqi] texture")
 end
     </code></pre>
   </section>
@@ -88,6 +104,17 @@ end
       document.documentElement.setAttribute('data-theme', selectedTheme);
       localStorage.setItem('theme', selectedTheme);
     });
+
+    function copyCode(button) {
+      const code = button.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        button.textContent = "Copied!";
+        setTimeout(() => button.textContent = "Copy", 1500);
+      }).catch(err => {
+        console.error("Copy failed", err);
+        button.textContent = "Error";
+      });
+    }
   </script>
 </body>
 </html>
