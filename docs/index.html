@@ -76,20 +76,17 @@
     <p><a class="button" href="https://github.com/Synkgg/Vortek-Engine/releases" target="_blank">Download Latest Release</a></p>
   </section>
 
-  <!-- Lua Code Example Block -->
-  <div class="container">
-  <section class="code-example">
-    <h2>Example: Adding a Texture with Lua</h2>
-    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code class="language-lua">
+  <div class="code-block">
+  <pre><code class="language-lua">
 -- Add the hero texture to the asset manager
 if AssetManager.add_texture("Fezqi", "./assets/fezi.png", true) then
     print("Added texture [Fezqi] successfully")
 else
     print("Failed to add the [Fezqi] texture")
 end
-    </code></pre>
-  </section>
- </div>
+  </code></pre>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+</div>
 
   <footer>
     <p>© 2025 Fezqi(Synkgg). Built with love.</p>
