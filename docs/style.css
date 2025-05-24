@@ -1,24 +1,30 @@
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --link-color: #1a0dab;
+  --header-bg: #f1f1f1;
+  --footer-bg: #f1f1f1;
+}
+
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #ffffff;
+  --link-color: #8ab4f8;
+  --header-bg: #1f1f1f;
+  --footer-bg: #1f1f1f;
+}
+
 body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #1e1e1e;
-  color: #f0f0f0;
   text-align: center;
 }
 
-header {
-  padding: 2rem;
-  background-color: #2e2e2e;
-}
-
-.logo {
-  height: 80px;
-  margin-bottom: 1rem;
-}
-
 a {
-  color: #4fc3f7;
+  color: var(--link-color);
   text-decoration: none;
 }
 
@@ -26,37 +32,15 @@ a:hover {
   text-decoration: underline;
 }
 
-.features {
+header {
+  background-color: var(--header-bg);
   padding: 2rem;
-}
-
-.features ul {
-  list-style: none;
-  padding: 0;
-}
-
-.features li {
-  margin: 0.5rem 0;
-}
-
-.get-started {
-  padding: 2rem;
-  background-color: #333;
-}
-
-.button {
-  display: inline-block;
-  margin: 0.5rem;
-  padding: 1rem 2rem;
-  background-color: #4fc3f7;
-  color: #000;
-  border-radius: 5px;
-  text-decoration: none;
-  font-weight: bold;
 }
 
 footer {
+  background-color: var(--footer-bg);
   padding: 1rem;
-  background-color: #2e2e2e;
   font-size: 0.9rem;
 }
+
+/* Additional styles for buttons and layout can be added here */
