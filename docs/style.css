@@ -23,6 +23,14 @@
   --footer-bg: #162a45;
 }
 
+.container {
+  padding-left: 1em;
+  padding-right: 1em;
+  max-width: 1000px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
