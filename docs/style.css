@@ -43,7 +43,15 @@ header {
 }
 
 .header-left {
-  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  height: 60px;
+  width: 60px;
+  object-fit: contain;
 }
 
 .header-right {
