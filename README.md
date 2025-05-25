@@ -11,3 +11,6 @@ Vortek Engine is based on the Youtube Series "Scion2D" From
 
 ## Documentation
 [Documentation](https://synkgg.github.io/Vortek-Engine/)
+
+## Supported Platforms
+- Windows
