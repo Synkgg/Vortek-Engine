@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f05a811d-3d08-475e-a0c8-bfe481db5c59}</ProjectGuid>
+    <RootNamespace>VORTEKCORE</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir).\Dependencies\box2d\include;$(SolutionDir).\VORTEK_LOGGER;$(SolutionDir).\VORTEK_RENDERING;$(SolutionDir).\Dependencies\glm;$(SolutionDir).\Dependencies\entt;$(SolutionDir).\GLAD\src\include;$(SolutionDir).\SOIL\include;$(SolutionDir).\Dependencies\lua_53\include;$(SolutionDir).\Dependencies\sol3;$(SolutionDir).\Dependencies\SDL\include;$(SolutionDir).\VORTEK_WINDOW;$(SolutionDir).\VORTEK_UTILITIES;$(SolutionDir).\VORTEK_SOUNDS\src;$(SolutionDir).\VORTEK_PHYSICS;$(SolutionDir).\Dependencies\tinyfiledialogs\include;$(SolutionDir).\Dependencies\rapidjson\include;$(SolutionDir).\VORTEK_FILESYSTEM;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir).\Dependencies\lua_53\lib;$(SolutionDir).\Dependencies\SDL\lib;$(SolutionDir).\Dependencies\box2d\lib\Debug;$(SolutionDir).\Dependencies\tinyfiledialogs\lib\Debug;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir).\Dependencies\box2d\include;$(SolutionDir).\VORTEK_LOGGER;$(SolutionDir).\VORTEK_RENDERING;$(SolutionDir).\Dependencies\glm;$(SolutionDir).\Dependencies\entt;$(SolutionDir).\GLAD\src\include;$(SolutionDir).\SOIL\include;$(SolutionDir).\Dependencies\lua_53\include;$(SolutionDir).\Dependencies\sol3;$(SolutionDir).\Dependencies\SDL\include;$(SolutionDir).\VORTEK_WINDOW;$(SolutionDir).\VORTEK_UTILITIES;$(SolutionDir).\VORTEK_SOUNDS\src;$(SolutionDir).\VORTEK_PHYSICS;$(SolutionDir).\Dependencies\tinyfiledialogs\include;$(SolutionDir).\Dependencies\rapidjson\include;$(SolutionDir).\VORTEK_FILESYSTEM;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir).\Dependencies\lua_53\lib;$(SolutionDir).\Dependencies\SDL\lib;$(SolutionDir).\Dependencies\box2d\lib\Release;$(SolutionDir).\Dependencies\tinyfiledialogs\lib\Release;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>lua53.lib;SDL2.lib;SDL2_mixer.lib;box2d.lib;tinyfiledialogs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <Optimization>MaxSpeed</Optimization>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>lua53.lib;SDL2.lib;SDL2_mixer.lib;box2d.lib;tinyfiledialogs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GLAD\GLAD.vcxproj">
+      <Project>{da6750cb-ada4-4b08-aee5-886156301a99}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\SOIL\SOIL.vcxproj">
+      <Project>{57c50c28-056b-4b04-b5f3-fc594c25ba78}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_FILESYSTEM\VORTEK_FILESYSTEM.vcxproj">
+      <Project>{f54ed4f1-ce55-4e24-ae72-f6a56cee147a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_LOGGER\VORTEK_LOGGER.vcxproj">
+      <Project>{95209233-3a27-4edf-82f3-13f6662e354a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_PHYSICS\VORTEK_PHYSICS.vcxproj">
+      <Project>{188c1636-4d8b-4beb-82bb-09203cc6ef73}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_RENDERING\VORTEK_RENDERING.vcxproj">
+      <Project>{d7bacb24-7234-41ba-a075-6ae6b85077f3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_SOUNDS\VORTEK_SOUNDS.vcxproj">
+      <Project>{278e5c7a-1e5e-4255-9467-87270785ba81}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_UTILITIES\VORTEK_UTILITIES.vcxproj">
+      <Project>{7d0a7db9-8f7b-4887-ae81-10f7487c5549}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_WINDOW\VORTEK_WINDOW.vcxproj">
+      <Project>{23c973c0-e040-4cf8-9029-1a76e0a776f0}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Core\CoreUtilities\CoreEngineData.h" />
+    <ClInclude Include="Core\CoreUtilities\CoreUtilities.h" />
+    <ClInclude Include="Core\CoreUtilities\FollowCamera.h" />
+    <ClInclude Include="Core\ECS\Components\AllComponents.h" />
+    <ClInclude Include="Core\ECS\Components\AnimationComponent.h" />
+    <ClInclude Include="Core\ECS\Components\BoxColliderComponent.h" />
+    <ClInclude Include="Core\ECS\Components\CircleColliderComponent.h" />
+    <ClInclude Include="Core\ECS\Components\ComponentSerializer.h" />
+    <ClInclude Include="Core\ECS\Components\Identification.h" />
+    <ClInclude Include="Core\ECS\Components\PhysicsComponent.h" />
+    <ClInclude Include="Core\ECS\Components\RigidBodyComponent.h" />
+    <ClInclude Include="Core\ECS\Components\ScriptComponent.h" />
+    <ClInclude Include="Core\ECS\Components\SpriteComponent.h" />
+    <ClInclude Include="Core\ECS\Components\TextComponent.h" />
+    <ClInclude Include="Core\ECS\Components\TileComponent.h" />
+    <ClInclude Include="Core\ECS\Components\TransformComponent.h" />
+    <ClInclude Include="Core\ECS\Entity.h" />
+    <ClInclude Include="Core\ECS\MainRegistry.h" />
+    <ClInclude Include="Core\ECS\MetaUtilities.h" />
+    <ClInclude Include="Core\ECS\Registry.h" />
+    <ClInclude Include="Core\Loaders\TilemapLoader.h" />
+    <ClInclude Include="Core\Resources\AssetManager.h" />
+    <ClInclude Include="Core\Resources\Fonts\default_fonts.h" />
+    <ClInclude Include="Core\Scripting\ContactListenerBind.h" />
+    <ClInclude Include="Core\Scripting\GlmLuaBindings.h" />
+    <ClInclude Include="Core\Scripting\InputManager.h" />
+    <ClInclude Include="Core\Scripting\RendererBindings.h" />
+    <ClInclude Include="Core\Scripting\SoundBindings.h" />
+    <ClInclude Include="Core\States\State.h" />
+    <ClInclude Include="Core\States\StateMachine.h" />
+    <ClInclude Include="Core\States\StateStack.h" />
+    <ClInclude Include="Core\Systems\AnimationSystem.h" />
+    <ClInclude Include="Core\Systems\PhysicsSystem.h" />
+    <ClInclude Include="Core\Systems\RenderShapeSystem.h" />
+    <ClInclude Include="Core\Systems\RenderSystem.h" />
+    <ClInclude Include="Core\Systems\RenderUISystem.h" />
+    <ClInclude Include="Core\Systems\ScriptingSystem.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Core\CoreUtilities\CoreEngineData.cpp" />
+    <ClCompile Include="Core\CoreUtilities\CoreUtilities.cpp" />
+    <ClCompile Include="Core\CoreUtilities\FollowCamera.cpp" />
+    <ClCompile Include="Core\ECS\Components\AnimationComponent.cpp" />
+    <ClCompile Include="Core\ECS\Components\BoxColliderComponent.cpp" />
+    <ClCompile Include="Core\ECS\Components\CircleColliderComponent.cpp" />
+    <ClCompile Include="Core\ECS\Components\ComponentSerializer.cpp" />
+    <ClCompile Include="Core\ECS\Components\PhysicsComponent.cpp" />
+    <ClCompile Include="Core\ECS\Components\RigidBodyComponent.cpp" />
+    <ClCompile Include="Core\ECS\Components\SpriteComponent.cpp" />
+    <ClCompile Include="Core\ECS\Components\TextComponent.cpp" />
+    <ClCompile Include="Core\ECS\Components\TransformComponent.cpp" />
+    <ClCompile Include="Core\ECS\Entity.cpp" />
+    <ClCompile Include="Core\ECS\MainRegistry.cpp" />
+    <ClCompile Include="Core\ECS\MetaUtilities.cpp" />
+    <ClCompile Include="Core\ECS\Registry.cpp" />
+    <ClCompile Include="Core\Loaders\TilemapLoader.cpp" />
+    <ClCompile Include="Core\Resources\AssetManager.cpp" />
+    <ClCompile Include="Core\Scripting\ContactListenerBind.cpp" />
+    <ClCompile Include="Core\Scripting\GlmLuaBindings.cpp" />
+    <ClCompile Include="Core\Scripting\InputManager.cpp" />
+    <ClCompile Include="Core\Scripting\RendererBindings.cpp" />
+    <ClCompile Include="Core\Scripting\SoundBindings.cpp" />
+    <ClCompile Include="Core\Scripting\UserDataBindings.cpp" />
+    <ClCompile Include="Core\States\State.cpp" />
+    <ClCompile Include="Core\States\StateMachine.cpp" />
+    <ClCompile Include="Core\States\StateStack.cpp" />
+    <ClCompile Include="Core\Systems\AnimationSystem.cpp" />
+    <ClCompile Include="Core\Systems\PhysicsSystem.cpp" />
+    <ClCompile Include="Core\Systems\RenderShapeSystem.cpp" />
+    <ClCompile Include="Core\Systems\RenderSystem.cpp" />
+    <ClCompile Include="Core\Systems\RenderUISystem.cpp" />
+    <ClCompile Include="Core\Systems\ScriptingSystem.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Core\ECS\Components\ComponentSerializer.inl" />
+    <None Include="Core\ECS\Entity.inl" />
+    <None Include="Core\ECS\Registry.inl" />
+    <None Include="Core\Scripting\UserDataBindings.h" />
+    <None Include="Core\Scripting\UserDataBindings.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{61864fac-7ca2-49a5-b4c5-c30c0eb934e2}</ProjectGuid>
+    <RootNamespace>VORTEKEDITOR</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir).\Dependencies\box2d\include;$(SolutionDir).\Dependencies\tinyfiledialogs\include;$(SolutionDir).\Dependencies\SDL\include;$(SolutionDir).\GLAD\src\include;$(SolutionDir).\VORTEK_UTILITIES;$(SolutionDir).\VORTEK_WINDOW;$(SolutionDir).\SOIL\include;$(SolutionDir).\Dependencies\glm;$(SolutionDir).\VORTEK_RENDERING;$(SolutionDir).\VORTEK_LOGGER;$(SolutionDir).\Dependencies\entt;$(SolutionDir).\VORTEK_CORE;$(SolutionDir).\Dependencies\lua_53\include;$(SolutionDir).\Dependencies\sol3;$(SolutionDir).\VORTEK_SOUNDS\src;$(SolutionDir).\VORTEK_PHYSICS;$(SolutionDir).\ImGui\src;$(SolutionDir).\Dependencies\rapidjson\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir).\Dependencies\SDL\lib;$(SolutionDir).\Dependencies\lua_53\lib;$(SolutionDir).\Dependencies\box2d\lib\Debug;$(SolutionDir).\Dependencies\tinyfiledialogs\lib\Debug;$(LibraryPath)</LibraryPath>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir).\Dependencies\box2d\include;$(SolutionDir).\Dependencies\tinyfiledialogs\include;$(SolutionDir).\Dependencies\SDL\include;$(SolutionDir).\GLAD\src\include;$(SolutionDir).\VORTEK_UTILITIES;$(SolutionDir).\VORTEK_WINDOW;$(SolutionDir).\SOIL\include;$(SolutionDir).\Dependencies\glm;$(SolutionDir).\VORTEK_RENDERING;$(SolutionDir).\VORTEK_LOGGER;$(SolutionDir).\Dependencies\entt;$(SolutionDir).\VORTEK_CORE;$(SolutionDir).\Dependencies\lua_53\include;$(SolutionDir).\Dependencies\sol3;$(SolutionDir).\VORTEK_SOUNDS\src;$(SolutionDir).\VORTEK_PHYSICS;$(SolutionDir).\ImGui\src;$(SolutionDir).\Dependencies\rapidjson\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir).\Dependencies\SDL\lib;$(SolutionDir).\Dependencies\lua_53\lib;$(SolutionDir).\Dependencies\box2d\lib\Release;$(SolutionDir).\Dependencies\tinyfiledialogs\lib\Release;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;opengl32.lib;lua53.lib;box2d.lib;tinyfiledialogs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;opengl32.lib;lua53.lib;box2d.lib;tinyfiledialogs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Application.cpp" />
+    <ClCompile Include="src\editor\commands\cmds\CreateTileToolCmds.cpp" />
+    <ClCompile Include="src\editor\commands\cmds\RectToolCmds.cpp" />
+    <ClCompile Include="src\editor\displays\AssetDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\EditorStyleToolDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\LogDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\MenuDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\SceneDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\SceneHierarchyDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\TileDetailsDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\TilemapDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\TilesetDisplay.cpp" />
+    <ClCompile Include="src\editor\scene\SceneManager.cpp" />
+    <ClCompile Include="src\editor\scene\SceneObject.cpp" />
+    <ClCompile Include="src\editor\systems\GridSystem.cpp" />
+    <ClCompile Include="src\editor\tools\AbstractTool.cpp" />
+    <ClCompile Include="src\editor\tools\CreateTileTool.cpp" />
+    <ClCompile Include="src\editor\tools\RectFillTool.cpp" />
+    <ClCompile Include="src\editor\tools\TileTool.cpp" />
+    <ClCompile Include="src\editor\tools\ToolManager.cpp" />
+    <ClCompile Include="src\editor\utilities\DrawComponentUtils.cpp" />
+    <ClCompile Include="src\editor\utilities\ImGuiUtils.cpp" />
+    <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\scripts\asteroids\assetDefs.lua" />
+    <None Include="assets\scripts\asteroids\asteroid.lua" />
+    <None Include="assets\scripts\asteroids\collision_system.lua" />
+    <None Include="assets\scripts\asteroids\entityDefs.lua" />
+    <None Include="assets\scripts\asteroids\game_data.lua" />
+    <None Include="assets\scripts\asteroids\hud.lua" />
+    <None Include="assets\scripts\asteroids\projectile.lua" />
+    <None Include="assets\scripts\asteroids\ship.lua" />
+    <None Include="assets\scripts\asteroids\utilities.lua" />
+    <None Include="assets\scripts\platformer\characters\character.lua" />
+    <None Include="assets\scripts\platformer\characters\player_states\move_state.lua" />
+    <None Include="assets\scripts\platformer\defs\playerDefs.lua" />
+    <None Include="assets\scripts\platformer\events\collision_event.lua" />
+    <None Include="assets\scripts\platformer\events\event_manager.lua" />
+    <None Include="assets\scripts\platformer\maps\test_platformer.lua" />
+    <None Include="assets\scripts\platformer\projectiles\projectile.lua" />
+    <None Include="assets\scripts\platformer\projectiles\projectileDefs.lua" />
+    <None Include="assets\scripts\platformer\script_list.lua" />
+    <None Include="assets\scripts\platformer\utilities\follow_cam.lua" />
+    <None Include="assets\scripts\platformer\game_states\game_state.lua" />
+    <None Include="assets\scripts\platformer\game_states\title_state.lua" />
+    <None Include="assets\scripts\Main.lua" />
+    <None Include="assets\scripts\platformer\utilities\lua_test_scripts.lua" />
+    <None Include="assets\scripts\platformer\utilities\rain_generator.lua" />
+    <None Include="assets\scripts\platformer\systems\trigger_system.lua" />
+    <None Include="assets\scripts\platformer\defs\assetDefs.lua" />
+    <None Include="assets\scripts\platformer\maps\testmap.lua" />
+    <None Include="assets\scripts\platformer\utilities\scene_dimmer.lua" />
+    <None Include="assets\shaders\basicShader.frag" />
+    <None Include="assets\shaders\basicShader.vert" />
+    <None Include="assets\shaders\circleShader.frag" />
+    <None Include="assets\shaders\circleShader.vert" />
+    <None Include="assets\shaders\colorShader.frag" />
+    <None Include="assets\shaders\colorShader.vert" />
+    <None Include="assets\shaders\fontShader.frag" />
+    <None Include="assets\shaders\fontShader.vert" />
+    <None Include="SDL2.dll" />
+    <None Include="SDL2_mixer.dll" />
+    <None Include="src\editor\commands\AbstractCommandManager.inl" />
+    <None Include="src\editor\utilities\DrawComponentUtils.inl" />
+    <None Include="tinyfiledialogs64.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GLAD\GLAD.vcxproj">
+      <Project>{da6750cb-ada4-4b08-aee5-886156301a99}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ImGui\ImGui.vcxproj">
+      <Project>{0177edcd-fc6a-4449-bab5-39a7f8473127}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\SOIL\SOIL.vcxproj">
+      <Project>{57c50c28-056b-4b04-b5f3-fc594c25ba78}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_CORE\VORTEK_CORE.vcxproj">
+      <Project>{f05a811d-3d08-475e-a0c8-bfe481db5c59}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_FILESYSTEM\VORTEK_FILESYSTEM.vcxproj">
+      <Project>{f54ed4f1-ce55-4e24-ae72-f6a56cee147a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_LOGGER\VORTEK_LOGGER.vcxproj">
+      <Project>{95209233-3a27-4edf-82f3-13f6662e354a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_PHYSICS\VORTEK_PHYSICS.vcxproj">
+      <Project>{188c1636-4d8b-4beb-82bb-09203cc6ef73}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_RENDERING\VORTEK_RENDERING.vcxproj">
+      <Project>{d7bacb24-7234-41ba-a075-6ae6b85077f3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_SOUNDS\VORTEK_SOUNDS.vcxproj">
+      <Project>{278e5c7a-1e5e-4255-9467-87270785ba81}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_UTILITIES\VORTEK_UTILITIES.vcxproj">
+      <Project>{7d0a7db9-8f7b-4887-ae81-10f7487c5549}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VORTEK_WINDOW\VORTEK_WINDOW.vcxproj">
+      <Project>{23c973c0-e040-4cf8-9029-1a76e0a776f0}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="assets\scripts\platformer\utilities\utilities.lua" />
+    <ClInclude Include="src\Application.h" />
+    <ClInclude Include="src\editor\commands\AbstractCommandManager.h" />
+    <ClInclude Include="src\editor\commands\cmds\CreateTileToolCmds.h" />
+    <ClInclude Include="src\editor\commands\cmds\RectToolCmds.h" />
+    <ClInclude Include="src\editor\commands\CommandManager.h" />
+    <ClInclude Include="src\editor\displays\AssetDisplay.h" />
+    <ClInclude Include="src\editor\displays\EditorStyleToolDisplay.h" />
+    <ClInclude Include="src\editor\displays\IDisplay.h" />
+    <ClInclude Include="src\editor\displays\LogDisplay.h" />
+    <ClInclude Include="src\editor\displays\MenuDisplay.h" />
+    <ClInclude Include="src\editor\displays\SceneDisplay.h" />
+    <ClInclude Include="src\editor\displays\SceneHierarchyDisplay.h" />
+    <ClInclude Include="src\editor\displays\TileDetailsDisplay.h" />
+    <ClInclude Include="src\editor\displays\TilemapDisplay.h" />
+    <ClInclude Include="src\editor\displays\TilesetDisplay.h" />
+    <ClInclude Include="src\editor\scene\SceneManager.h" />
+    <ClInclude Include="src\editor\scene\SceneObject.h" />
+    <ClInclude Include="src\editor\systems\GridSystem.h" />
+    <ClInclude Include="src\editor\tools\AbstractTool.h" />
+    <ClInclude Include="src\editor\tools\CreateTileTool.h" />
+    <ClInclude Include="src\editor\tools\RectFillTool.h" />
+    <ClInclude Include="src\editor\tools\TileTool.h" />
+    <ClInclude Include="src\editor\tools\ToolAccessories.h" />
+    <ClInclude Include="src\editor\tools\ToolManager.h" />
+    <ClInclude Include="src\editor\utilities\DrawComponentUtils.h" />
+    <ClInclude Include="src\editor\utilities\EditorFrameBuffers.h" />
+    <ClInclude Include="src\editor\utilities\EditorUtilities.h" />
+    <ClInclude Include="src\editor\utilities\editor_textures.h" />
+    <ClInclude Include="src\editor\utilities\fonts\IconsFontAwesome5.h" />
+    <ClInclude Include="src\editor\utilities\ImGuiUtils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\fonts\opensans\LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\fonts\fa-solid-900.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-Bold.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-BoldItalic.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-ExtraBold.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-ExtraBoldItalic.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-Light.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-LightItalic.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-Regular.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-SemiBold.ttf" />
+    <Font Include="assets\fonts\opensans\OpenSans-SemiBoldItalic.ttf" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
