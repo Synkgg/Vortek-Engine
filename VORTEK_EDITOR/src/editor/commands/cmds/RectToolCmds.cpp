@@ -4,7 +4,7 @@
 #include "Core/ECS/Components/AllComponents.h"
 
 #include "Logger/Logger.h"
-#include "../VORTEK_EDITOR/src/editor/utilities/EditorUtilities.h"
+#include "editor/utilities/EditorUtilities.h"
 
 
 using namespace VORTEK_CORE::ECS;

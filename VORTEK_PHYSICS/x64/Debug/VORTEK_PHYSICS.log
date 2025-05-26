@@ -1,6 +1,0 @@
-﻿  Box2DWrappers.cpp
-  ContactListener.cpp
-  PhysicsUtilities.cpp
-  UserData.cpp
-  Generating Code...
-LINK : fatal error LNK1181: cannot open input file 'box2d.lib'

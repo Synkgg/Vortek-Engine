@@ -20,7 +20,7 @@
 #include "../scene/SceneManager.h"
 #include "../scene/SceneObject.h"
 
-#include "../tools/ToolManager.h"
+#include "editor/tools/ToolManager.h"
 #include "../tools/ToolAccessories.h"
 #include "../tools/CreateTileTool.h"
 

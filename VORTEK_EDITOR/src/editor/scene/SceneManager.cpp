@@ -1,10 +1,10 @@
 #include "SceneManager.h"
 #include "SceneObject.h"
 #include "VORTEKUtilities/VORTEKUtilities.h"
-#include "../tools/ToolManager.h"
-#include "../tools/TileTool.h"
+#include "editor/tools/ToolManager.h"
+#include "editor/tools/TileTool.h"
 
-#include "../VORTEK_EDITOR/src/editor/commands/CommandManager.h"
+#include "editor/commands/CommandManager.h"
 
 #include "Logger/Logger.h"
 

@@ -201,11 +201,11 @@ namespace VORTEK_EDITOR
 		auto playTextureID = (ImTextureID)(intptr_t)pPlayTexture->GetID();
 		if (m_bPlayScene && m_bSceneLoaded)
 		{
-			ImGui::ActiveImageButton(playTextureID);
+			ImGui::ActiveImageButton("##playbutton", playTextureID);
 		}
 		else
 		{
-			if (ImGui::ImageButton(playTextureID, TOOL_BUTTON_SIZE))
+			if (ImGui::ImageButton("##playbutton", playTextureID, TOOL_BUTTON_SIZE))
 			{
 				LoadScene();
 			}
@@ -219,11 +219,11 @@ namespace VORTEK_EDITOR
 		auto stopTextureID = (ImTextureID)(intptr_t)pStopTexture->GetID();
 		if (!m_bPlayScene && !m_bSceneLoaded)
 		{
-			ImGui::ActiveImageButton(stopTextureID);
+			ImGui::ActiveImageButton("##stopbutton", stopTextureID);
 		}
 		else
 		{
-			if (ImGui::ImageButton(stopTextureID, TOOL_BUTTON_SIZE))
+			if (ImGui::ImageButton("##stopbutton", stopTextureID, TOOL_BUTTON_SIZE))
 			{
 				UnloadScene();
 			}

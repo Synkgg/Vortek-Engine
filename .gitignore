@@ -36,3 +36,8 @@ docs/
 x64/
 
 .vs/
+.vscode/
+
+# Build Folders
+out/
+build/

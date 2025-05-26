@@ -1,17 +1,17 @@
 #include "MenuDisplay.h"
-#include "Logger/Logger.h"
-#include "../VORTEK_FILESYSTEM/Dialogs/FileDialog.h"
+#include <Logger/Logger.h>
+#include "Dialogs/FileDialog.h"
 #include "Core/Loaders/TilemapLoader.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
 
 #include "../scene/SceneManager.h"
 #include "../scene/SceneObject.h"
-#include "../tools/ToolManager.h"
+#include "editor/tools/ToolManager.h"
 #include "../utilities/ImGuiUtils.h"
 #include "../utilities/fonts/IconsFontAwesome5.h"
 
 #include <imgui.h>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 namespace VORTEK_EDITOR
 {
