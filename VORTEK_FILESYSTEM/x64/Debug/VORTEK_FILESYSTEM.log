@@ -1,0 +1,14 @@
+﻿  FileDialog.cpp
+  JSONSerializer.cpp
+F:\GitHub\Vortek-Engine\VORTEK_FILESYSTEM\Dialogs\FileDialog.cpp(11,54): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+F:\GitHub\Vortek-Engine\VORTEK_FILESYSTEM\Dialogs\FileDialog.cpp(23,54): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  JSONSerializer.inl
+F:\GitHub\Vortek-Engine\VORTEK_FILESYSTEM\Serializers\JSONSerializer.inl(6,41): error C2995: 'VORTEK_FILESYSTEM::JSONSerializer &VORTEK_FILESYSTEM::JSONSerializer::AddKeyValuePair(const std::string &,const TValue &)': function template has already been defined
+      F:\GitHub\Vortek-Engine\VORTEK_FILESYSTEM\Serializers\JSONSerializer.h(30,19):
+      see declaration of 'VORTEK_FILESYSTEM::JSONSerializer::AddKeyValuePair'
+  
+F:\GitHub\Vortek-Engine\VORTEK_FILESYSTEM\Serializers\JSONSerializer.inl(35,41): error C2766: explicit specialization; 'VORTEK_FILESYSTEM::JSONSerializer &VORTEK_FILESYSTEM::JSONSerializer::AddKeyValuePair<bool>(const std::string &,const bool &)' has already been defined
+      F:\GitHub\Vortek-Engine\VORTEK_FILESYSTEM\Serializers\JSONSerializer.h(33,19):
+      see previous definition of 'VORTEK_FILESYSTEM::JSONSerializer::AddKeyValuePair'
+  
+  Generating Code...

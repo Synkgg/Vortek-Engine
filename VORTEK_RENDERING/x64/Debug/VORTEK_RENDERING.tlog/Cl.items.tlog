@@ -1,0 +1,14 @@
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Buffers\FrameBuffer.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\FrameBuffer.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Core\BatchRenderer.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\BatchRenderer.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Core\Camera2D.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\Camera2D.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Core\CircleBatchRenderer.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\CircleBatchRenderer.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Core\LineBatchRenderer.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\LineBatchRenderer.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Core\RectBatchRenderer.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\RectBatchRenderer.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Core\Renderer.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\Renderer.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Core\TextBatchRenderer.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\TextBatchRenderer.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Essentials\Font.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\Font.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Essentials\FontLoader.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\FontLoader.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Essentials\Shader.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\Shader.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Essentials\ShaderLoader.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\ShaderLoader.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Essentials\Texture.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\Texture.obj
+F:\GitHub\Vortek-Engine\VORTEK_RENDERING\Rendering\Essentials\TextureLoader.cpp;F:\GitHub\Vortek-Engine\VORTEK_RENDERING\x64\Debug\TextureLoader.obj

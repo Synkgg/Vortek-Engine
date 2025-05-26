@@ -1,0 +1,73 @@
+﻿  Application.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(130,9): warning C4005: 'APIENTRY': macro redefinition
+  (compiling source file 'src/Application.cpp')
+      F:\GitHub\Vortek-Engine\GLAD\src\include\glad\glad.h(32,9):
+      see previous definition of 'APIENTRY'
+  
+  CreateTileToolCmds.cpp
+  RectToolCmds.cpp
+  AssetDisplay.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(130,9): warning C4005: 'APIENTRY': macro redefinition
+  (compiling source file 'src/editor/displays/AssetDisplay.cpp')
+      F:\GitHub\Vortek-Engine\GLAD\src\include\glad\glad.h(32,9):
+      see previous definition of 'APIENTRY'
+  
+  EditorStyleToolDisplay.cpp
+  LogDisplay.cpp
+  MenuDisplay.cpp
+  SceneDisplay.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(130,9): warning C4005: 'APIENTRY': macro redefinition
+  (compiling source file 'src/editor/displays/SceneDisplay.cpp')
+      F:\GitHub\Vortek-Engine\GLAD\src\include\glad\glad.h(32,9):
+      see previous definition of 'APIENTRY'
+  
+  SceneHierarchyDisplay.cpp
+  TileDetailsDisplay.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(130,9): warning C4005: 'APIENTRY': macro redefinition
+  (compiling source file 'src/editor/displays/TileDetailsDisplay.cpp')
+      F:\GitHub\Vortek-Engine\GLAD\src\include\glad\glad.h(32,9):
+      see previous definition of 'APIENTRY'
+  
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\displays\TileDetailsDisplay.cpp(212,11): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+  TilemapDisplay.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(130,9): warning C4005: 'APIENTRY': macro redefinition
+  (compiling source file 'src/editor/displays/TilemapDisplay.cpp')
+      F:\GitHub\Vortek-Engine\GLAD\src\include\glad\glad.h(32,9):
+      see previous definition of 'APIENTRY'
+  
+  TilesetDisplay.cpp
+  SceneManager.cpp
+  SceneObject.cpp
+  GridSystem.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(130,9): warning C4005: 'APIENTRY': macro redefinition
+  (compiling source file 'src/editor/systems/GridSystem.cpp')
+      F:\GitHub\Vortek-Engine\GLAD\src\include\glad\glad.h(32,9):
+      see previous definition of 'APIENTRY'
+  
+  AbstractTool.cpp
+  CreateTileTool.cpp
+  RectFillTool.cpp
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,20): warning C4244: 'argument': conversion from 'T' to 'int', possible loss of data
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,20): warning C4244:         with
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,20): warning C4244:         [
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,20): warning C4244:             T=float
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,20): warning C4244:         ]
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,16): warning C4244: 'argument': conversion from 'T' to 'int', possible loss of data
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,16): warning C4244:         with
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,16): warning C4244:         [
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,16): warning C4244:             T=float
+F:\GitHub\Vortek-Engine\VORTEK_EDITOR\src\editor\tools\RectFillTool.cpp(271,16): warning C4244:         ]
+  TileTool.cpp
+  ToolManager.cpp
+  Generating Code...
+  Compiling...
+  DrawComponentUtils.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(130,9): warning C4005: 'APIENTRY': macro redefinition
+  (compiling source file 'src/editor/utilities/DrawComponentUtils.cpp')
+      F:\GitHub\Vortek-Engine\GLAD\src\include\glad\glad.h(32,9):
+      see previous definition of 'APIENTRY'
+  
+  ImGuiUtils.cpp
+  main.cpp
+  Generating Code...
+LINK : fatal error LNK1181: cannot open input file 'SDL2.lib'
