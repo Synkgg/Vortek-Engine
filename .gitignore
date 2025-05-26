@@ -33,3 +33,6 @@
 
 # Folders
 docs/
+x64/
+
+.vs/
