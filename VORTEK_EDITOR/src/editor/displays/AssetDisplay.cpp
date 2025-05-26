@@ -221,7 +221,7 @@ namespace VORTEK_EDITOR
 					if (textureID == 0)
 						break;
 
-					ImGui::ImageButton((ImTextureID)(intptr_t)textureID, ImVec2{ m_AssetSize, m_AssetSize });
+					ImGui::ImageButton(std::format("##{}", k).c_str(), (ImTextureID)(intptr_t)textureID, ImVec2{m_AssetSize, m_AssetSize});
 
 					if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0) && !m_bRename)
 						m_SelectedID = id;
@@ -263,7 +263,7 @@ namespace VORTEK_EDITOR
 							m_sRenameBuf.clear();
 							m_bRename = false;
 						}
-						else if (m_bRename && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
+						else if (m_bRename && ImGui::IsKeyPressed(ImGuiKey_Escape))
 						{
 							m_sRenameBuf.clear();
 							m_bRename = false;

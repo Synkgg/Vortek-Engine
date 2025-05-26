@@ -1,5 +1,5 @@
 #include "MusicPlayer.h"
-#include "../Essentials/Music.h"
+#include "Sounds/Essentials/Music.h"
 #include <Logger/Logger.h>
 
 namespace VORTEK_SOUNDS {
