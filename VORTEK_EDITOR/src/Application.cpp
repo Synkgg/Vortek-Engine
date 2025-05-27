@@ -552,13 +552,13 @@ namespace VORTEK_EDITOR
 		icons_config.GlyphOffset = ImVec2{ 0.f, 2.f };
 		io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS, baseFontSize, &icons_config, icons_ranges);
 
-		/*ImGui::StyleColorsDark();
+		ImGui::StyleColorsDark();
 		SetDarkThemeColors();
 		ImGuiStyle& style = ImGui::GetStyle();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
 			style.WindowRounding = 0.0f;
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-		}*/
+		}
 
 		if (!ImGui_ImplSDL2_InitForOpenGL(m_pWindow->GetWindow().get(), m_pWindow->GetGLContext()))
 		{
