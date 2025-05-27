@@ -2,6 +2,9 @@
 #include "CreateTileTool.h"
 #include "RectFillTool.h"
 #include "ToolAccessories.h"
+#include "gizmos/TranslateGizmo.h"
+#include "gizmos/ScaleGizmo.h"
+#include "gizmos/RotateGizmo.h"
 #include "../scene/SceneObject.h"
 #include "Rendering/Core/Camera2D.h"
 
@@ -11,6 +14,10 @@ namespace VORTEK_EDITOR
 	{
 		m_mapTools.emplace(EToolType::CREATE_TILE, std::make_unique<CreateTileTool>());
 		m_mapTools.emplace(EToolType::RECT_FILL_TILE, std::make_unique<RectFillTool>());
+
+		m_mapGizmos.emplace(EGizmoType::TRANSLATE, std::make_unique<TranslateGizmo>());
+		m_mapGizmos.emplace(EGizmoType::SCALE, std::make_unique<ScaleGizmo>());
+		m_mapGizmos.emplace(EGizmoType::ROTATE, std::make_unique<RotateGizmo>());
 
 		// TODO: Add other tools as needed.
 
@@ -22,11 +29,22 @@ namespace VORTEK_EDITOR
 		auto activeTool = std::ranges::find_if(m_mapTools, [](const auto& tool) { return tool.second->IsActivated(); });
 		if (activeTool != m_mapTools.end())
 			activeTool->second->Update(canvas);
+
+		auto activeGizmo =
+			std::ranges::find_if(m_mapGizmos, [](const auto& gizmo) { return gizmo.second->IsActivated(); });
+		if (activeGizmo != m_mapGizmos.end())
+			activeGizmo->second->Update(canvas);
 	}
 
 	void ToolManager::SetToolActive(EToolType eToolType)
 	{
-		// TODO: Deactivate all gizmos when map exists
+		// Deactivate all gizmos when map exists
+		for (const auto& [eType, pGizmo] : m_mapGizmos)
+		{
+			pGizmo->Deactivate();
+			pGizmo->Hide();
+		}
+
 		m_eActiveGizmoType = EGizmoType::NO_GIZMO;
 
 		for (const auto& [eType, pTool] : m_mapTools)
@@ -50,7 +68,19 @@ namespace VORTEK_EDITOR
 		m_eActiveToolType = EToolType::NO_TOOL;
 
 		// Activate the specified gizmo
-		// TODO: Create the gizmo map and set active
+		for (const auto& [eType, pGizmo] : m_mapGizmos)
+		{
+			if (eType == eGizmoType)
+			{
+				pGizmo->Activate();
+				pGizmo->Show();
+			}
+			else
+			{
+				pGizmo->Deactivate();
+				pGizmo->Hide();
+			}
+		}
 
 		m_eActiveGizmoType = eGizmoType;
 	}
@@ -64,6 +94,27 @@ namespace VORTEK_EDITOR
 		return nullptr;
 	}
 
+	Gizmo* ToolManager::GetActiveGizmo()
+	{
+		auto activeGizmo =
+			std::ranges::find_if(m_mapGizmos, [](const auto& gizmo) { return gizmo.second->IsActivated(); });
+		if (activeGizmo != m_mapGizmos.end())
+			return activeGizmo->second.get();
+
+		return nullptr;
+	}
+
+	AbstractTool* ToolManager::GetActiveToolFromAbstract()
+	{
+		if (auto* pTool = GetActiveTool())
+			return pTool;
+
+		if (auto* pGizmo = GetActiveGizmo())
+			return pGizmo;
+
+		return nullptr;
+	}
+
 	bool ToolManager::SetupTools(SceneObject* pSceneObject, VORTEK_RENDERING::Camera2D* pCamera)
 	{
 		for (auto& [eType, pTool] : m_mapTools)
@@ -72,7 +123,11 @@ namespace VORTEK_EDITOR
 				return false;
 		}
 
-		// TODO: Setup gizmos
+		for (auto& [eType, pGizmo] : m_mapGizmos)
+		{
+			if (!pGizmo->SetupTool(pSceneObject, pCamera))
+				return false;
+		}
 
 		return true;
 	}
@@ -90,6 +145,14 @@ namespace VORTEK_EDITOR
 		for (auto& [eType, pTool] : m_mapTools)
 		{
 			pTool->SetSpriteUVs(x, y);
+		}
+	}
+
+	void ToolManager::SetSelectedEntity(entt::entity entity)
+	{
+		for (auto& [eGizmo, pGizmo] : m_mapGizmos)
+		{
+			pGizmo->SetSelectedEntity(entity);
 		}
 	}
 

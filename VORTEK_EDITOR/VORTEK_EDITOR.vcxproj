@@ -160,6 +160,10 @@
     <ClCompile Include="src\editor\systems\GridSystem.cpp" />
     <ClCompile Include="src\editor\tools\AbstractTool.cpp" />
     <ClCompile Include="src\editor\tools\CreateTileTool.cpp" />
+    <ClCompile Include="src\editor\tools\gizmos\Gizmo.cpp" />
+    <ClCompile Include="src\editor\tools\gizmos\RotateGizmo.cpp" />
+    <ClCompile Include="src\editor\tools\gizmos\ScaleGizmo.cpp" />
+    <ClCompile Include="src\editor\tools\gizmos\TranslateGizmo.cpp" />
     <ClCompile Include="src\editor\tools\RectFillTool.cpp" />
     <ClCompile Include="src\editor\tools\TileTool.cpp" />
     <ClCompile Include="src\editor\tools\ToolManager.cpp" />
@@ -267,6 +271,10 @@
     <ClInclude Include="src\editor\systems\GridSystem.h" />
     <ClInclude Include="src\editor\tools\AbstractTool.h" />
     <ClInclude Include="src\editor\tools\CreateTileTool.h" />
+    <ClInclude Include="src\editor\tools\gizmos\Gizmo.h" />
+    <ClInclude Include="src\editor\tools\gizmos\RotateGizmo.h" />
+    <ClInclude Include="src\editor\tools\gizmos\ScaleGizmo.h" />
+    <ClInclude Include="src\editor\tools\gizmos\TranslateGizmo.h" />
     <ClInclude Include="src\editor\tools\RectFillTool.h" />
     <ClInclude Include="src\editor\tools\TileTool.h" />
     <ClInclude Include="src\editor\tools\ToolAccessories.h" />

@@ -2,6 +2,8 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <entt.hpp>
+
 
 namespace VORTEK_RENDERING
 {
@@ -12,7 +14,9 @@ namespace VORTEK_EDITOR
 {
 
 	struct Canvas;
+	class AbstractTool;
 	class TileTool;
+	class Gizmo;
 	class SceneObject;
 	enum class EToolType;
 	enum class EGizmoType;
@@ -21,6 +25,7 @@ namespace VORTEK_EDITOR
 	{
 	private:
 		std::map<EToolType, std::unique_ptr<TileTool>> m_mapTools;
+		std::map<EGizmoType, std::unique_ptr<Gizmo>> m_mapGizmos;
 
 		EToolType m_eActiveToolType;
 		EGizmoType m_eActiveGizmoType;
@@ -36,6 +41,10 @@ namespace VORTEK_EDITOR
 
 		TileTool* GetActiveTool();
 
+		Gizmo* GetActiveGizmo();
+
+		AbstractTool* GetActiveToolFromAbstract();
+
 		bool SetupTools(SceneObject* pSceneObject, VORTEK_RENDERING::Camera2D* pCamera);
 
 		void SetToolsCurrentTileset(const std::string& sTileset);
@@ -44,6 +53,8 @@ namespace VORTEK_EDITOR
 
 		inline EToolType GetActiveToolType() const { return m_eActiveToolType; }
 		inline EGizmoType GetActiveGizmoType() const { return m_eActiveGizmoType; }
+
+		void SetSelectedEntity(entt::entity entity);
 
 		void EnableGridSnap(bool bEnable);
 	};

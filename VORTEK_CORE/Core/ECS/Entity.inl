@@ -30,6 +30,13 @@ namespace VORTEK_CORE::ECS
 	}
 
 	template <typename TComponent>
+	TComponent* Entity::TryGetComponent()
+	{
+		auto& registry = m_Registry.GetRegistry();
+		return registry.try_get<TComponent>(m_Entity);
+	}
+
+	template <typename TComponent>
 	bool Entity::HasComponent()
 	{
 		auto& registry = m_Registry.GetRegistry();

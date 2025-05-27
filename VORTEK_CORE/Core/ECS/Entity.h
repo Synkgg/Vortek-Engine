@@ -54,12 +54,6 @@ namespace VORTEK_CORE::ECS
 		template <typename TComponent>
 		static void RegisterMetaComponent();
 
-		/*
-		 * @brief Add a component to entity.
-		 * @tparam Takes a TComponent parameter and the arguments neeeded to
-		 * construct the given component.
-		 * @return Returns a reference to the added component.
-		 */
 		template <typename TComponent, typename... Args>
 		TComponent& AddComponent(Args&&... args);
 
@@ -69,11 +63,9 @@ namespace VORTEK_CORE::ECS
 		template <typename TComponent>
 		TComponent& GetComponent();
 
-		/*
-		 * @brief Checks to see if the entity has the given component.
-		 * @tparam The desired component to check.
-		 * @return Returns true if the entity has that component, false otherwise
-		 */
+		template <typename TComponent>
+		TComponent* TryGetComponent();
+
 		template <typename TComponent>
 		bool HasComponent();
 

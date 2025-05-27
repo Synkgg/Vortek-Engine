@@ -23,6 +23,7 @@
 #include "../tools/ToolManager.h"
 #include "../tools/ToolAccessories.h"
 #include "../tools/CreateTileTool.h"
+#include "../tools/gizmos/Gizmo.h"
 
 #include "../commands/CommandManager.h"
 
@@ -46,6 +47,8 @@ namespace VORTEK_EDITOR
 		auto& renderSystem = mainRegistry.GetRenderSystem();
 		auto& renderUISystem = mainRegistry.GetRenderUISystem();
 		auto& renderShapeSystem = mainRegistry.GetRenderShapeSystem();
+
+		auto pActiveGizmo = TOOL_MANAGER().GetActiveGizmo();
 
 		const auto& fb = editorFramebuffers->mapFramebuffers[FramebufferType::TILEMAP];
 
@@ -72,9 +75,12 @@ namespace VORTEK_EDITOR
 
 		renderUISystem.Update(pCurrentScene->GetRegistry());
 
-		auto pActiveTool = SCENE_MANAGER().GetToolManager().GetActiveTool();
+		auto pActiveTool = TOOL_MANAGER().GetActiveTool();
 		if (pActiveTool)
 			pActiveTool->Draw();
+
+		if (pActiveGizmo)
+			pActiveGizmo->Draw();
 
 		fb->Unbind();
 		fb->CheckResize();
@@ -239,21 +245,17 @@ namespace VORTEK_EDITOR
 
 		if (eActiveGizmoType == EGizmoType::ROTATE)
 		{
-			// ImGui::ActiveButton( ICON_FA_CIRCLE_NOTCH, TOOL_BUTTON_SIZE );
-			ImGui::DisabledButton(
-				ICON_FA_CIRCLE_NOTCH, TOOL_BUTTON_SIZE, "Rotate [R] - Rotates game object - Currently Unavailable.");
+			ImGui::ActiveButton(ICON_FA_CIRCLE_NOTCH, TOOL_BUTTON_SIZE);
 		}
 		else
 		{
-			/*	if ( ImGui::Button( ICON_FA_CIRCLE_NOTCH, TOOL_BUTTON_SIZE ) )
-				{
-					toolManager.SetGizmoActive( EGizmoType::ROTATE);
-				}*/
-			ImGui::DisabledButton(
-				ICON_FA_CIRCLE_NOTCH, TOOL_BUTTON_SIZE, "Rotate [R] - Rotates game object - Currently Unavailable.");
+			if (ImGui::Button(ICON_FA_CIRCLE_NOTCH, TOOL_BUTTON_SIZE))
+			{
+				toolManager.SetGizmoActive(EGizmoType::ROTATE);
+			}
 		}
 
-		// ImGui::ItemToolTip( "Rotate [R] - Rotates game object" );
+		ImGui::ItemToolTip( "Rotate [R] - Rotates game object" );
 
 		ImGui::SameLine();
 
@@ -335,7 +337,7 @@ namespace VORTEK_EDITOR
 			auto relativePos = ImGui::GetCursorScreenPos();
 			auto windowPos = ImGui::GetWindowPos();
 
-			auto pActiveTool = SCENE_MANAGER().GetToolManager().GetActiveTool();
+			auto pActiveTool = SCENE_MANAGER().GetToolManager().GetActiveToolFromAbstract();
 			if (pActiveTool)
 			{
 				pActiveTool->SetRelativeCoords(glm::vec2{ relativePos.x, relativePos.y });
@@ -380,13 +382,20 @@ namespace VORTEK_EDITOR
 		if (!pCurrentScene)
 			return;
 
-		auto pActiveTool = SCENE_MANAGER().GetToolManager().GetActiveTool();
+		auto pActiveTool = TOOL_MANAGER().GetActiveTool();
 		if (pActiveTool && pActiveTool->IsOverTilemapWindow() && !ImGui::GetDragDropPayload())
 		{
 			PanZoomCamera(pActiveTool->GetMouseScreenCoords());
 
 			pActiveTool->Update(pCurrentScene->GetCanvas());
 			pActiveTool->Create();
+		}
+
+		auto pActiveGizmo = TOOL_MANAGER().GetActiveGizmo();
+		if (pActiveGizmo && pActiveGizmo->IsOverTilemapWindow() && !ImGui::GetDragDropPayload())
+		{
+			PanZoomCamera(pActiveGizmo->GetMouseScreenCoords());
+			pActiveGizmo->Update(pCurrentScene->GetCanvas());
 		}
 
 		auto& mainRegistry = MAIN_REGISTRY();

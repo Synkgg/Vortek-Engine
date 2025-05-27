@@ -1,8 +1,12 @@
 #include "SceneHierarchyDisplay.h"
+
 #include "../scene/SceneManager.h"
 #include "../scene/SceneObject.h"
+
 #include "../utilities/fonts/IconsFontAwesome5.h"
 #include "../utilities/ImGuiUtils.h"
+#include "../tools/ToolManager.h"
+
 #include "Core/ECS/MainRegistry.h"
 #include "Core/ECS/Entity.h"
 #include "Core/ECS/MetaUtilities.h"
@@ -42,6 +46,7 @@ namespace VORTEK_EDITOR
 		{
 			m_pSelectedEntity =
 				std::make_shared<Entity>(SCENE_MANAGER().GetCurrentScene()->GetRegistry(), entity.GetEntity());
+			TOOL_MANAGER().SetSelectedEntity(entity.GetEntity());
 		}
 
 		ImGui::PopID();

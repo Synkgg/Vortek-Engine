@@ -204,7 +204,7 @@ namespace VORTEK_EDITOR
 				if (ImGui::TreeNode("About VORTEK ENGINE"))
 				{
 					ImGui::Separator();
-					ImGui::Text("Vortek Engine is based on the Youtube Series 'Scion2D' From");
+					ImGui::Text("Vortek Engine is based on the Youtube Series 'VORTEK2D' From");
 					ImGui::SameLine();
 					ImGui::TextLinkOpenURL("Dustin Clark", "https://github.com/dwjclark11");
 					ImGui::Separator();

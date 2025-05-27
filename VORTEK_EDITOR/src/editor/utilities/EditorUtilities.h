@@ -29,4 +29,22 @@ namespace VORTEK_EDITOR
 		bool bCollider{ false }, bAnimation{ false }, bPhysics{ false }, bCircle{ false };
 	};
 
+	constexpr VORTEK_RENDERING::Color XAXIS_GIZMO_COLOR = { 255, 0, 0, 175 };
+	constexpr VORTEK_RENDERING::Color XAXIS_HOVERED_GIZMO_COLOR = { 255, 255, 0, 175 };
+	constexpr VORTEK_RENDERING::Color YAXIS_GIZMO_COLOR = { 0, 255, 0, 175 };
+	constexpr VORTEK_RENDERING::Color YAXIS_HOVERED_GIZMO_COLOR = { 0, 255, 255, 175 };
+
+	constexpr VORTEK_RENDERING::Color GRAYED_OUT_GIZMO_COLOR = { 135, 135, 135, 175 };
+
+	struct GizmoAxisParams
+	{
+		VORTEK_CORE::ECS::TransformComponent transform{};
+		VORTEK_CORE::ECS::SpriteComponent sprite{};
+		glm::vec2 axisOffset;
+
+		VORTEK_RENDERING::Color axisColor;
+		VORTEK_RENDERING::Color axisHoveredColor;
+		VORTEK_RENDERING::Color axisDisabledColor;
+	};
+
 } // namespace VORTEK_EDITOR
