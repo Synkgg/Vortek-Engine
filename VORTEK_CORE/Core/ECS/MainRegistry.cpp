@@ -9,6 +9,7 @@
 #include "../Systems/RenderShapeSystem.h"
 #include "../Systems/AnimationSystem.h"
 #include "../Systems/PhysicsSystem.h"
+#include "../Events/EventDispatcher.h"
 #include <Rendering/Core/Renderer.h>
 #include <VORTEKUtilities/HelperUtilities.h>
 
@@ -102,7 +103,16 @@ namespace VORTEK_CORE::ECS
 		AddToContext<std::shared_ptr<VORTEK_CORE::Systems::AnimationSystem>>(
 			std::make_shared<VORTEK_CORE::Systems::AnimationSystem>());
 
+		AddToContext<std::shared_ptr<VORTEK_CORE::Events::EventDispatcher>>(
+			std::make_shared<VORTEK_CORE::Events::EventDispatcher>());
+
 		return true;
+	}
+
+	VORTEK_CORE::Events::EventDispatcher& MainRegistry::GetEventDispatcher()
+	{
+		VORTEK_ASSERT(m_bInitialized && "Main Registry must be initialized before use.");
+		return *m_pMainRegistry->GetContext<std::shared_ptr<VORTEK_CORE::Events::EventDispatcher>>();
 	}
 
 	VORTEK_RESOURCES::AssetManager& MainRegistry::GetAssetManager()

@@ -96,6 +96,8 @@ namespace VORTEK_EDITOR
 		m_pCamera = pCamera;
 		m_pRegistry = pSceneObject->GetRegistryPtr();
 
+		ResetSelectedEntity();
+
 		return true;
 	}
 

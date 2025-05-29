@@ -21,6 +21,10 @@
 #include "../States/StateStack.h"
 #include "../States/StateMachine.h"
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 using namespace VORTEK_CORE::ECS;
 using namespace VORTEK_RESOURCES;
 
@@ -32,15 +36,22 @@ namespace VORTEK_CORE::Systems
 	{
 	}
 
-	bool ScriptingSystem::LoadMainScript(VORTEK_CORE::ECS::Registry& registry, sol::state& lua)
+	bool ScriptingSystem::LoadMainScript(const std::string& sMainLuaFile, VORTEK_CORE::ECS::Registry& registry, sol::state& lua)
 	{
+		std::error_code ec;
+		if (!fs::exists(sMainLuaFile, ec))
+		{
+			VORTEK_ERROR("Error loading the main lua script: {}", ec.message());
+			return false;
+		}
+
 		try
 		{
-			auto result = lua.safe_script_file("./assets/scripts/main.lua");
+			auto result = lua.safe_script_file(sMainLuaFile);
 		}
 		catch (const sol::error& err)
 		{
-			VORTEK_ERROR("Error loading the main lua script: {0}", err.what());
+			VORTEK_ERROR("Error loading the main lua script: {}", err.what());
 			return false;
 		}
 
@@ -262,12 +273,12 @@ namespace VORTEK_CORE::Systems
 			});
 
 		auto assertResult = lua.safe_script(R"(
-				S2D_assert = assert
+				assert = assert
 				assert = function(arg1, message, ...)
 					if not arg1 then 
 						Logger.error(string.format(message, ...))
 					end 
-					S2D_assert(arg1)
+					assert(arg1)
 				end
 			)");
 		};

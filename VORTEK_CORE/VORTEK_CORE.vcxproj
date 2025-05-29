@@ -180,6 +180,7 @@
   <ItemGroup>
     <ClInclude Include="Core\CoreUtilities\CoreEngineData.h" />
     <ClInclude Include="Core\CoreUtilities\CoreUtilities.h" />
+    <ClInclude Include="Core\CoreUtilities\EngineShaders.h" />
     <ClInclude Include="Core\CoreUtilities\FollowCamera.h" />
     <ClInclude Include="Core\ECS\Components\AllComponents.h" />
     <ClInclude Include="Core\ECS\Components\AnimationComponent.h" />
@@ -188,6 +189,7 @@
     <ClInclude Include="Core\ECS\Components\ComponentSerializer.h" />
     <ClInclude Include="Core\ECS\Components\Identification.h" />
     <ClInclude Include="Core\ECS\Components\PhysicsComponent.h" />
+    <ClInclude Include="Core\ECS\Components\Relationship.h" />
     <ClInclude Include="Core\ECS\Components\RigidBodyComponent.h" />
     <ClInclude Include="Core\ECS\Components\ScriptComponent.h" />
     <ClInclude Include="Core\ECS\Components\SpriteComponent.h" />
@@ -198,6 +200,7 @@
     <ClInclude Include="Core\ECS\MainRegistry.h" />
     <ClInclude Include="Core\ECS\MetaUtilities.h" />
     <ClInclude Include="Core\ECS\Registry.h" />
+    <ClInclude Include="Core\Events\EventDispatcher.h" />
     <ClInclude Include="Core\Loaders\TilemapLoader.h" />
     <ClInclude Include="Core\Resources\AssetManager.h" />
     <ClInclude Include="Core\Resources\Fonts\default_fonts.h" />
@@ -225,6 +228,7 @@
     <ClCompile Include="Core\ECS\Components\CircleColliderComponent.cpp" />
     <ClCompile Include="Core\ECS\Components\ComponentSerializer.cpp" />
     <ClCompile Include="Core\ECS\Components\PhysicsComponent.cpp" />
+    <ClCompile Include="Core\ECS\Components\Relationship.cpp" />
     <ClCompile Include="Core\ECS\Components\RigidBodyComponent.cpp" />
     <ClCompile Include="Core\ECS\Components\SpriteComponent.cpp" />
     <ClCompile Include="Core\ECS\Components\TextComponent.cpp" />

@@ -32,13 +32,12 @@ namespace VORTEK_CORE::ECS
 		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const TransformComponent& transform);
 		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const SpriteComponent& sprite);
 		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const AnimationComponent& animation);
-		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer,
-			const BoxColliderComponent& boxCollider);
-		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer,
-			const CircleColliderComponent& circleCollider);
+		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const BoxColliderComponent& boxCollider);
+		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const CircleColliderComponent& circleCollider);
 		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const TextComponent& text);
 		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const PhysicsComponent& physics);
 		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const RigidBodyComponent& rigidBody);
+		static void SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const Identification& id);
 
 		static void DeserializeComponent(const rapidjson::Value& jsonValue, TransformComponent& transform);
 		static void DeserializeComponent(const rapidjson::Value& jsonValue, SpriteComponent& sprite);
@@ -48,6 +47,7 @@ namespace VORTEK_CORE::ECS
 		static void DeserializeComponent(const rapidjson::Value& jsonValue, TextComponent& text);
 		static void DeserializeComponent(const rapidjson::Value& jsonValue, PhysicsComponent& physics);
 		static void DeserializeComponent(const rapidjson::Value& jsonValue, RigidBodyComponent& rigidBody);
+		static void DeserializeComponent(const rapidjson::Value& jsonValue, Identification& id);
 	};
 
 } // namespace VORTEK_CORE::ECS

@@ -14,6 +14,9 @@ namespace VORTEK_CORE::Loaders
 		bool SaveTilemapJSON(VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile);
 		bool LoadTilemapJSON(VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile);
 
+		bool SaveObjectMapJSON(VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile);
+		bool LoadObjectMapJSON(VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile);
+
 		// TODO: Save and load functions for lua serializer
 
 	public:
@@ -22,5 +25,7 @@ namespace VORTEK_CORE::Loaders
 
 		bool SaveTilemap(VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON = false);
 		bool LoadTilemap(VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON = false);
+		bool LoadGameObjects(VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile, bool bUseJSON = false);
+		bool SaveGameObjects(VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile, bool bUseJSON = false);
 	};
 } // namespace VORTEK_CORE::Loaders

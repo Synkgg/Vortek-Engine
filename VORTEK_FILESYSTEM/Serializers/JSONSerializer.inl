@@ -11,6 +11,14 @@ namespace VORTEK_FILESYSTEM
 		{
 			m_pWriter->String(value.c_str());
 		}
+		else if constexpr (std::is_same_v<TValue, const char*>)
+		{
+			m_pWriter->String(value);
+		}
+		else if constexpr (std::is_same_v<TValue, const char>)
+		{
+			m_pWriter->String(value);
+		}
 		else if constexpr (std::is_integral_v<TValue>)
 		{
 			m_pWriter->Int64(value);

@@ -27,27 +27,19 @@ namespace VORTEK_CORE::ECS
 
 		~Entity() = default;
 
+		bool AddChild(entt::entity child);
+		void UpdateTransform();
+
 		inline const std::string& GetName() const { return m_sName; }
 		inline const std::string& GetGroup() const { return m_sGroup; }
-		/*
-		 * @brief Destroys the underlying entt::entity. This will remove the entity from the
-		 * the registry. USE WITH CAUTION!! Please ensure that there are no other references to
-		 * this Entity, trying to access an entity that does not exist can cause problems.
-		 * @return Returns the std::uint32_t id of the destroyed entity.
-		 */
+
 		inline std::uint32_t Kill() { return m_Registry.GetRegistry().destroy(m_Entity); }
 
-		/*
-		 * @brief Gets the actual entity.
-		 * @return Returns the underlying entt::entity.
-		 */
 		inline entt::entity& GetEntity() { return m_Entity; }
 
-		/*
-		 * @brief All entities have a reference to the registry that they were created in.
-		 * @return Returns the actual underlying entt::registry as a reference.
-		 */
-		inline entt::registry& GetRegistry() { return m_Registry.GetRegistry(); }
+		inline entt::registry& GetEnttRegistry() { return m_Registry.GetRegistry(); }
+
+		inline Registry& GetRegistry() { return m_Registry; }
 
 		static void CreateLuaEntityBind(sol::state& lua, Registry& registry);
 

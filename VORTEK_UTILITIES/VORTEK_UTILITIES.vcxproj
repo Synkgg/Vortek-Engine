@@ -156,6 +156,7 @@
     <ClCompile Include="VortekUtilities\RandomGenerator.cpp" />
     <ClCompile Include="VortekUtilities\SDL_Wrappers.cpp" />
     <ClCompile Include="VortekUtilities\Timer.cpp" />
+    <ClCompile Include="VortekUtilities\VortekUtilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VORTEK_LOGGER\VORTEK_LOGGER.vcxproj">

@@ -19,7 +19,8 @@
 #include "Core/Resources/AssetManager.h"
 
 #include "../utilities/EditorFramebuffers.h"
-#include "../utilities/ImGuiUtils.h"
+#include "../utilities/imgui/ImGuiUtils.h"
+#include "../utilities/SaveProject.h"
 #include "../scene/SceneManager.h"
 #include "../scene/SceneObject.h"
 
@@ -120,7 +121,9 @@ namespace VORTEK_EDITOR
 
 		}
 
-		if (!scriptSystem->LoadMainScript(runtimeRegistry, *lua))
+		// Get the main script path
+		auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>();
+		if (!scriptSystem->LoadMainScript(pSaveProject->sMainLuaScript, runtimeRegistry, *lua))
 		{
 			VORTEK_ERROR("Failed to load the main lua script!");
 			return;
@@ -201,11 +204,11 @@ namespace VORTEK_EDITOR
 		auto playTextureID = (ImTextureID)(intptr_t)pPlayTexture->GetID();
 		if (m_bPlayScene && m_bSceneLoaded)
 		{
-			ImGui::ActiveImageButton(playTextureID);
+			ImGui::ActiveImageButton("##playButton", playTextureID);
 		}
 		else
 		{
-			if (ImGui::ImageButton(playTextureID, TOOL_BUTTON_SIZE))
+			if (ImGui::ImageButton("##playButton", playTextureID, TOOL_BUTTON_SIZE))
 			{
 				LoadScene();
 			}
@@ -219,11 +222,11 @@ namespace VORTEK_EDITOR
 		auto stopTextureID = (ImTextureID)(intptr_t)pStopTexture->GetID();
 		if (!m_bPlayScene && !m_bSceneLoaded)
 		{
-			ImGui::ActiveImageButton(stopTextureID);
+			ImGui::ActiveImageButton("##stopButton", stopTextureID);
 		}
 		else
 		{
-			if (ImGui::ImageButton(stopTextureID, TOOL_BUTTON_SIZE))
+			if (ImGui::ImageButton("##stopButton", stopTextureID, TOOL_BUTTON_SIZE))
 			{
 				UnloadScene();
 			}

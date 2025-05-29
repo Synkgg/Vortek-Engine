@@ -8,13 +8,19 @@ namespace VORTEK_EDITOR
 	inline void DrawComponentsUtil::DrawEntityComponentInfo(VORTEK_CORE::ECS::Entity& entity)
 	{
 		auto& component = entity.GetComponent<TComponent>();
-		DrawImGuiComponent(component);
+		DrawImGuiComponent(entity, component);
 	}
 
 	template <typename TComponent>
 	inline void DrawComponentsUtil::DrawComponentInfo(TComponent& component)
 	{
 		DrawImGuiComponent(component);
+	}
+
+	template <typename TComponent>
+	inline void DrawComponentsUtil::DrawComponentInfo(VORTEK_CORE::ECS::Entity& entity, TComponent& component)
+	{
+		DrawImGuiComponent(entity, component);
 	}
 
 	template <typename TComponent>

@@ -22,15 +22,20 @@
     <ClCompile Include="Dialogs\FileDialog.cpp" />
     <ClCompile Include="Serializers\JSONSerializer.cpp" />
     <ClCompile Include="Serializers\JSONSerializer.inl" />
+    <ClCompile Include="Serializers\LuaSerializer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialogs\FileDialog.h" />
     <ClInclude Include="Serializers\JSONSerializer.h" />
+    <ClInclude Include="Serializers\LuaSerializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VORTEK_LOGGER\VORTEK_LOGGER.vcxproj">
       <Project>{95209233-3a27-4edf-82f3-13f6662e354a}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Serializers\LuaSerializer.inl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

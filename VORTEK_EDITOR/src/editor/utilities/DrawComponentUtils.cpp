@@ -4,7 +4,7 @@
 #include "Core/CoreUtilities/CoreUtilities.h"
 #include "VORTEKUtilities/VORTEKUtilities.h"
 #include "Logger/Logger.h"
-#include "../utilities/ImGuiUtils.h"
+#include "../utilities/imgui/ImGuiUtils.h"
 #include "Physics/PhysicsUtilities.h"
 #include <map>
 
@@ -365,7 +365,7 @@ namespace VORTEK_EDITOR
 			if (physicsAttributes.filterMask > 0)
 			{
 				ImGui::InlineLabel("applied masks");
-				if (ImGui::BeginListBox("##applied_masks", ImVec2{ 0.f, 75.f }))
+				if (ImGui::BeginListBox("##applied_masks", ImVec2{ 0.f, 32.f }))
 				{
 					auto setMaskBits{ GetAllSetBits(physicsAttributes.filterMask) };
 					for (auto mask : setMaskBits)
@@ -457,8 +457,10 @@ namespace VORTEK_EDITOR
 			ImGui::Checkbox("##sensor", &physicsAttributes.bIsSensor);
 
 			ImGui::InlineLabel("bullet");
-			ImGui::ItemToolTip("Treat this body as high speed object that performs continuous collision detection against dynamic and kinematic bodies, but not other bullet bodies.\n"
-				"Warning - Bullets should be used sparingly. They are not a solution for general dynamic-versus-dynamic continuous collision. They may interfere with joint constraints.");
+			ImGui::ItemToolTip("Treat this body as high speed object that performs continuous collision detection against "
+				"dynamic and kinematic bodies, but not other bullet bodies.\n"
+				"Warning - Bullets should be used sparingly. They are not a solution for general "
+				"dynamic-versus-dynamic continuous collision. They may interfere with joint constraints.");
 			ImGui::Checkbox("##bullet", &physicsAttributes.bIsBullet);
 
 			ImGui::SeparatorText("Physics Object Data");
@@ -527,7 +529,7 @@ namespace VORTEK_EDITOR
 			std::string sTextBuffer{ textComponent.sTextStr };
 			ImGui::InlineLabel("text");
 			if (ImGui::InputText(
-				"##_textStr", sTextBuffer.data(), sizeof(char) * 1024, 0/*ImGuiInputTextFlags_EnterReturnsTrue*/))
+				"##_textStr", sTextBuffer.data(), sizeof(char) * 1024, 0 /*ImGuiInputTextFlags_EnterReturnsTrue*/))
 			{
 				textComponent.sTextStr = std::string{ sTextBuffer.data() };
 			}
@@ -595,6 +597,116 @@ namespace VORTEK_EDITOR
 			ImGui::TreePop();
 		}
 		ImGui::PopID();
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+		VORTEK_CORE::ECS::TransformComponent& transform)
+	{
+		ImGui::SeparatorText("Transform");
+		ImGui::PushID(entt::type_hash<TransformComponent>::value());
+		if (ImGui::TreeNodeEx("##TransformTree", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			const auto& relations = entity.GetComponent<Relationship>();
+			bool bHasParent{ relations.parent != entt::null };
+			bool bPositionChanged{ false };
+
+			ImGui::PushItemWidth(120.f);
+			ImGui::InlineLabel(bHasParent ? "relative pos" : "position");
+			ImGui::ItemToolTip(bHasParent ? "Game object has a parent. "
+				"This is the relative position based on the parent's position."
+				: "World or absolute position of the game object.");
+
+			ImGui::ColoredLabel("x", LABEL_SINGLE_SIZE, LABEL_RED);
+			ImGui::SameLine();
+			if (ImGui::InputFloat(
+				"##position_x", bHasParent ? &transform.localPosition.x : &transform.position.x, 1.f, 10.f, "%.1f"))
+			{
+				bPositionChanged = true;
+			}
+
+			ImGui::SameLine();
+			ImGui::ColoredLabel("y", LABEL_SINGLE_SIZE, LABEL_GREEN);
+			ImGui::SameLine();
+			if (ImGui::InputFloat(
+				"##position_y", bHasParent ? &transform.localPosition.y : &transform.position.y, 1.f, 10.f, "%.1f"))
+			{
+				bPositionChanged = true;
+			}
+
+			if (bPositionChanged)
+			{
+				entity.UpdateTransform();
+			}
+
+			ImGui::InlineLabel("scale");
+			ImGui::ColoredLabel("x", LABEL_SINGLE_SIZE, LABEL_RED);
+			ImGui::SameLine();
+			if (ImGui::InputFloat("##scale_x", &transform.scale.x, 1.f, 1.f, "%.1f"))
+			{
+				transform.scale.x = std::clamp(transform.scale.x, 0.1f, 150.f);
+			}
+			ImGui::SameLine();
+			ImGui::ColoredLabel("y", LABEL_SINGLE_SIZE, LABEL_GREEN);
+			ImGui::SameLine();
+			if (ImGui::InputFloat("##scale_y", &transform.scale.y, 1.f, 1.f, "%.1f"))
+			{
+				transform.scale.y = std::clamp(transform.scale.y, 0.1f, 150.f);
+			}
+
+			ImGui::InlineLabel("rotation");
+			ImGui::InputFloat("##rotation", &transform.rotation, 1.f, 1.f, "%.1f");
+			ImGui::PopItemWidth();
+			ImGui::TreePop();
+		}
+
+		ImGui::PopID();
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::SpriteComponent& sprite)
+	{
+		DrawImGuiComponent(sprite);
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+		VORTEK_CORE::ECS::AnimationComponent& animation)
+	{
+		DrawImGuiComponent(animation);
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+		VORTEK_CORE::ECS::BoxColliderComponent& boxCollider)
+	{
+		DrawImGuiComponent(boxCollider);
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+		VORTEK_CORE::ECS::CircleColliderComponent& circleCollider)
+	{
+		DrawImGuiComponent(circleCollider);
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+		VORTEK_CORE::ECS::PhysicsComponent& physics)
+	{
+		DrawImGuiComponent(physics);
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+		VORTEK_CORE::ECS::RigidBodyComponent& rigidbody)
+	{
+		DrawImGuiComponent(rigidbody);
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+		VORTEK_CORE::ECS::TextComponent& textComponent)
+	{
+		DrawImGuiComponent(textComponent);
+	}
+
+	void DrawComponentsUtil::DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+		VORTEK_CORE::ECS::Identification& identification)
+	{
+		DrawImGuiComponent(identification);
 	}
 
 } // namespace VORTEK_EDITOR

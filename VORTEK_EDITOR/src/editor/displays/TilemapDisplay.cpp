@@ -15,7 +15,7 @@
 #include "../systems/GridSystem.h"
 #include "../utilities/EditorFramebuffers.h"
 #include "../utilities/EditorUtilities.h"
-#include "../utilities/ImGuiUtils.h"
+#include "../utilities/imgui/ImGuiUtils.h"
 #include "../utilities/fonts/IconsFontAwesome5.h"
 #include "../scene/SceneManager.h"
 #include "../scene/SceneObject.h"
@@ -356,7 +356,9 @@ namespace VORTEK_EDITOR
 				const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(DROP_SCENE_SRC);
 				if (payload)
 				{
+					SCENE_MANAGER().UnloadCurrentScene();
 					SCENE_MANAGER().SetCurrentScene(std::string{ (const char*)payload->Data });
+					SCENE_MANAGER().LoadCurrentScene();
 					LoadNewScene();
 					m_pTilemapCam->Reset();
 				}

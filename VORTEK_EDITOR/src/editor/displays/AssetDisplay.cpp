@@ -1,4 +1,5 @@
 #include "AssetDisplay.h"
+#include "AssetDisplayUtils.h"
 #include "VORTEKUtilities/VORTEKUtilities.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Scripting/InputManager.h"
@@ -6,7 +7,7 @@
 #include "Logger/Logger.h"
 
 #include "../utilities/EditorUtilities.h"
-#include "../utilities/ImGuiUtils.h"
+#include "../utilities/imgui/ImGuiUtils.h"
 #include "../utilities/fonts/IconsFontAwesome5.h"
 #include "../scene/SceneManager.h"
 
@@ -221,7 +222,10 @@ namespace VORTEK_EDITOR
 					if (textureID == 0)
 						break;
 
-					ImGui::ImageButton((ImTextureID)(intptr_t)textureID, ImVec2{ m_AssetSize, m_AssetSize });
+					std::string assetBtn = "##asset" + std::to_string(id);
+
+					ImGui::ImageButton(
+						assetBtn.c_str(), (ImTextureID)(intptr_t)textureID, ImVec2{ m_AssetSize, m_AssetSize });
 
 					if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0) && !m_bRename)
 						m_SelectedID = id;
@@ -263,7 +267,7 @@ namespace VORTEK_EDITOR
 							m_sRenameBuf.clear();
 							m_bRename = false;
 						}
-						else if (m_bRename && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
+						else if (m_bRename && ImGui::IsKeyPressed(ImGuiKey_Escape))
 						{
 							m_sRenameBuf.clear();
 							m_bRename = false;
@@ -298,6 +302,7 @@ namespace VORTEK_EDITOR
 		, m_bRename{ false }
 		, m_bWindowSelected{ false }
 		, m_bWindowHovered{ false }
+		, m_bOpenAddAssetModal{ false }
 		, m_sSelectedAssetName{ "" }
 		, m_sSelectedType{ "TEXTURES" }
 		, m_sDragSource{ "" }
@@ -328,6 +333,19 @@ namespace VORTEK_EDITOR
 			m_bWindowSelected = ImGui::IsWindowFocused();
 
 			DrawSelectedAssets();
+
+			if (m_SelectedID == -1 && ImGui::BeginPopupContextWindow("##AddAsset"))
+			{
+				if (ImGui::Selectable(AssetDisplayUtils::AddAssetBasedOnType(m_eSelectedType).c_str()))
+				{
+					m_bOpenAddAssetModal = true;
+				}
+
+				ImGui::EndPopup();
+			}
+
+			if (m_bOpenAddAssetModal)
+				AssetDisplayUtils::OpenAddAssetModalBasedOnType(m_eSelectedType, &m_bOpenAddAssetModal);
 
 			ImGui::EndChild();
 		}

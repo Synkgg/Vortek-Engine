@@ -4,7 +4,7 @@
 #include "../scene/SceneObject.h"
 
 #include "../utilities/fonts/IconsFontAwesome5.h"
-#include "../utilities/ImGuiUtils.h"
+#include "../utilities/imgui/ImGuiUtils.h"
 #include "../tools/ToolManager.h"
 
 #include "Core/ECS/MainRegistry.h"
@@ -34,22 +34,58 @@ namespace VORTEK_EDITOR
 		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding |
 			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
+		// Get a copy of the relationships of the current entity
+		auto relations = entity.GetComponent<Relationship>();
+		auto curr = relations.firstChild;
+
 		// If the selected entity is the current node, highlight the selected node
-		if (m_pSelectedEntity && m_pSelectedEntity->GetEntity() == entity.GetEntity())
+		bool bSelected{ m_pSelectedEntity && m_pSelectedEntity->GetEntity() == entity.GetEntity() };
+		if (bSelected)
 			nodeFlags |= ImGuiTreeNodeFlags_Selected;
 
 		bool bTreeNodeOpen{ false };
 
 		bTreeNodeOpen = ImGui::TreeNodeEx(name.c_str(), nodeFlags);
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
 
 		if (ImGui::IsItemClicked())
 		{
-			m_pSelectedEntity =
-				std::make_shared<Entity>(SCENE_MANAGER().GetCurrentScene()->GetRegistry(), entity.GetEntity());
+			m_pSelectedEntity = std::make_shared<Entity>(pCurrentScene->GetRegistry(), entity.GetEntity());
 			TOOL_MANAGER().SetSelectedEntity(entity.GetEntity());
 		}
 
 		ImGui::PopID();
+
+		if (ImGui::BeginDragDropSource())
+		{
+			ImGui::SetDragDropPayload("SceneHierarchy", &(entity.GetEntity()), sizeof(entity.GetEntity()));
+			ImGui::Text(entity.GetName().c_str());
+			ImGui::EndDragDropSource();
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SceneHierarchy");
+
+			if (payload)
+			{
+				VORTEK_ASSERT(payload->DataSize == sizeof(entity.GetEntity()));
+				entt::entity* ent = (entt::entity*)payload->Data;
+				auto entID = static_cast<int32_t>(*ent);
+				entity.AddChild(*ent);
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
+		while (curr != entt::null && bTreeNodeOpen)
+		{
+			Entity ent{ pCurrentScene->GetRegistry(), curr };
+			if (OpenTreeNode(ent))
+				ImGui::TreePop();
+
+			curr = ent.GetComponent<Relationship>().nextSibling;
+		}
 
 		return bTreeNodeOpen;
 	}
@@ -64,7 +100,7 @@ namespace VORTEK_EDITOR
 
 		if (ImGui::BeginPopupModal("Add Component"))
 		{
-			auto& registry = entity.GetRegistry();
+			auto& registry = entity.GetEnttRegistry();
 
 			// Get all of the reflected types from entt::meta
 			std::map<entt::id_type, std::string> componentMap;
@@ -200,14 +236,14 @@ namespace VORTEK_EDITOR
 		if (!m_pSelectedEntity)
 			return;
 
-		auto& registry = m_pSelectedEntity->GetRegistry();
+		auto& registry = m_pSelectedEntity->GetEnttRegistry();
 
 		for (const auto&& [id, storage] : registry.storage())
 		{
 			if (!storage.contains(m_pSelectedEntity->GetEntity()))
 				continue;
 
-			if (id == entt::type_hash<TileComponent>::value())
+			if (id == entt::type_hash<TileComponent>::value() || id == entt::type_hash<Relationship>::value())
 				continue;
 
 			const auto drawInfo =
@@ -274,8 +310,13 @@ namespace VORTEK_EDITOR
 			if (!m_TextFilter.PassFilter(ent.GetName().c_str()))
 				continue;
 
-			if (OpenTreeNode(ent))
-				ImGui::TreePop();
+			// Do not redraw the children
+			const auto& relations = ent.GetComponent<Relationship>();
+			if (relations.parent == entt::null)
+			{
+				if (OpenTreeNode(ent))
+					ImGui::TreePop();
+			}
 		}
 
 		ImGui::End();

@@ -161,6 +161,15 @@ namespace VORTEK_CORE::ECS
 			.EndObject(); // End rigid body table
 	}
 
+	void ComponentSerializer::SerializeComponent(VORTEK_FILESYSTEM::JSONSerializer& serializer, const Identification& id)
+	{
+		serializer
+			.StartNewObject("id") // Start id table
+			.AddKeyValuePair("name", id.name)
+			.AddKeyValuePair("group", id.group)
+			.EndObject(); // End id table
+	}
+
 	void ComponentSerializer::DeserializeComponent(const rapidjson::Value& jsonValue, TransformComponent& transform)
 	{
 		transform.position =
@@ -233,6 +242,12 @@ namespace VORTEK_CORE::ECS
 	{
 		rigidBody.maxVelocity.x = jsonValue["maxVelocity"]["x"].GetFloat();
 		rigidBody.maxVelocity.y = jsonValue["maxVelocity"]["y"].GetFloat();
+	}
+
+	void ComponentSerializer::DeserializeComponent(const rapidjson::Value& jsonValue, Identification& id)
+	{
+		id.name = jsonValue["name"].GetString();
+		id.group = jsonValue["group"].GetString();
 	}
 
 } // namespace VORTEK_CORE::ECS

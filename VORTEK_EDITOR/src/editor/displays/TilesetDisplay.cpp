@@ -6,7 +6,7 @@
 #include "../scene/SceneManager.h"
 #include "../tools/ToolManager.h"
 #include "../tools/TileTool.h"
-#include "../utilities/ImGuiUtils.h"
+#include "../utilities/imgui/ImGuiUtils.h"
 #include "../utilities/fonts/IconsFontAwesome5.h"
 
 #include <imgui.h>
@@ -108,8 +108,10 @@ namespace VORTEK_EDITOR
 
 					// Create unique id for the buttons
 					ImGui::PushID(k++);
+					std::string buttonStr = "##tile_" + std::to_string(k);
 
-					if (ImGui::ImageButton((ImTextureID)(intptr_t)pTexture->GetID(),
+					if (ImGui::ImageButton(buttonStr.c_str(),
+						(ImTextureID)(intptr_t)pTexture->GetID(),
 						ImVec2{
 							16.f * 1.5f,
 							16.f * 1.5f,

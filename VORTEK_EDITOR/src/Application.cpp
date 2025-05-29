@@ -9,18 +9,12 @@
 #include <Core/CoreUtilities/CoreEngineData.h>
 
 #include <Core/Scripting/InputManager.h>
+#include <Core/CoreUtilities/EngineShaders.h>
+
 #include <Windowing/Inputs/Keyboard.h>
 #include <Windowing/Inputs/Mouse.h>
 #include <Windowing/Inputs/Gamepad.h>
 #include <Windowing/Window/Window.h>
-
-// IMGUI TESTING
-// ===================================
-#include <imgui_internal.h>
-#include <backends/imgui_impl_sdl2.h>
-#include <backends/imgui_impl_opengl3.h>
-#include <SDL_opengl.h>
-// ===================================
 
 #include "editor/displays/MenuDisplay.h"
 #include "editor/displays/AssetDisplay.h"
@@ -31,25 +25,33 @@
 #include "editor/displays/TilemapDisplay.h"
 #include "editor/displays/LogDisplay.h"
 #include "editor/displays/EditorStyleToolDisplay.h"
+#include "editor/displays/ContentDisplay.h"
 
 #include "editor/utilities/editor_textures.h"
 #include "editor/utilities/EditorFramebuffers.h"
-#include "editor/utilities/ImGuiUtils.h"
 #include "editor/utilities/DrawComponentUtils.h"
-#include "editor/utilities/fonts/IconsFontAwesome5.h"
-
+#include "editor/utilities/SaveProject.h"
 #include "editor/systems/GridSystem.h"
 
-// TODO: This needs to be removed. Scenes are added by default for testing.
-#include "editor/scene/SceneManager.h"
+#include "editor/events/EditorEventTypes.h"
+#include "Core/Events/EventDispatcher.h"
 
+#include "editor/hub/Hub.h"
+
+// IMGUI
+// ===================================
+#include <imgui_internal.h>
+#include <backends/imgui_impl_sdl2.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <SDL_opengl.h>
+#include "editor/utilities/imgui/Gui.h"
+// ===================================
 
 namespace VORTEK_EDITOR
 {
 	bool Application::Initialize()
 	{
 		VORTEK_INIT_LOGS(false, true);
-		// TODO: LOAD CORE ENGINE DATA
 		// Init SDL
 		if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 		{
@@ -80,18 +82,16 @@ namespace VORTEK_EDITOR
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-		SDL_DisplayMode displayMode;
-		SDL_GetCurrentDisplayMode(0, &displayMode);
-
 		// Create the Window
-		m_pWindow = std::make_unique<VORTEK_WINDOWING::Window>("VORTEK 2D",
-			displayMode.w,
-			displayMode.h,
-			SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED,
-			true,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE |
-			SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_MAXIMIZED);
+		m_pWindow = std::make_unique<VORTEK_WINDOWING::Window>(
+			"Vortek Engine", 800, 600, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, true, SDL_WINDOW_OPENGL);
+
+		/*
+		 * SDL Hack - If we create the window as borderless, we lose the icon in the title bar.
+		 * Therefore, after testing I found that if we create the window with a border, then hide
+		 * the border. When we show the border later on, the icon will be there.
+		 */
+		SDL_SetWindowBordered(m_pWindow->GetWindow().get(), SDL_FALSE);
 
 		if (!m_pWindow->GetWindow())
 		{
@@ -127,7 +127,6 @@ namespace VORTEK_EDITOR
 
 		SDL_GL_SetSwapInterval(1);
 
-
 		auto& mainRegistry = MAIN_REGISTRY();
 		if (!mainRegistry.Initialize())
 		{
@@ -135,15 +134,9 @@ namespace VORTEK_EDITOR
 			return false;
 		}
 
-		if (!InitImGui())
+		if (!Gui::InitImGui(m_pWindow.get()))
 		{
 			VORTEK_ERROR("Failed to initialize ImGui!");
-			return false;
-		}
-
-		if (!LoadShaders())
-		{
-			VORTEK_ERROR("Failed to load the shaders!");
 			return false;
 		}
 
@@ -153,13 +146,27 @@ namespace VORTEK_EDITOR
 			return false;
 		}
 
+		mainRegistry.AddToContext<std::shared_ptr<SaveProject>>(std::make_shared<SaveProject>());
+		m_pHub = std::make_unique<Hub>(*m_pWindow);
+
+		return true;
+	}
+
+	bool Application::InitApp()
+	{
+		if (!LoadShaders())
+		{
+			VORTEK_ERROR("Failed to load the shaders!");
+			return false;
+		}
+
 		if (!CreateDisplays())
 		{
 			VORTEK_ERROR("Failed to create displays.");
 			return false;
 		}
 
-		if (!mainRegistry.GetAssetManager().CreateDefaultFonts())
+		if (!ASSET_MANAGER().CreateDefaultFonts())
 		{
 			VORTEK_ERROR("Failed to create default fonts");
 			return false;
@@ -173,7 +180,7 @@ namespace VORTEK_EDITOR
 			return false;
 		}
 
-		if (!mainRegistry.AddToContext<std::shared_ptr<EditorFramebuffers>>(pEditorFramebuffers))
+		if (!MAIN_REGISTRY().AddToContext<std::shared_ptr<EditorFramebuffers>>(pEditorFramebuffers))
 		{
 			VORTEK_ERROR("Failed add the editor frame buffers to registry context!");
 			return false;
@@ -185,19 +192,17 @@ namespace VORTEK_EDITOR
 		pEditorFramebuffers->mapFramebuffers.emplace(FramebufferType::TILEMAP,
 			std::make_shared<VORTEK_RENDERING::Framebuffer>(640, 480, false));
 
-		if (!mainRegistry.AddToContext<std::shared_ptr<GridSystem>>(std::make_shared<GridSystem>()))
+		if (!MAIN_REGISTRY().AddToContext<std::shared_ptr<GridSystem>>(std::make_shared<GridSystem>()))
 		{
 			VORTEK_ERROR("Failed add the grid system registry context!");
 			return false;
 		}
 
+		ADD_EVENT_HANDLER(VORTEK_EDITOR::Events::CloseEditorEvent, &Application::OnCloseEditor, *this);
+
 		// Register Meta Functions
 		RegisterEditorMetaFunctions();
 		VORTEK_CORE::CoreEngineData::RegisterMetaFunctions();
-
-		// TEST SCENES -- TODO: Remove These after testing
-		SCENE_MANAGER().AddScene("DefaultScene");
-		SCENE_MANAGER().AddScene("NewScene");
 
 		return true;
 	}
@@ -207,25 +212,29 @@ namespace VORTEK_EDITOR
 		auto& mainRegistry = MAIN_REGISTRY();
 		auto& assetManager = mainRegistry.GetAssetManager();
 
-		if (!assetManager.AddShader("basic", "assets/shaders/basicShader.vert", "assets/shaders/basicShader.frag"))
+		if (!assetManager.AddShaderFromMemory(
+			"basic", VORTEK_CORE::Shaders::basicShaderVert, VORTEK_CORE::Shaders::basicShaderFrag))
 		{
 			VORTEK_ERROR("Failed to add the basic shader to the asset manager");
 			return false;
 		}
 
-		if (!assetManager.AddShader("color", "assets/shaders/colorShader.vert", "assets/shaders/colorShader.frag"))
+		if (!assetManager.AddShaderFromMemory(
+			"color", VORTEK_CORE::Shaders::colorShaderVert, VORTEK_CORE::Shaders::colorShaderFrag))
 		{
 			VORTEK_ERROR("Failed to add the color shader to the asset manager");
 			return false;
 		}
 
-		if (!assetManager.AddShader("circle", "assets/shaders/circleShader.vert", "assets/shaders/circleShader.frag"))
+		if (!assetManager.AddShaderFromMemory(
+			"circle", VORTEK_CORE::Shaders::circleShaderVert, VORTEK_CORE::Shaders::circleShaderFrag))
 		{
 			VORTEK_ERROR("Failed to add the color shader to the asset manager");
 			return false;
 		}
 
-		if (!assetManager.AddShader("font", "assets/shaders/fontShader.vert", "assets/shaders/fontShader.frag"))
+		if (!assetManager.AddShaderFromMemory(
+			"font", VORTEK_CORE::Shaders::fontShaderVert, VORTEK_CORE::Shaders::fontShaderFrag))
 		{
 			VORTEK_ERROR("Failed to add the font shader to the asset manager");
 			return false;
@@ -319,6 +328,52 @@ namespace VORTEK_EDITOR
 
 		// ====== Gizmo Textures End   ======
 
+			// ====== Content Display Textures Start ======
+		if (!assetManager.AddTextureFromMemory(
+			"S2D_file_icon", file_icon, sizeof(file_icon) / sizeof(file_icon[0])))
+		{
+			VORTEK_ERROR("Failed to load texture [file_icon] from memory.");
+			return false;
+		}
+
+		assetManager.GetTexture("S2D_file_icon")->SetIsEditorTexture(true);
+
+		if (!assetManager.AddTextureFromMemory(
+			"S2D_music_icon", music_icon, sizeof(music_icon) / sizeof(music_icon[0])))
+		{
+			VORTEK_ERROR("Failed to load texture [music_icon] from memory.");
+			return false;
+		}
+
+		assetManager.GetTexture("S2D_music_icon")->SetIsEditorTexture(true);
+
+		if (!assetManager.AddTextureFromMemory(
+			"S2D_folder_icon", folder_icon, sizeof(folder_icon) / sizeof(folder_icon[0])))
+		{
+			VORTEK_ERROR("Failed to load texture [folder_icon] from memory.");
+			return false;
+		}
+
+		assetManager.GetTexture("S2D_folder_icon")->SetIsEditorTexture(true);
+
+		if (!assetManager.AddTextureFromMemory(
+			"S2D_image_icon", image_icon, sizeof(image_icon) / sizeof(image_icon[0])))
+		{
+			VORTEK_ERROR("Failed to load texture [image_icon] from memory.");
+			return false;
+		}
+
+		assetManager.GetTexture("S2D_image_icon")->SetIsEditorTexture(true);
+		// ====== Content Display Textures End   ======
+
+		if (!assetManager.AddTextureFromMemory("vortek_logo", vortek_logo, vortek_logo_size))
+		{
+			VORTEK_ERROR("Failed to load texture [vortek_logo] from memory.");
+			return false;
+		}
+
+		assetManager.GetTexture("vortek_logo")->SetIsEditorTexture(true);
+
 		return true;
 	}
 
@@ -359,6 +414,12 @@ namespace VORTEK_EDITOR
 				}
 				break;
 			}
+			case SDL_DROPFILE: {
+				EVENT_DISPATCHER().EmitEvent(VORTEK_EDITOR::Events::FileEvent{
+					.eAction = Events::EFileAction::FileDropped, .sFilepath = std::string{ m_Event.drop.file } });
+
+				break;
+			}
 			default: break;
 			}
 		}
@@ -387,44 +448,11 @@ namespace VORTEK_EDITOR
 
 	void Application::Render()
 	{
-		Begin();
-		RenderImGui();
-		End();
+		Gui::Begin();
+		RenderDisplays();
+		Gui::End(m_pWindow.get());
 
 		SDL_GL_SwapWindow(m_pWindow->GetWindow().get());
-	}
-
-	void Application::SetDarkThemeColors()
-	{
-		auto& colors = ImGui::GetStyle().Colors;
-		colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
-
-		// Headers
-		colors[ImGuiCol_Header] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-		colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-		colors[ImGuiCol_HeaderActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-
-		// Buttons
-		colors[ImGuiCol_Button] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-		colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-		colors[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-
-		// Frame BG
-		colors[ImGuiCol_FrameBg] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-		colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
-		colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-
-		// Tabs
-		colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		colors[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.3805f, 0.381f, 1.0f };
-		colors[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.2805f, 0.281f, 1.0f };
-		colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
-
-		// Title
-		colors[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 	}
 
 	void Application::CleanUp()
@@ -500,12 +528,12 @@ namespace VORTEK_EDITOR
 			return false;
 		}
 
-		// auto pEditorStylesDisplay = std::make_unique<EditorStyleToolDisplay>();
-	// if ( !pEditorStylesDisplay )
-	//{
-	//	VORTEK_ERROR( "Failed to Create Editor Styles Display!" );
-	//	return false;
-	// }
+		auto pContentDisplay = std::make_unique<ContentDisplay>();
+		if (!pContentDisplay)
+		{
+			VORTEK_ERROR("Failed to Create Content Display!");
+			return false;
+		}
 
 		pDisplayHolder->displays.push_back(std::move(pMenuDisplay));
 		pDisplayHolder->displays.push_back(std::move(pSceneDisplay));
@@ -515,94 +543,15 @@ namespace VORTEK_EDITOR
 		pDisplayHolder->displays.push_back(std::move(pTilesetDisplay));
 		pDisplayHolder->displays.push_back(std::move(pTilemapDisplay));
 		pDisplayHolder->displays.push_back(std::move(pAssetDisplay));
-		// pDisplayHolder->displays.push_back( std::move( pEditorStylesDisplay ) );
+		pDisplayHolder->displays.push_back(std::move(pContentDisplay));
 
 		return true;
 	}
 
-	bool Application::InitImGui()
-	{
-		const char* glslVersion = "#version 450";
-		IMGUI_CHECKVERSION();
-
-		if (!ImGui::CreateContext())
-		{
-			VORTEK_ERROR("Failed to create ImGui Context");
-			return false;
-		}
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-		io.ConfigWindowsMoveFromTitleBarOnly = true;
-
-		io.FontDefault = io.Fonts->AddFontFromFileTTF("./assets/fonts/opensans/OpenSans-Regular.ttf", 18.0f);
-
-		float baseFontSize = 16.0f;
-		float iconFontSize = baseFontSize * 2.0f / 3.0f;
-
-		// merge in icons from Font Awesome
-		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
-		ImFontConfig icons_config;
-		icons_config.MergeMode = true;
-		icons_config.PixelSnapH = true;
-		icons_config.GlyphMinAdvanceX = iconFontSize;
-		icons_config.GlyphOffset = ImVec2{ 0.f, 2.f };
-		io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS, baseFontSize, &icons_config, icons_ranges);
-
-		ImGui::StyleColorsDark();
-		SetDarkThemeColors();
-		ImGuiStyle& style = ImGui::GetStyle();
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-			style.WindowRounding = 0.0f;
-			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-		}
-
-		if (!ImGui_ImplSDL2_InitForOpenGL(m_pWindow->GetWindow().get(), m_pWindow->GetGLContext()))
-		{
-			VORTEK_ERROR("Failed to initialize ImGui SDL2 for OpenGL!");
-			return false;
-		}
-
-		if (!ImGui_ImplOpenGL3_Init(glslVersion))
-		{
-			VORTEK_ERROR("Failed to initialize ImGui OpenGL3!");
-			return false;
-		}
-
-		ImGui::InitDefaultStyles();
-
-		return true;
-	}
-
-	void Application::Begin()
-	{
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
-	}
-
-	void Application::End()
-	{
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		ImGuiIO& io = ImGui::GetIO();
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
-			SDL_GLContext backupContext = SDL_GL_GetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-
-			SDL_GL_MakeCurrent(m_pWindow->GetWindow().get(), backupContext);
-		}
-	}
-
-	void Application::RenderImGui()
+	void Application::InitDisplays()
 	{
 		const auto dockSpaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+
 		if (static auto firstTime = true; firstTime) [[unlikely]]
 		{
 			firstTime = false;
@@ -611,12 +560,13 @@ namespace VORTEK_EDITOR
 			ImGui::DockBuilderAddNode(dockSpaceId);
 
 			auto centerNodeId = dockSpaceId;
-
-			const auto leftNodeId = ImGui::DockBuilderSplitNode(centerNodeId, ImGuiDir_Left, 0.2f, nullptr, &centerNodeId);
+			const auto leftNodeId =
+				ImGui::DockBuilderSplitNode(centerNodeId, ImGuiDir_Left, 0.2f, nullptr, &centerNodeId);
 
 			auto RightNodeId = ImGui::DockBuilderSplitNode(centerNodeId, ImGuiDir_Right, 0.3f, nullptr, &centerNodeId);
 
-			const auto LogNodeId = ImGui::DockBuilderSplitNode(centerNodeId, ImGuiDir_Down, 0.25f, nullptr, &centerNodeId);
+			const auto LogNodeId =
+				ImGui::DockBuilderSplitNode(centerNodeId, ImGuiDir_Down, 0.25f, nullptr, &centerNodeId);
 
 			auto TileLayerId = ImGui::DockBuilderSplitNode(RightNodeId, ImGuiDir_Down, 0.4f, nullptr, &RightNodeId);
 
@@ -629,9 +579,15 @@ namespace VORTEK_EDITOR
 			ImGui::DockBuilderDockWindow("Tilemap Editor", centerNodeId);
 			ImGui::DockBuilderDockWindow("Assets", LogNodeId);
 			ImGui::DockBuilderDockWindow("Logs", LogNodeId);
+			ImGui::DockBuilderDockWindow("Content Browser", LogNodeId);
 
 			ImGui::DockBuilderFinish(dockSpaceId);
 		}
+	}
+
+	void Application::RenderDisplays()
+	{
+		InitDisplays();
 
 		auto& mainRegistry = MAIN_REGISTRY();
 		auto& pDisplayHolder = mainRegistry.GetContext<std::shared_ptr<DisplayHolder>>();
@@ -640,8 +596,6 @@ namespace VORTEK_EDITOR
 		{
 			pDisplay->Draw();
 		}
-
-		//ImGui::ShowDemoWindow();
 	}
 
 	void Application::RegisterEditorMetaFunctions()
@@ -655,6 +609,12 @@ namespace VORTEK_EDITOR
 		DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::RigidBodyComponent>();
 		DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::BoxColliderComponent>();
 		DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::CircleColliderComponent>();
+	}
+
+	void Application::OnCloseEditor(VORTEK_EDITOR::Events::CloseEditorEvent& close)
+	{
+		// TODO: Maybe add a check for save??
+		m_bIsRunning = false;
 	}
 
 	Application::Application()
@@ -677,6 +637,14 @@ namespace VORTEK_EDITOR
 			VORTEK_ERROR("Initialization Failed!");
 			return;
 		}
+
+		if (!m_pHub || !m_pHub->Run())
+		{
+			// If it makes it here, the app is closing.
+			return;
+		}
+
+		InitApp();
 
 		while (m_bIsRunning)
 		{

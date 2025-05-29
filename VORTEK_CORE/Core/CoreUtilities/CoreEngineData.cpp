@@ -79,6 +79,7 @@ namespace VORTEK_CORE
 		Entity::RegisterMetaComponent<TextComponent>();
 		Entity::RegisterMetaComponent<RigidBodyComponent>();
 		Entity::RegisterMetaComponent<TileComponent>();
+		Entity::RegisterMetaComponent<Relationship>();
 
 		Registry::RegisterMetaComponent<Identification>();
 		Registry::RegisterMetaComponent<TransformComponent>();
@@ -90,6 +91,7 @@ namespace VORTEK_CORE
 		Registry::RegisterMetaComponent<TextComponent>();
 		Registry::RegisterMetaComponent<RigidBodyComponent>();
 		Registry::RegisterMetaComponent<TileComponent>();
+		Registry::RegisterMetaComponent<Relationship>();
 
 		// Register User Data Types
 		VORTEK_CORE::Scripting::UserDataBinder::register_meta_user_data<ObjectData>();

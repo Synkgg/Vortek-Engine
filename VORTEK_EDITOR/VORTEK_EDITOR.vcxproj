@@ -126,7 +126,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -147,6 +147,8 @@
     <ClCompile Include="src\editor\commands\cmds\CreateTileToolCmds.cpp" />
     <ClCompile Include="src\editor\commands\cmds\RectToolCmds.cpp" />
     <ClCompile Include="src\editor\displays\AssetDisplay.cpp" />
+    <ClCompile Include="src\editor\displays\AssetDisplayUtils.cpp" />
+    <ClCompile Include="src\editor\displays\ContentDisplay.cpp" />
     <ClCompile Include="src\editor\displays\EditorStyleToolDisplay.cpp" />
     <ClCompile Include="src\editor\displays\LogDisplay.cpp" />
     <ClCompile Include="src\editor\displays\MenuDisplay.cpp" />
@@ -155,6 +157,8 @@
     <ClCompile Include="src\editor\displays\TileDetailsDisplay.cpp" />
     <ClCompile Include="src\editor\displays\TilemapDisplay.cpp" />
     <ClCompile Include="src\editor\displays\TilesetDisplay.cpp" />
+    <ClCompile Include="src\editor\hub\Hub.cpp" />
+    <ClCompile Include="src\editor\loaders\ProjectLoader.cpp" />
     <ClCompile Include="src\editor\scene\SceneManager.cpp" />
     <ClCompile Include="src\editor\scene\SceneObject.cpp" />
     <ClCompile Include="src\editor\systems\GridSystem.cpp" />
@@ -168,7 +172,9 @@
     <ClCompile Include="src\editor\tools\TileTool.cpp" />
     <ClCompile Include="src\editor\tools\ToolManager.cpp" />
     <ClCompile Include="src\editor\utilities\DrawComponentUtils.cpp" />
-    <ClCompile Include="src\editor\utilities\ImGuiUtils.cpp" />
+    <ClCompile Include="src\editor\utilities\EditorUtilities.cpp" />
+    <ClCompile Include="src\editor\utilities\imgui\Gui.cpp" />
+    <ClCompile Include="src\editor\utilities\imgui\ImGuiUtils.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -200,14 +206,6 @@
     <None Include="assets\scripts\platformer\defs\assetDefs.lua" />
     <None Include="assets\scripts\platformer\maps\testmap.lua" />
     <None Include="assets\scripts\platformer\utilities\scene_dimmer.lua" />
-    <None Include="assets\shaders\basicShader.frag" />
-    <None Include="assets\shaders\basicShader.vert" />
-    <None Include="assets\shaders\circleShader.frag" />
-    <None Include="assets\shaders\circleShader.vert" />
-    <None Include="assets\shaders\colorShader.frag" />
-    <None Include="assets\shaders\colorShader.vert" />
-    <None Include="assets\shaders\fontShader.frag" />
-    <None Include="assets\shaders\fontShader.vert" />
     <None Include="SDL2.dll" />
     <None Include="SDL2_mixer.dll" />
     <None Include="src\editor\commands\AbstractCommandManager.inl" />
@@ -257,6 +255,8 @@
     <ClInclude Include="src\editor\commands\cmds\RectToolCmds.h" />
     <ClInclude Include="src\editor\commands\CommandManager.h" />
     <ClInclude Include="src\editor\displays\AssetDisplay.h" />
+    <ClInclude Include="src\editor\displays\AssetDisplayUtils.h" />
+    <ClInclude Include="src\editor\displays\ContentDisplay.h" />
     <ClInclude Include="src\editor\displays\EditorStyleToolDisplay.h" />
     <ClInclude Include="src\editor\displays\IDisplay.h" />
     <ClInclude Include="src\editor\displays\LogDisplay.h" />
@@ -266,6 +266,9 @@
     <ClInclude Include="src\editor\displays\TileDetailsDisplay.h" />
     <ClInclude Include="src\editor\displays\TilemapDisplay.h" />
     <ClInclude Include="src\editor\displays\TilesetDisplay.h" />
+    <ClInclude Include="src\editor\events\EditorEventTypes.h" />
+    <ClInclude Include="src\editor\hub\Hub.h" />
+    <ClInclude Include="src\editor\loaders\ProjectLoader.h" />
     <ClInclude Include="src\editor\scene\SceneManager.h" />
     <ClInclude Include="src\editor\scene\SceneObject.h" />
     <ClInclude Include="src\editor\systems\GridSystem.h" />
@@ -283,8 +286,12 @@
     <ClInclude Include="src\editor\utilities\EditorFrameBuffers.h" />
     <ClInclude Include="src\editor\utilities\EditorUtilities.h" />
     <ClInclude Include="src\editor\utilities\editor_textures.h" />
+    <ClInclude Include="src\editor\utilities\fonts\editor_fonts.h" />
     <ClInclude Include="src\editor\utilities\fonts\IconsFontAwesome5.h" />
-    <ClInclude Include="src\editor\utilities\ImGuiUtils.h" />
+    <ClInclude Include="src\editor\utilities\fonts\OpenSans.h" />
+    <ClInclude Include="src\editor\utilities\imgui\Gui.h" />
+    <ClInclude Include="src\editor\utilities\imgui\ImGuiUtils.h" />
+    <ClInclude Include="src\editor\utilities\SaveProject.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="assets\fonts\opensans\LICENSE.txt" />

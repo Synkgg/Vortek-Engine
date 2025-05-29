@@ -2,14 +2,12 @@
 #include <iostream>
 #include <Logger.h>
 
-namespace VORTEK_WINDOWING {
+namespace VORTEK_WINDOWING
+{
 
 	void Window::CreateNewWindow(Uint32 flags)
 	{
-		m_pWindow = WindowPtr(SDL_CreateWindow(
-			m_sTitle.c_str(),
-			m_XPos, m_YPos, m_Width, m_Height, flags
-		));
+		m_pWindow = WindowPtr(SDL_CreateWindow(m_sTitle.c_str(), m_XPos, m_YPos, m_Width, m_Height, flags));
 
 		// Check to see if the window was created correctly
 		if (!m_pWindow)
@@ -25,8 +23,14 @@ namespace VORTEK_WINDOWING {
 	}
 
 	Window::Window(const std::string title, int width, int height, int x_pos, int y_pos, bool v_sync, Uint32 flags)
-		: m_pWindow{ nullptr }, m_GLContext{}, m_sTitle{ title }
-		, m_Width{ width }, m_Height{ height }, m_XPos{ x_pos }, m_YPos{ y_pos }, m_WindowFlags{ flags }
+		: m_pWindow{ nullptr }
+		, m_GLContext{}
+		, m_sTitle{ title }
+		, m_Width{ width }
+		, m_Height{ height }
+		, m_XPos{ x_pos }
+		, m_YPos{ y_pos }
+		, m_WindowFlags{ flags }
 	{
 		CreateNewWindow(flags);
 
@@ -51,6 +55,7 @@ namespace VORTEK_WINDOWING {
 	{
 		m_Width = width;
 		m_Height = height;
+		SDL_SetWindowSize(m_pWindow.get(), width, height);
 	}
 
 	void Window::SetWindowName(const std::string& name)
@@ -58,4 +63,4 @@ namespace VORTEK_WINDOWING {
 		m_sTitle = name;
 		SDL_SetWindowTitle(m_pWindow.get(), name.c_str());
 	}
-}
+} // namespace VORTEK_WINDOWING

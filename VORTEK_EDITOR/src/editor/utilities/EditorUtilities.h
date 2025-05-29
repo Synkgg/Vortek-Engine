@@ -2,6 +2,11 @@
 #include "Core/ECS/Components/AllComponents.h"
 #include "Physics/UserData.h"
 
+namespace VORTEK_RENDERING
+{
+	class Texture;
+}
+
 namespace VORTEK_EDITOR
 {
 	constexpr const char* DROP_TEXTURE_SRC = "DropTextureSource";
@@ -9,6 +14,25 @@ namespace VORTEK_EDITOR
 	constexpr const char* DROP_SOUNDFX_SRC = "DropSoundFxSource";
 	constexpr const char* DROP_MUSIC_SRC = "DropMusicSource";
 	constexpr const char* DROP_SCENE_SRC = "DropSceneSource";
+
+#define BASE_PATH                                                                                                      \
+	std::string                                                                                                        \
+	{                                                                                                                  \
+		SDL_GetBasePath()                                                                                              \
+	}
+
+#ifdef _WIN32
+	constexpr char PATH_SEPARATOR = '\\';
+#define DEFAULT_PROJECT_PATH BASE_PATH + "VortekProjects"
+#else
+	constexpr char PATH_SEPARATOR = '/';
+#define DEFAULT_PROJECT_PATH BASE_PATH + PATH_SEPARATOR + "VortekProjects"
+#endif
+
+#define SCRIPTS "scripts"
+#define ASSETS "assets" 
+
+	constexpr const char* PRJ_FILE_EXT = ".veprj";
 
 	struct Canvas
 	{
@@ -46,5 +70,20 @@ namespace VORTEK_EDITOR
 		VORTEK_RENDERING::Color axisHoveredColor;
 		VORTEK_RENDERING::Color axisDisabledColor;
 	};
+
+	/* Supported file types */
+	enum class EFileType
+	{
+		SOUND,
+		IMAGE,
+		TXT, // All text file types
+		FOLDER,
+		INVALID_TYPE,
+	};
+
+	EFileType GetFileType(const std::string& sPath);
+
+	std::vector<std::string> SplitStr(const std::string& str, char delimiter);
+	VORTEK_RENDERING::Texture* GetIconTexture(const std::string& sPath);
 
 } // namespace VORTEK_EDITOR

@@ -1,5 +1,6 @@
 #pragma once
 #include <sol/sol.hpp>
+#include <string>
 
 namespace VORTEK_CORE::ECS
 {
@@ -17,7 +18,7 @@ namespace VORTEK_CORE::Systems
 		ScriptingSystem();
 		~ScriptingSystem() = default;
 
-		bool LoadMainScript(VORTEK_CORE::ECS::Registry& registry, sol::state& lua);
+		bool LoadMainScript(const std::string& sMainLuaFile, VORTEK_CORE::ECS::Registry& registry, sol::state& lua);
 		void Update(VORTEK_CORE::ECS::Registry& registry);
 		void Render(VORTEK_CORE::ECS::Registry& registry);
 

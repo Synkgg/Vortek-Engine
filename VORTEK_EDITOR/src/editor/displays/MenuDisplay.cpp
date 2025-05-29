@@ -3,13 +3,18 @@
 #include "../VORTEK_FILESYSTEM/Dialogs/FileDialog.h"
 #include "Core/Loaders/TilemapLoader.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
+#include "Core/ECS/MainRegistry.h"
 
 #include "../scene/SceneManager.h"
 #include "../scene/SceneObject.h"
 #include "../tools/ToolManager.h"
-#include "../utilities/ImGuiUtils.h"
+#include "../utilities/imgui/ImGuiUtils.h"
 #include "../utilities/fonts/IconsFontAwesome5.h"
+#include "../utilities/SaveProject.h"
+#include "../loaders/ProjectLoader.h"
 
+#include "Core/Events/EventDispatcher.h"
+#include "../events/EditorEventTypes.h"
 #include <imgui.h>
 #include <SDL.h>
 
@@ -30,53 +35,27 @@ namespace VORTEK_EDITOR
 				ImGui::InlineLabel(ICON_FA_FOLDER_OPEN, 32.f);
 				if (ImGui::MenuItem("Open", "Ctrl + O"))
 				{
-					VORTEK_FILESYSTEM::FileDialog fd{};
-					auto file = fd.OpenFileDialog("Open tilemap test", SDL_GetBasePath(), { "*.json" });
-
-					if (!file.empty())
-					{
-						auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
-						if (pCurrentScene)
-						{
-							VORTEK_CORE::Loaders::TilemapLoader tl{};
-							if (!tl.LoadTilemap(pCurrentScene->GetRegistry(), file, true))
-							{
-								VORTEK_ERROR("Failed to load tilemap.");
-							}
-						}
-						else
-						{
-							VORTEK_ERROR("Failed to load tilemap. No active scene.");
-						}
-					}
+					VORTEK_LOG("OPEN PRESSED");
 				}
 				ImGui::InlineLabel(ICON_FA_SAVE, 32.f);
 				if (ImGui::MenuItem("Save", "Ctrl + S"))
 				{
-					VORTEK_FILESYSTEM::FileDialog fd{};
-					auto file = fd.SaveFileDialog("Save Tilemap test", SDL_GetBasePath(), { "*.json" });
-					if (!file.empty())
+					auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>();
+					VORTEK_ASSERT(pSaveProject && "Save Project must exist!");
+					// Save entire project
+					ProjectLoader pl{};
+					if (!pl.SaveLoadedProject(*pSaveProject))
 					{
-						auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
-						if (pCurrentScene)
-						{
-							VORTEK_CORE::Loaders::TilemapLoader tl{};
-							if (!tl.SaveTilemap(pCurrentScene->GetRegistry(), file, true))
-							{
-								VORTEK_ERROR("Failed to save tilemap.");
-							}
-						}
-						else
-						{
-							VORTEK_ERROR("Failed to save tilemap. No active scene.");
-						}
+						VORTEK_ERROR("Failed to save project [{}] at file [{}]",
+							pSaveProject->sProjectName,
+							pSaveProject->sProjectFilePath);
 					}
 				}
 
 				ImGui::InlineLabel(ICON_FA_WINDOW_CLOSE, 32.f);
 				if (ImGui::MenuItem("Exit"))
 				{
-					VORTEK_LOG("SHOULD EVENTUALLY EXIT!");
+					EVENT_DISPATCHER().EmitEvent(Events::CloseEditorEvent{});
 				}
 
 				ImGui::EndMenu();

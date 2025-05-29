@@ -1,6 +1,6 @@
 #include "TileDetailsDisplay.h"
 
-#include "../utilities/ImGuiUtils.h"
+#include "../utilities/imgui/ImGuiUtils.h"
 #include "../utilities/DrawComponentUtils.h"
 #include "../utilities/fonts/IconsFontAwesome5.h"
 #include "../scene/SceneManager.h"
@@ -286,7 +286,7 @@ namespace VORTEK_EDITOR
 						m_sRenameLayerBuf.clear();
 						m_bRename = false;
 					}
-					else if (m_bRename && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
+					else if (m_bRename && ImGui::IsKeyPressed(ImGuiKey_Escape))
 					{
 						m_sRenameLayerBuf.clear();
 						m_bRename = false;

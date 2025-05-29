@@ -31,6 +31,24 @@ namespace VORTEK_EDITOR
 		return bSuccess;
 	}
 
+	bool SceneManager::AddScene(const std::string& sSceneName, const std::string& sSceneData)
+	{
+		if (m_mapScenes.contains(sSceneName))
+		{
+			VORTEK_ERROR("Failed to add new scene object - [{}] already exists.", sSceneName);
+			return false;
+		}
+
+		auto [itr, bSuccess] = m_mapScenes.emplace(
+			sSceneName, std::move(std::make_shared<VORTEK_EDITOR::SceneObject>(sSceneName, sSceneData)));
+		return bSuccess;
+	}
+
+	bool SceneManager::HasScene(const std::string& sSceneName)
+	{
+		return m_mapScenes.contains(sSceneName);
+	}
+
 	std::shared_ptr<VORTEK_EDITOR::SceneObject> SceneManager::GetScene(const std::string& sSceneName)
 	{
 		auto sceneItr = m_mapScenes.find(sSceneName);
@@ -56,6 +74,17 @@ namespace VORTEK_EDITOR
 		}
 
 		return sceneItr->second;
+	}
+
+	void SceneManager::AddLayerToCurrentScene(const std::string& sLayerName, bool bVisible)
+	{
+		if (auto pCurrentScene = GetCurrentScene())
+		{
+			pCurrentScene->AddLayer(sLayerName, bVisible);
+			return;
+		}
+
+		VORTEK_ERROR("Failed to add layer. Current scene is nullptr.");
 	}
 
 	std::vector<std::string> SceneManager::GetSceneNames() const
@@ -91,5 +120,40 @@ namespace VORTEK_EDITOR
 			return;
 
 		m_pToolManager->SetToolsCurrentTileset(sTileset);
+	}
+
+	bool SceneManager::LoadCurrentScene()
+	{
+		if (auto pCurrentScene = GetCurrentScene())
+		{
+			return pCurrentScene->LoadScene();
+		}
+
+		return false;
+	}
+
+	bool SceneManager::UnloadCurrentScene()
+	{
+		if (auto pCurrentScene = GetCurrentScene())
+		{
+			return pCurrentScene->UnloadScene();
+		}
+
+		return false;
+	}
+
+	bool SceneManager::SaveAllScenes()
+	{
+		bool bSuccess{ true };
+		for (const auto& [sName, pScene] : m_mapScenes)
+		{
+			if (!pScene->SaveScene())
+			{
+				VORTEK_ERROR("Failed to save scene [{}]", sName);
+				bSuccess = false;
+			}
+		}
+
+		return bSuccess;
 	}
 } // namespace VORTEK_EDITOR

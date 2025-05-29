@@ -64,6 +64,26 @@ namespace VORTEK_RESOURCES
 			return m_mapTextures;
 		}
 
+		inline const std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::SoundFX>>& GetAllSoundFx() const
+		{
+			return m_mapSoundFx;
+		}
+
+		inline const std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Shader>>& GetAllShaders() const
+		{
+			return m_mapShader;
+		}
+
+		inline const std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Font>>& GetAllFonts() const
+		{
+			return m_mapFonts;
+		}
+
+		inline const std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::Music>>& GetAllMusic() const
+		{
+			return m_mapMusic;
+		}
+
 		std::vector<std::string> GetAssetKeyNames(VORTEK_UTIL::AssetType eAssetType) const;
 
 		bool ChangeAssetName(const std::string& sOldName, const std::string& sNewName, VORTEK_UTIL::AssetType eAssetType);

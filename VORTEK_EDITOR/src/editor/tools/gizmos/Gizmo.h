@@ -44,6 +44,8 @@ namespace VORTEK_EDITOR
 
 		void SetGizmoPosition(VORTEK_CORE::ECS::Entity& selectedEntity);
 
+		virtual void ResetSelectedEntity() override { m_SelectedEntity = entt::null; }
+
 	protected:
 		std::unique_ptr<GizmoAxisParams> m_pXAxisParams;
 		std::unique_ptr<GizmoAxisParams> m_pYAxisParams;

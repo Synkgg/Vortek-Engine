@@ -4,9 +4,11 @@
 #include <ranges>
 #include <functional>
 #include <concepts>
+#include <string_view>
 #include <set>
 #include <map>
 #include <unordered_map>
+#include <iostream>
 
 namespace VORTEK_UTIL
 {
@@ -29,6 +31,12 @@ namespace VORTEK_UTIL
 		std::same_as<T, std::unordered_map<typename T::key_type, typename T::mapped_type, typename T::hasher,
 		typename T::key_equal, typename T::allocator_type>>;
 
+	/*
+	 * @brief Returns a vector of the keys of a specified map.
+	 * @tparam The map type that is passed in.
+	 * @param A const map& to extract the keys.
+	 * @return Returns a vector of the key_type of the map.
+	 */
 	template <MapType Map>
 	std::vector<typename Map::key_type> GetKeys(const Map& map)
 	{
@@ -37,6 +45,13 @@ namespace VORTEK_UTIL
 		return keys;
 	}
 
+	/*
+	 * @brief Returns a vector of filtered keys of a specified map.
+	 * @tparam The map type that is passed in.
+	 * @tparam The predicate function to filter the keys.
+	 * @param A const map& to extract the keys.
+	 * @return Returns a vector of the key_type of the map.
+	 */
 	template <MapType Map, typename Func>
 	std::vector<typename Map::key_type> GetKeys(const Map& map, Func func)
 	{
@@ -45,6 +60,14 @@ namespace VORTEK_UTIL
 		return keys;
 	}
 
+	/*
+	 * @brief Change the specified key of a map.
+	 * @tparam The map type that is passed in.
+	 * @param A reference to the map that we want to change the key.
+	 * @param The key to be changed, must be of the same type as the maps keys.
+	 * @param value to change the key to, must be of the same type as the maps keys.
+	 * @return Returns true if successful, false otherwise.
+	 */
 	template <MapType Map>
 	bool KeyChange(Map& map, const typename Map::key_type& key, const typename Map::key_type& change)
 	{
@@ -77,6 +100,9 @@ namespace VORTEK_UTIL
 		return num | mask;
 	}
 
+	/*
+	 *@brief Returns the first set bit in the given number.
+	 */
 	template <UintType T>
 	T GetFirstSetBit(T num)
 	{
@@ -125,4 +151,8 @@ namespace VORTEK_UTIL
 		return 0 != (x & y);
 	}
 
+	std::string_view GetSubstring(const std::string_view& str, const std::string& find);
+
 } // namespace VORTEK_UTIL
+
+#define GET_SUBSTRING( str, find ) VORTEK_UTIL::GetSubstring( str, find )

@@ -4,6 +4,8 @@
 
 #define MAIN_REGISTRY() VORTEK_CORE::ECS::MainRegistry::GetInstance()
 #define ASSET_MANAGER() MAIN_REGISTRY().GetAssetManager()
+#define EVENT_DISPATCHER() MAIN_REGISTRY().GetEventDispatcher()
+#define ADD_EVENT_HANDLER( Event, Func, Handler ) EVENT_DISPATCHER().AddHandler<Event, Func>( Handler );
 
 namespace VORTEK_RESOURCES
 {
@@ -14,6 +16,11 @@ namespace VORTEK_SOUNDS
 	class MusicPlayer;
 	class SoundFxPlayer;
 } // namespace VORTEK_SOUNDS
+
+namespace VORTEK_CORE::Events
+{
+	class EventDispatcher;
+}
 
 namespace VORTEK_CORE::Systems
 {
@@ -43,6 +50,7 @@ namespace VORTEK_CORE::ECS
 		static MainRegistry& GetInstance();
 		bool Initialize();
 
+		VORTEK_CORE::Events::EventDispatcher& GetEventDispatcher();
 		VORTEK_RESOURCES::AssetManager& GetAssetManager();
 		VORTEK_SOUNDS::MusicPlayer& GetMusicPlayer();
 		VORTEK_SOUNDS::SoundFxPlayer& GetSoundPlayer();

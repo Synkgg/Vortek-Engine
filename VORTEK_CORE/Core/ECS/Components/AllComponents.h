@@ -10,3 +10,4 @@
 #include "Identification.h"
 #include "TextComponent.h"
 #include "TileComponent.h"
+#include "Relationship.h"
