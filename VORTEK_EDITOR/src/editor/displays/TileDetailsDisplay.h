@@ -2,15 +2,18 @@
 #include "IDisplay.h"
 #include <string>
 
-namespace VORTEK_CORE::ECS
+namespace VORTEK_CORE
 {
-	struct SpriteComponent;
-}
+	class Scene;
+
+	namespace ECS
+	{
+		struct SpriteComponent;
+	}
+} // namespace VORTEK_CORE::ECS
 
 namespace VORTEK_EDITOR
 {
-
-	class SceneObject;
 
 	class TileDetailsDisplay : public IDisplay
 	{
@@ -20,7 +23,7 @@ namespace VORTEK_EDITOR
 		bool m_bRename;
 
 	private:
-		void DrawSpriteComponent(VORTEK_CORE::ECS::SpriteComponent& sprite, SceneObject* pScene);
+		void DrawSpriteComponent(VORTEK_CORE::ECS::SpriteComponent& sprite, VORTEK_CORE::Scene* pScene);
 
 	public:
 		TileDetailsDisplay();

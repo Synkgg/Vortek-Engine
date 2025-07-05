@@ -11,32 +11,50 @@
 #include "Core/Systems/PhysicsSystem.h"
 #include "Core/Systems/ScriptingSystem.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
+
 #include "Logger/Logger.h"
+#include "Logger/CrashLogger.h"
+
+#include "Core/Scripting/CrashLoggerTestBindings.h"
+
 #include "Sounds/MusicPlayer/MusicPlayer.h"
 #include "Sounds/SoundPlayer/SoundFxPlayer.h"
 #include "Physics/Box2DWrappers.h"
 #include "Physics/ContactListener.h"
 #include "Core/Resources/AssetManager.h"
 
-#include "../utilities/EditorFramebuffers.h"
-#include "../utilities/imgui/ImGuiUtils.h"
-#include "../utilities/SaveProject.h"
-#include "../scene/SceneManager.h"
-#include "../scene/SceneObject.h"
+#include "editor/utilities/EditorFramebuffers.h"
+#include "editor/utilities/EditorUtilities.h"
+#include "editor/utilities/imgui/ImGuiUtils.h"
+#include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "Core/CoreUtilities/SaveProject.h"
+#include "editor/scene/SceneManager.h"
+#include "editor/scene/SceneObject.h"
+
+#include "editor/scripting/EditorCoreLuaWrappers.h"
+
+#include "Core/Events/EventDispatcher.h"
+#include "Core/Events/EngineEventTypes.h"
+#include "Windowing/Inputs/Keys.h"
 
 #include <imgui.h>
+#include <thread>
 
 using namespace VORTEK_CORE::Systems;
 using namespace VORTEK_CORE::ECS;
 using namespace VORTEK_RENDERING;
+using namespace VORTEK_PHYSICS;
 
-constexpr float one_over_sixty = 1.f / 60.f;
+constexpr float TARGET_FRAME_TIME_F = 1.f / 60.f;
+constexpr double TARGET_FRAME_TIME = 1.0 / 60.0;
+
+std::string frame = "0";
 
 namespace VORTEK_EDITOR
 {
 	void SceneDisplay::LoadScene()
 	{
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
 		if (!pCurrentScene)
 			return;
 
@@ -44,7 +62,7 @@ namespace VORTEK_EDITOR
 		auto& runtimeRegistry = pCurrentScene->GetRuntimeRegistry();
 
 		const auto& canvas = pCurrentScene->GetCanvas();
-		runtimeRegistry.AddToContext<std::shared_ptr<Camera2D>>(
+		auto pCamera = runtimeRegistry.AddToContext<std::shared_ptr<Camera2D>>(
 			std::make_shared<Camera2D>(canvas.width, canvas.height));
 
 		auto pPhysicsWorld = runtimeRegistry.AddToContext<VORTEK_PHYSICS::PhysicsWorld>(
@@ -55,14 +73,21 @@ namespace VORTEK_EDITOR
 
 		pPhysicsWorld->SetContactListener(pContactListener.get());
 
+		// Add the temporary event dispatcher
+		runtimeRegistry.AddToContext<std::shared_ptr<VORTEK_CORE::Events::EventDispatcher>>(
+			std::make_shared<VORTEK_CORE::Events::EventDispatcher>());
+
 		// Add necessary systems
-		auto scriptSystem = runtimeRegistry.AddToContext<std::shared_ptr<ScriptingSystem>>(
-			std::make_shared<ScriptingSystem>());
+		auto scriptSystem =
+			runtimeRegistry.AddToContext<std::shared_ptr<ScriptingSystem>>(std::make_shared<ScriptingSystem>());
+		runtimeRegistry.AddToContext<std::shared_ptr<MouseGuiInfo>>(std::make_shared<MouseGuiInfo>());
 
 		auto lua = runtimeRegistry.AddToContext<std::shared_ptr<sol::state>>(std::make_shared<sol::state>());
 
 		if (!lua)
+		{
 			lua = std::make_shared<sol::state>();
+		}
 
 		lua->open_libraries(sol::lib::base,
 			sol::lib::math,
@@ -74,10 +99,14 @@ namespace VORTEK_EDITOR
 
 		VORTEK_CORE::Systems::ScriptingSystem::RegisterLuaBindings(*lua, runtimeRegistry);
 		VORTEK_CORE::Systems::ScriptingSystem::RegisterLuaFunctions(*lua, runtimeRegistry);
+		VORTEK_CORE::Systems::ScriptingSystem::RegisterLuaEvents(*lua, runtimeRegistry);
+		VORTEK_CORE::Systems::ScriptingSystem::RegisterLuaSystems(*lua, runtimeRegistry);
+		LuaCoreBinder::CreateLuaBind(*lua, runtimeRegistry);
+
+		EditorSceneManager::CreateSceneManagerLuaBind(*lua);
 
 		// We need to initialize all of the physics entities
 		auto physicsEntities = runtimeRegistry.GetRegistry().view<PhysicsComponent>();
-
 		for (auto entity : physicsEntities)
 		{
 			Entity ent{ runtimeRegistry, entity };
@@ -113,21 +142,35 @@ namespace VORTEK_EDITOR
 			physicsAttributes.scale = transform.scale;
 			physicsAttributes.objectData.entityID = static_cast<std::int32_t>(entity);
 
+			physics.Init(pPhysicsWorld, pCamera->GetWidth(), pCamera->GetHeight());
+
 			/*
-			* TODO: Set Filters/Masks/Group Index
-			*/
+			 * Set Filters/Masks/Group Index
+			 */
+			if (physics.UseFilters()) // Right now filters are disabled, since there is no way to set this from the editor
+			{
+				physics.SetFilterCategory();
+				physics.SetFilterMask();
 
-			physics.Init(pPhysicsWorld, 640, 480);
-
+				// Should the group index be set based on the sprite layer?
+				physics.SetGroupIndex();
+			}
 		}
 
 		// Get the main script path
-		auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>();
-		if (!scriptSystem->LoadMainScript(pSaveProject->sMainLuaScript, runtimeRegistry, *lua))
+		auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
+		if ( !scriptSystem->LoadMainScript( *pSaveProject, runtimeRegistry, *lua ) )
 		{
 			VORTEK_ERROR("Failed to load the main lua script!");
 			return;
 		}
+
+		// Setup Crash Tests
+		VORTEK_CORE::Scripting::CrashLoggerTests::CreateLuaBind(*lua);
+
+		// Set the lua state for the crash logger.
+		// This is used to log the lua stack trace in case of a crash
+		VORTEK_CRASH_LOGGER().SetLuaState(lua->lua_state());
 
 		m_bSceneLoaded = true;
 		m_bPlayScene = true;
@@ -137,15 +180,20 @@ namespace VORTEK_EDITOR
 	{
 		m_bPlayScene = false;
 		m_bSceneLoaded = false;
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+		frame = "0";
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
+
+		VORTEK_ASSERT(pCurrentScene && "Current Scene must be Valid.");
+
 		auto& runtimeRegistry = pCurrentScene->GetRuntimeRegistry();
 
 		runtimeRegistry.ClearRegistry();
 		runtimeRegistry.RemoveContext<std::shared_ptr<Camera2D>>();
-		runtimeRegistry.RemoveContext<std::shared_ptr<sol::state>>();
 		runtimeRegistry.RemoveContext<VORTEK_PHYSICS::PhysicsWorld>();
 		runtimeRegistry.RemoveContext<std::shared_ptr<VORTEK_PHYSICS::ContactListener>>();
 		runtimeRegistry.RemoveContext<std::shared_ptr<ScriptingSystem>>();
+		runtimeRegistry.RemoveContext<std::shared_ptr<VORTEK_CORE::Events::EventDispatcher>>();
+		runtimeRegistry.RemoveContext<std::shared_ptr<sol::state>>();
 
 		auto& mainRegistry = MAIN_REGISTRY();
 		mainRegistry.GetMusicPlayer().Stop();
@@ -169,7 +217,7 @@ namespace VORTEK_EDITOR
 		renderer->SetClearColor(0.f, 0.f, 0.f, 1.f);
 		renderer->ClearBuffers(true, true, false);
 
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
 
 		if (pCurrentScene && m_bPlayScene)
 		{
@@ -183,10 +231,44 @@ namespace VORTEK_EDITOR
 			}
 
 			renderUISystem.Update(runtimeRegistry);
+
+			// Add Render Script stuff after everything???
+			auto& scriptSystem = runtimeRegistry.GetContext<std::shared_ptr<VORTEK_CORE::Systems::ScriptingSystem>>();
+			scriptSystem->Render(runtimeRegistry);
 		}
 
 		fb->Unbind();
 		fb->CheckResize();
+	}
+
+	void SceneDisplay::HandleKeyEvent(const VORTEK_CORE::Events::KeyEvent keyEvent)
+	{
+		if (m_bSceneLoaded)
+		{
+			if (keyEvent.eType == VORTEK_CORE::Events::EKeyEventType::Released)
+			{
+				if (keyEvent.key == VORTEK_KEY_ESCAPE)
+				{
+					UnloadScene();
+				}
+			}
+		}
+
+		// Send double dispatch events to the scene dispatcher.
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
+		if (!pCurrentScene)
+			return;
+
+		auto& runtimeRegistry = pCurrentScene->GetRuntimeRegistry();
+
+		if (auto* pEventDispatcher =
+			runtimeRegistry.TryGetContext<std::shared_ptr<VORTEK_CORE::Events::EventDispatcher>>())
+		{
+			if (!pEventDispatcher->get()->HasHandlers<VORTEK_CORE::Events::KeyEvent>())
+				return;
+
+			pEventDispatcher->get()->EmitEvent(keyEvent);
+		}
 	}
 
 	void SceneDisplay::DrawToolbar()
@@ -199,6 +281,7 @@ namespace VORTEK_EDITOR
 
 		VORTEK_ASSERT(pPlayTexture && pStopTexture);
 
+		ImGui::Separator();
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0.f, 0.f });
 
 		auto playTextureID = (ImTextureID)(intptr_t)pPlayTexture->GetID();
@@ -235,20 +318,25 @@ namespace VORTEK_EDITOR
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
 			ImGui::SetTooltip("Stop Scene");
 
-		ImGui::Separator();
 		ImGui::PopStyleVar(1);
+
+		ImGui::SameLine(0.f, 16.f);
+		ImGui::Text("FPS: %s", frame.c_str());
+
+		ImGui::Separator();
 	}
 
 	SceneDisplay::SceneDisplay()
 		: m_bPlayScene{ false }
+		, m_bWindowActive{ false }
 		, m_bSceneLoaded{ false }
 	{
+		ADD_EVENT_HANDLER(VORTEK_CORE::Events::KeyEvent, &SceneDisplay::HandleKeyEvent, *this);
 	}
 
 	void SceneDisplay::Draw()
 	{
-		static bool pOpen{ true };
-		if (!ImGui::Begin("Scene", &pOpen))
+		if ( !ImGui::Begin( ICON_FA_EYE "Scene", nullptr, ImGuiWindowFlags_NoCollapse ) )
 		{
 			ImGui::End();
 			return;
@@ -257,19 +345,36 @@ namespace VORTEK_EDITOR
 		DrawToolbar();
 		RenderScene();
 
-
 		if (ImGui::BeginChild(
-			"##SceneChild", ImVec2{ 0.f, 0.f }, NULL, ImGuiWindowFlags_NoScrollWithMouse))
+			"##SceneChild", ImVec2{ 0.f, 0.f }, ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollWithMouse))
 		{
+			m_bWindowActive = ImGui::IsWindowFocused();
+
 			auto& editorFramebuffers = MAIN_REGISTRY().GetContext<std::shared_ptr<EditorFramebuffers>>();
 			const auto& fb = editorFramebuffers->mapFramebuffers[FramebufferType::SCENE];
 
-			ImGui::SetCursorPos(ImVec2{ 0.f, 0.f });
+			if (auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject())
+			{
+				auto& runtimeRegistry = pCurrentScene->GetRuntimeRegistry();
+				// We need to set the relative mouse window so that any scripts scripts will
+				// take into account the position of the imgui window relative to the actual window
+				// position, size, etc.
+				if (auto* pMouseInfo = runtimeRegistry.TryGetContext<std::shared_ptr<MouseGuiInfo>>())
+				{
+					ImGuiIO io = ImGui::GetIO();
+					auto relativePos = ImGui::GetCursorScreenPos();
+					ImVec2 windowSize{ ImGui::GetWindowSize() };
+
+					(*pMouseInfo)->position = glm::vec2{ io.MousePos.x - relativePos.x, io.MousePos.y - relativePos.y };
+					(*pMouseInfo)->windowSize = glm::vec2{ fb->Width(), fb->Height() };
+				}
+			}
 
 			ImGui::Image((ImTextureID)(intptr_t)fb->GetTextureID(),
 				ImVec2{ static_cast<float>(fb->Width()), static_cast<float>(fb->Height()) },
 				ImVec2{ 0.f, 1.f },
 				ImVec2{ 1.f, 0.f });
+
 			ImGui::EndChild();
 
 			// Check for resize based on the window size
@@ -286,7 +391,7 @@ namespace VORTEK_EDITOR
 		if (!m_bPlayScene)
 			return;
 
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
 		if (!pCurrentScene)
 			return;
 
@@ -294,6 +399,15 @@ namespace VORTEK_EDITOR
 
 		auto& mainRegistry = MAIN_REGISTRY();
 		auto& coreGlobals = CORE_GLOBALS();
+
+		double dt = coreGlobals.GetDeltaTime();
+		coreGlobals.UpdateDeltaTime();
+
+		// Clamp delta time to the target frame rate
+		if (dt < TARGET_FRAME_TIME)
+		{
+			std::this_thread::sleep_for(std::chrono::duration<double>(TARGET_FRAME_TIME - dt));
+		}
 
 		auto& camera = runtimeRegistry.GetContext<std::shared_ptr<VORTEK_RENDERING::Camera2D>>();
 		if (!camera)
@@ -310,8 +424,38 @@ namespace VORTEK_EDITOR
 		if (coreGlobals.IsPhysicsEnabled())
 		{
 			auto& pPhysicsWorld = runtimeRegistry.GetContext<VORTEK_PHYSICS::PhysicsWorld>();
-			pPhysicsWorld->Step(one_over_sixty, coreGlobals.GetVelocityIterations(), coreGlobals.GetPositionIterations());
+			pPhysicsWorld->Step(
+				TARGET_FRAME_TIME_F, coreGlobals.GetVelocityIterations(), coreGlobals.GetPositionIterations());
 			pPhysicsWorld->ClearForces();
+
+			auto& dispatch = runtimeRegistry.GetContext<std::shared_ptr<VORTEK_CORE::Events::EventDispatcher>>();
+
+			// If there are no listeners for contact events, don't emit event
+			if (dispatch->HasHandlers<VORTEK_CORE::Events::ContactEvent>())
+			{
+				if (auto& pContactListener = runtimeRegistry.GetContext<std::shared_ptr<ContactListener>>())
+				{
+					auto pUserDataA = pContactListener->GetUserDataA();
+					auto pUserDataB = pContactListener->GetUserDataB();
+
+					// Only emit contact event if both contacts are valid
+					if (pUserDataA && pUserDataB)
+					{
+						try
+						{
+							auto ObjectA = std::any_cast<ObjectData>(pUserDataA->userData);
+							auto ObjectB = std::any_cast<ObjectData>(pUserDataB->userData);
+
+							dispatch->EmitEvent(
+								VORTEK_CORE::Events::ContactEvent{ .objectA = ObjectA, .objectB = ObjectB });
+						}
+						catch (const std::bad_any_cast& e)
+						{
+							VORTEK_ERROR("Failed to cast to object data - {}", e.what());
+						}
+					}
+				}
+			}
 		}
 
 		auto& pPhysicsSystem = mainRegistry.GetPhysicsSystem();
@@ -319,5 +463,7 @@ namespace VORTEK_EDITOR
 
 		auto& animationSystem = mainRegistry.GetAnimationSystem();
 		animationSystem.Update(runtimeRegistry, *camera);
+
+		frame = std::to_string(ImGui::GetIO().Framerate);
 	}
 } // namespace VORTEK_EDITOR

@@ -3,29 +3,29 @@
 
 namespace VORTEK_CORE::ECS
 {
-	class Registry;
+class Registry;
 }
 
 namespace VORTEK_EDITOR
 {
-	struct Tile;
+struct Tile;
 
-	struct CreateTileToolAddCmd
-	{
-		VORTEK_CORE::ECS::Registry* pRegistry{ nullptr };
-		std::shared_ptr<Tile> pTile{ nullptr };
+struct CreateTileToolAddCmd
+{
+	VORTEK_CORE::ECS::Registry* pRegistry{ nullptr };
+	std::shared_ptr<Tile> pTile{ nullptr };
 
-		void undo();
-		void redo();
-	};
+	void undo();
+	void redo();
+};
 
-	struct CreateTileToolRemoveCmd
-	{
-		VORTEK_CORE::ECS::Registry* pRegistry{ nullptr };
-		std::shared_ptr<Tile> pTile{ nullptr };
+struct CreateTileToolRemoveCmd
+{
+	VORTEK_CORE::ECS::Registry* pRegistry{ nullptr };
+	std::shared_ptr<Tile> pTile{ nullptr };
 
-		void undo();
-		void redo();
-	};
+	void undo();
+	void redo();
+};
 
-}
+} // namespace VORTEK_EDITOR

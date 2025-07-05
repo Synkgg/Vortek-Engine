@@ -6,12 +6,12 @@
 
 namespace VORTEK_EDITOR
 {
-	using UndoableCommands = VarCommands<CreateTileToolAddCmd, CreateTileToolRemoveCmd, RectToolAddTilesCmd,
-		RectToolRemoveTilesCmd /* Add other command types */>;
+using UndoableCommands = VarCommands<CreateTileToolAddCmd, CreateTileToolRemoveCmd, RectToolAddTilesCmd,
+									 RectToolRemoveTilesCmd /* Add other command types */>;
 
-	class CommandManager : public AbstractCommandManager<CreateTileToolAddCmd, CreateTileToolRemoveCmd, RectToolAddTilesCmd,
-		RectToolRemoveTilesCmd /* Add other command types */>
-	{
-	};
+class CommandManager : public AbstractCommandManager<CreateTileToolAddCmd, CreateTileToolRemoveCmd, RectToolAddTilesCmd,
+													 RectToolRemoveTilesCmd /* Add other command types */>
+{
+};
 
 } // namespace VORTEK_EDITOR

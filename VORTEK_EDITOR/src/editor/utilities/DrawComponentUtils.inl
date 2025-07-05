@@ -28,9 +28,9 @@ namespace VORTEK_EDITOR
 	{
 		using namespace entt::literals;
 
-		entt::meta_factory<TComponent>().type(entt::type_hash<TComponent>::value())
+		entt::meta_factory<TComponent>()
+			.type(entt::type_hash<TComponent>::value())
 			.template func<&DrawEntityComponentInfo<TComponent>>("DrawEntityComponentInfo"_hs);
 	}
 
-
-}
+} // namespace VORTEK_EDITOR

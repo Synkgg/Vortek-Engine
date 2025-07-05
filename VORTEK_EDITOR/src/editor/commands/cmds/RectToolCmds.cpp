@@ -4,168 +4,166 @@
 #include "Core/ECS/Components/AllComponents.h"
 
 #include "Logger/Logger.h"
-#include "../VORTEK_EDITOR/src/editor/utilities/EditorUtilities.h"
-
+#include "editor/utilities/EditorUtilities.h"
 
 using namespace VORTEK_CORE::ECS;
 
 namespace VORTEK_EDITOR
 {
-	void RectToolAddTilesCmd::undo()
+void RectToolAddTilesCmd::undo()
+{
+	VORTEK_ASSERT( pRegistry && "The registry cannot be nullptr." );
+
+	if ( !pRegistry )
 	{
-		VORTEK_ASSERT(pRegistry && "The registry cannot be nullptr.");
+		VORTEK_ERROR( "Failed to undo create tile. Registry was not set correctly." );
+		return;
+	}
 
-		if (!pRegistry)
+	auto tileView = pRegistry->GetRegistry().view<TileComponent, TransformComponent>();
+	for ( const auto& tile : tiles )
+	{
+		const auto& tilePos = tile.transform.position;
+		const auto layer = tile.sprite.layer;
+
+		for ( auto entity : tileView )
 		{
-			VORTEK_ERROR("Failed to undo create tile. Registry was not set correctly.");
-			return;
-		}
+			Entity checkedTile{ *pRegistry, entity };
+			const auto& transform = checkedTile.GetComponent<TransformComponent>();
+			const auto& sprite = checkedTile.GetComponent<SpriteComponent>();
 
-		auto tileView = pRegistry->GetRegistry().view<TileComponent, TransformComponent>();
-		for (const auto& tile : tiles)
-		{
-			const auto& tilePos = tile.transform.position;
-			const auto layer = tile.sprite.layer;
-
-			for (auto entity : tileView)
+			if ( tilePos.x >= transform.position.x &&
+				 tilePos.x < transform.position.x + sprite.width * transform.scale.x &&
+				 tilePos.y >= transform.position.y &&
+				 tilePos.y < transform.position.y + sprite.height * transform.scale.y && layer == sprite.layer )
 			{
-				Entity checkedTile{ *pRegistry, entity };
-				const auto& transform = checkedTile.GetComponent<TransformComponent>();
-				const auto& sprite = checkedTile.GetComponent<SpriteComponent>();
-
-				if (tilePos.x >= transform.position.x &&
-					tilePos.x < transform.position.x + sprite.width * transform.scale.x &&
-					tilePos.y >= transform.position.y &&
-					tilePos.y < transform.position.y + sprite.height * transform.scale.y &&
-					layer == sprite.layer)
+				if ( entity != entt::null )
 				{
-					if (entity != entt::null)
-					{
-						pRegistry->GetRegistry().destroy(entity);
-					}
-
-					break;
+					pRegistry->GetRegistry().destroy( entity );
 				}
+
+				break;
 			}
 		}
 	}
+}
 
-	void RectToolAddTilesCmd::redo()
+void RectToolAddTilesCmd::redo()
+{
+	VORTEK_ASSERT( pRegistry && "The registry cannot be nullptr." );
+
+	if ( !pRegistry )
 	{
-		VORTEK_ASSERT(pRegistry && "The registry cannot be nullptr.");
-
-		if (!pRegistry)
-		{
-			VORTEK_ERROR("Failed to undo create tile. Registry was not set correctly.");
-			return;
-		}
-
-		for (const auto& tile : tiles)
-		{
-			Entity addedTile{ *pRegistry, "", "" };
-
-			addedTile.AddComponent<TransformComponent>(tile.transform);
-			addedTile.AddComponent<SpriteComponent>(tile.sprite);
-			addedTile.AddComponent<TileComponent>(static_cast<std::uint32_t>(addedTile.GetEntity()));
-
-			if (tile.bAnimation)
-			{
-				addedTile.AddComponent<AnimationComponent>(tile.animation);
-			}
-
-			if (tile.bCollider)
-			{
-				addedTile.AddComponent<BoxColliderComponent>(tile.boxCollider);
-			}
-
-			if (tile.bCircle)
-			{
-				addedTile.AddComponent<CircleColliderComponent>(tile.circleCollider);
-			}
-
-			if (tile.bPhysics)
-			{
-				addedTile.AddComponent<PhysicsComponent>(tile.physics);
-			}
-		}
+		VORTEK_ERROR( "Failed to undo create tile. Registry was not set correctly." );
+		return;
 	}
 
-	void RectToolRemoveTilesCmd::undo()
+	for ( const auto& tile : tiles )
 	{
-		VORTEK_ASSERT(pRegistry && "The registry cannot be nullptr.");
+		Entity addedTile{ *pRegistry, "", "" };
 
-		if (!pRegistry)
+		addedTile.AddComponent<TransformComponent>( tile.transform );
+		addedTile.AddComponent<SpriteComponent>( tile.sprite );
+		addedTile.AddComponent<TileComponent>( static_cast<std::uint32_t>( addedTile.GetEntity() ) );
+
+		if ( tile.bAnimation )
 		{
-			VORTEK_ERROR("Failed to undo create tile. Registry was not set correctly.");
-			return;
+			addedTile.AddComponent<AnimationComponent>( tile.animation );
 		}
 
-		for (const auto& tile : tiles)
+		if ( tile.bCollider )
 		{
-			Entity addedTile{ *pRegistry, "", "" };
+			addedTile.AddComponent<BoxColliderComponent>( tile.boxCollider );
+		}
 
-			addedTile.AddComponent<TransformComponent>(tile.transform);
-			addedTile.AddComponent<SpriteComponent>(tile.sprite);
-			addedTile.AddComponent<TileComponent>(static_cast<std::uint32_t>(addedTile.GetEntity()));
+		if ( tile.bCircle )
+		{
+			addedTile.AddComponent<CircleColliderComponent>( tile.circleCollider );
+		}
 
-			if (tile.bAnimation)
-			{
-				addedTile.AddComponent<AnimationComponent>(tile.animation);
-			}
-
-			if (tile.bCollider)
-			{
-				addedTile.AddComponent<BoxColliderComponent>(tile.boxCollider);
-			}
-
-			if (tile.bCircle)
-			{
-				addedTile.AddComponent<CircleColliderComponent>(tile.circleCollider);
-			}
-
-			if (tile.bPhysics)
-			{
-				addedTile.AddComponent<PhysicsComponent>(tile.physics);
-			}
+		if ( tile.bPhysics )
+		{
+			addedTile.AddComponent<PhysicsComponent>( tile.physics );
 		}
 	}
+}
 
-	void RectToolRemoveTilesCmd::redo()
+void RectToolRemoveTilesCmd::undo()
+{
+	VORTEK_ASSERT( pRegistry && "The registry cannot be nullptr." );
+
+	if ( !pRegistry )
 	{
-		VORTEK_ASSERT(pRegistry && "The registry cannot be nullptr.");
+		VORTEK_ERROR( "Failed to undo create tile. Registry was not set correctly." );
+		return;
+	}
 
-		if (!pRegistry)
+	for ( const auto& tile : tiles )
+	{
+		Entity addedTile{ *pRegistry, "", "" };
+
+		addedTile.AddComponent<TransformComponent>( tile.transform );
+		addedTile.AddComponent<SpriteComponent>( tile.sprite );
+		addedTile.AddComponent<TileComponent>( static_cast<std::uint32_t>( addedTile.GetEntity() ) );
+
+		if ( tile.bAnimation )
 		{
-			VORTEK_ERROR("Failed to undo create tile. Registry was not set correctly.");
-			return;
+			addedTile.AddComponent<AnimationComponent>( tile.animation );
 		}
 
-		auto tileView = pRegistry->GetRegistry().view<TileComponent, TransformComponent>();
-		for (const auto& tile : tiles)
+		if ( tile.bCollider )
 		{
-			const auto& tilePos = tile.transform.position;
-			const auto layer = tile.sprite.layer;
+			addedTile.AddComponent<BoxColliderComponent>( tile.boxCollider );
+		}
 
-			for (auto entity : tileView)
+		if ( tile.bCircle )
+		{
+			addedTile.AddComponent<CircleColliderComponent>( tile.circleCollider );
+		}
+
+		if ( tile.bPhysics )
+		{
+			addedTile.AddComponent<PhysicsComponent>( tile.physics );
+		}
+	}
+}
+
+void RectToolRemoveTilesCmd::redo()
+{
+	VORTEK_ASSERT( pRegistry && "The registry cannot be nullptr." );
+
+	if ( !pRegistry )
+	{
+		VORTEK_ERROR( "Failed to undo create tile. Registry was not set correctly." );
+		return;
+	}
+
+	auto tileView = pRegistry->GetRegistry().view<TileComponent, TransformComponent>();
+	for ( const auto& tile : tiles )
+	{
+		const auto& tilePos = tile.transform.position;
+		const auto layer = tile.sprite.layer;
+
+		for ( auto entity : tileView )
+		{
+			Entity checkedTile{ *pRegistry, entity };
+			const auto& transform = checkedTile.GetComponent<TransformComponent>();
+			const auto& sprite = checkedTile.GetComponent<SpriteComponent>();
+
+			if ( tilePos.x >= transform.position.x &&
+				 tilePos.x < transform.position.x + sprite.width * transform.scale.x &&
+				 tilePos.y >= transform.position.y &&
+				 tilePos.y < transform.position.y + sprite.height * transform.scale.y && layer == sprite.layer )
 			{
-				Entity checkedTile{ *pRegistry, entity };
-				const auto& transform = checkedTile.GetComponent<TransformComponent>();
-				const auto& sprite = checkedTile.GetComponent<SpriteComponent>();
-
-				if (tilePos.x >= transform.position.x &&
-					tilePos.x < transform.position.x + sprite.width * transform.scale.x &&
-					tilePos.y >= transform.position.y &&
-					tilePos.y < transform.position.y + sprite.height * transform.scale.y && layer == sprite.layer)
+				if ( entity != entt::null )
 				{
-					if (entity != entt::null)
-					{
-						pRegistry->GetRegistry().destroy(entity);
-					}
-
-					break;
+					pRegistry->GetRegistry().destroy( entity );
 				}
+
+				break;
 			}
 		}
 	}
+}
 
 } // namespace VORTEK_EDITOR

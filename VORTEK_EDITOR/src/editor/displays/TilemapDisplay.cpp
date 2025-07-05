@@ -1,31 +1,41 @@
 #include "TilemapDisplay.h"
 #include "Core/ECS/MainRegistry.h"
+#include "Core/ECS/Components/AllComponents.h"
 #include "Core/Resources/AssetManager.h"
 
 #include "Core/Systems/RenderSystem.h"
 #include "Core/Systems/RenderUISystem.h"
 #include "Core/Systems/RenderShapeSystem.h"
+#include "Core/Systems/RenderPickingSystem.h"
 #include "Core/Systems/AnimationSystem.h"
 
 #include "Core/CoreUtilities/CoreEngineData.h"
+#include "Core/CoreUtilities/Prefab.h"
+
+#include "Core/Events/EventDispatcher.h"
+#include "Core/Events/EngineEventTypes.h"
 
 #include "Rendering/Core/Camera2D.h"
 #include "Rendering/Core/Renderer.h"
+#include "Rendering/Essentials/PickingTexture.h"
 
-#include "../systems/GridSystem.h"
-#include "../utilities/EditorFramebuffers.h"
-#include "../utilities/EditorUtilities.h"
-#include "../utilities/imgui/ImGuiUtils.h"
-#include "../utilities/fonts/IconsFontAwesome5.h"
-#include "../scene/SceneManager.h"
-#include "../scene/SceneObject.h"
+#include "editor/systems/GridSystem.h"
+#include "editor/utilities/EditorFramebuffers.h"
+#include "editor/utilities/EditorUtilities.h"
+#include "editor/utilities/imgui/ImGuiUtils.h"
+#include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "editor/scene/SceneManager.h"
+#include "editor/scene/SceneObject.h"
 
-#include "../tools/ToolManager.h"
-#include "../tools/ToolAccessories.h"
-#include "../tools/CreateTileTool.h"
-#include "../tools/gizmos/Gizmo.h"
+#include "editor/tools/ToolManager.h"
+#include "editor/tools/ToolAccessories.h"
+#include "editor/tools/CreateTileTool.h"
 
-#include "../commands/CommandManager.h"
+#include "editor/tools/gizmos/Gizmo.h"
+
+#include "editor/commands/CommandManager.h"
+
+#include "editor/events/EditorEventTypes.h"
 
 #include "Core/Scripting/InputManager.h"
 #include "Windowing/Inputs/Mouse.h"
@@ -33,7 +43,13 @@
 #include "Logger/Logger.h"
 #include <imgui.h>
 
+#ifdef __linux
+#include <signal.h>
+#endif
+
+using namespace VORTEK_CORE::ECS;
 using namespace VORTEK_CORE::Systems;
+using namespace VORTEK_RENDERING;
 
 namespace VORTEK_EDITOR
 {
@@ -49,6 +65,52 @@ namespace VORTEK_EDITOR
 		auto& renderShapeSystem = mainRegistry.GetRenderShapeSystem();
 
 		auto pActiveGizmo = TOOL_MANAGER().GetActiveGizmo();
+		auto& mouse = INPUT_MANAGER().GetMouse();
+
+		if (pActiveGizmo && pActiveGizmo->IsOverTilemapWindow() && !pActiveGizmo->OverGizmo() &&
+			!ImGui::GetDragDropPayload() && mouse.IsBtnJustPressed(VORTEK_MOUSE_LEFT))
+		{
+			auto& renderPickingSystem = mainRegistry.GetContext<std::shared_ptr<RenderPickingSystem>>();
+			// Handle the picking texture/system
+			if (renderPickingSystem && pCurrentScene)
+			{
+				auto& pPickingTexture = mainRegistry.GetContext<std::shared_ptr<PickingTexture>>();
+				if (pPickingTexture)
+				{
+					renderer->SetCapability(Renderer::GLCapability::BLEND, false);
+					pPickingTexture->Bind();
+					renderer->SetViewport(0, 0, pPickingTexture->GetWidth(), pPickingTexture->GetHeight());
+					renderer->SetClearColor(0.f, 0.f, 0.f, 0.f);
+					renderer->ClearBuffers(true, true);
+
+					renderPickingSystem->Update(pCurrentScene->GetRegistry(), *m_pTilemapCam);
+
+					const auto& pos = pActiveGizmo->GetMouseScreenCoords();
+					auto id = static_cast<entt::entity>(
+						pPickingTexture->ReadPixel(static_cast<int>(pos.x), static_cast<int>(pos.y)));
+
+					if (!pCurrentScene->GetRegistry().IsValid(static_cast<entt::entity>(id)))
+					{
+						id = entt::null;
+					}
+					else
+					{
+						VORTEK_CORE::ECS::Entity checkedEntity{ pCurrentScene->GetRegistry(),
+															   static_cast<entt::entity>(id) };
+						if (checkedEntity.HasComponent<VORTEK_CORE::ECS::TileComponent>())
+						{
+							id = entt::null;
+						}
+					}
+
+					SCENE_MANAGER().GetToolManager().SetSelectedEntity(id);
+				}
+
+				pPickingTexture->Unbind();
+				pPickingTexture->CheckResize();
+				renderer->SetCapability(Renderer::GLCapability::BLEND, true);
+			}
+		}
 
 		const auto& fb = editorFramebuffers->mapFramebuffers[FramebufferType::TILEMAP];
 
@@ -80,7 +142,7 @@ namespace VORTEK_EDITOR
 			pActiveTool->Draw();
 
 		if (pActiveGizmo)
-			pActiveGizmo->Draw();
+			pActiveGizmo->Draw(renderUISystem.GetCamera());
 
 		fb->Unbind();
 		fb->CheckResize();
@@ -91,16 +153,20 @@ namespace VORTEK_EDITOR
 
 	void TilemapDisplay::LoadNewScene()
 	{
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
 		if (!pCurrentScene)
 			return;
 
 		auto& toolManager = TOOL_MANAGER();
 
-		if (!toolManager.SetupTools(pCurrentScene.get(), m_pTilemapCam.get()))
+		if (!toolManager.SetupTools(pCurrentScene, m_pTilemapCam.get()))
 		{
 			VORTEK_ASSERT(false && "This should work!!");
+#ifdef _WIN32
 			__debugbreak();
+#elif __linux
+			raise(SIGTRAP);
+#endif
 		}
 
 		if (!SCENE_MANAGER().GetCurrentTileset().empty())
@@ -166,11 +232,98 @@ namespace VORTEK_EDITOR
 		startPosition = mousePos;
 	}
 
+	void TilemapDisplay::HandleKeyPressedEvent(const VORTEK_CORE::Events::KeyEvent& keyEvent)
+	{
+		if (!m_bWindowActive || keyEvent.eType == VORTEK_CORE::Events::EKeyEventType::Released)
+			return;
+
+		// No need to change the tools if there is no scene loaded.
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+		if (!pCurrentScene)
+			return;
+
+		if (keyEvent.key == VORTEK_KEY_W)
+		{
+			TOOL_MANAGER().SetGizmoActive(EGizmoType::TRANSLATE);
+		}
+		else if (keyEvent.key == VORTEK_KEY_E)
+		{
+			TOOL_MANAGER().SetGizmoActive(EGizmoType::SCALE);
+		}
+		else if (keyEvent.key == VORTEK_KEY_R)
+		{
+			TOOL_MANAGER().SetGizmoActive(EGizmoType::ROTATE);
+		}
+		else if (keyEvent.key == VORTEK_KEY_T)
+		{
+			TOOL_MANAGER().SetToolActive(EToolType::CREATE_TILE);
+		}
+		else if (keyEvent.key == VORTEK_KEY_Y)
+		{
+			// IsoGrid scenes are not currently supported for rect tool.
+			if (pCurrentScene->GetMapType() == VORTEK_CORE::EMapType::Grid)
+			{
+				TOOL_MANAGER().SetToolActive(EToolType::RECT_FILL_TILE);
+			}
+		}
+	}
+
+	void TilemapDisplay::AddPrefabbedEntityToScene(const VORTEK_CORE::PrefabbedEntity& prefabbed)
+	{
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
+		if (!pCurrentScene)
+			return;
+
+		int count{ 1 };
+		std::string sTag{ prefabbed.id->name };
+		while (pCurrentScene->CheckTagName(sTag))
+		{
+			sTag = prefabbed.id->name + std::to_string(count);
+			++count;
+		}
+
+		VORTEK_CORE::ECS::Entity newEnt{ pCurrentScene->GetRegistry(), sTag, prefabbed.id->group };
+
+		newEnt.AddComponent<TransformComponent>(prefabbed.transform);
+		if (prefabbed.sprite)
+		{
+			newEnt.AddComponent<SpriteComponent>(prefabbed.sprite.value());
+		}
+
+		if (prefabbed.animation)
+		{
+			newEnt.AddComponent<AnimationComponent>(prefabbed.animation.value());
+		}
+
+		if (prefabbed.boxCollider)
+		{
+			newEnt.AddComponent<BoxColliderComponent>(prefabbed.boxCollider.value());
+		}
+
+		if (prefabbed.circleCollider)
+		{
+			newEnt.AddComponent<CircleColliderComponent>(prefabbed.circleCollider.value());
+		}
+
+		if (prefabbed.textComp)
+		{
+			newEnt.AddComponent<TextComponent>(prefabbed.textComp.value());
+		}
+
+		if (prefabbed.physics)
+		{
+			newEnt.AddComponent<PhysicsComponent>(prefabbed.physics.value());
+		}
+
+		pCurrentScene->AddGameObjectByTag(sTag, newEnt.GetEntity());
+	}
+
 	void TilemapDisplay::DrawToolbar()
 	{
+		ImGui::Separator();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 4.f, 0.f });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 0.f });
 
 		auto& commandManager = COMMAND_MANAGER();
 		if (commandManager.UndoEmpty())
@@ -207,7 +360,7 @@ namespace VORTEK_EDITOR
 		const EToolType eActiveToolType = toolManager.GetActiveToolType();
 		const EGizmoType eActiveGizmoType = toolManager.GetActiveGizmoType();
 
-		ImGui::DisabledButton(ICON_FA_TOOLS, TOOL_BUTTON_SIZE);
+		ImGui::DisabledButton(ICON_FA_TOOLS "##1", TOOL_BUTTON_SIZE);
 
 		ImGui::SameLine();
 
@@ -255,7 +408,7 @@ namespace VORTEK_EDITOR
 			}
 		}
 
-		ImGui::ItemToolTip( "Rotate [R] - Rotates game object" );
+		ImGui::ItemToolTip("Rotate [R] - Rotates game object");
 
 		ImGui::SameLine();
 
@@ -275,33 +428,63 @@ namespace VORTEK_EDITOR
 
 		ImGui::SameLine();
 
-		if (eActiveToolType == EToolType::RECT_FILL_TILE)
+		bool bIsoScene{ false };
+		if (auto pCurrentScene = SCENE_MANAGER().GetCurrentScene())
 		{
-			ImGui::ActiveButton(ICON_FA_CHESS_BOARD, TOOL_BUTTON_SIZE);
+			bIsoScene = pCurrentScene->GetMapType() == VORTEK_CORE::EMapType::IsoGrid;
+		}
+
+		if (bIsoScene)
+		{
+			ImGui::DisabledButton(
+				ICON_FA_CHESS_BOARD, TOOL_BUTTON_SIZE, "Rect Tile Tool [Y] - IsoMetric grids not currently supported.");
 		}
 		else
 		{
-			if (ImGui::Button(ICON_FA_CHESS_BOARD, TOOL_BUTTON_SIZE))
+			if (eActiveToolType == EToolType::RECT_FILL_TILE)
 			{
-				toolManager.SetToolActive(EToolType::RECT_FILL_TILE);
+				ImGui::ActiveButton(ICON_FA_CHESS_BOARD, TOOL_BUTTON_SIZE);
 			}
-		}
+			else
+			{
+				if (ImGui::Button(ICON_FA_CHESS_BOARD, TOOL_BUTTON_SIZE))
+				{
+					toolManager.SetToolActive(EToolType::RECT_FILL_TILE);
+				}
+			}
 
-		ImGui::ItemToolTip("Rect Tile Tool [Y] - Creates tiles inside of created rectangle.");
+			ImGui::ItemToolTip("Rect Tile Tool [Y] - Creates tiles inside of created rectangle.");
+		}
 
 		ImGui::SameLine();
 
-		ImGui::DisabledButton(ICON_FA_TOOLS, TOOL_BUTTON_SIZE);
+		ImGui::DisabledButton(ICON_FA_TOOLS "##2", TOOL_BUTTON_SIZE);
 
 		ImGui::PopStyleVar(2);
-		ImGui::AddSpaces(1);
+
+		ImGui::SameLine(0.f, 16.f);
+
+		if (auto pActiveTool = TOOL_MANAGER().GetActiveTool())
+		{
+			const auto& gridCoords = pActiveTool->GetGridCoords();
+			ImGui::TextColored(ImVec4{ 0.7f, 1.f, 7.f, 1.f },
+				std::format("Grid Coords [ x = {}, y = {} ]", gridCoords.x, gridCoords.y).c_str());
+			ImGui::SameLine(0.f, 16.f);
+
+			const auto& worldCoords = pActiveTool->GetMouseWorldCoords();
+			ImGui::TextColored(ImVec4{ 0.7f, 0.7f, 1.f, 1.f },
+				std::format("World Coords [ x = {}, y = {} ]", worldCoords.x, worldCoords.y).c_str());
+		}
+
 		ImGui::Separator();
 		ImGui::AddSpaces(1);
 	}
 
 	TilemapDisplay::TilemapDisplay()
 		: m_pTilemapCam{ std::make_unique<VORTEK_RENDERING::Camera2D>() }
+		, m_bWindowActive{ false }
 	{
+		ADD_EVENT_HANDLER(VORTEK_CORE::Events::KeyEvent, &TilemapDisplay::HandleKeyPressedEvent, *this);
 	}
 
 	TilemapDisplay::~TilemapDisplay()
@@ -310,7 +493,7 @@ namespace VORTEK_EDITOR
 
 	void TilemapDisplay::Draw()
 	{
-		if (!ImGui::Begin("Tilemap Editor"))
+		if (!ImGui::Begin(ICON_FA_PAINT_BRUSH " Tilemap Editor"))
 		{
 			ImGui::End();
 			return;
@@ -323,6 +506,8 @@ namespace VORTEK_EDITOR
 
 		if (ImGui::BeginChild("##tilemap", ImVec2{ 0, 0 }, false, ImGuiWindowFlags_NoScrollWithMouse))
 		{
+			m_bWindowActive = ImGui::IsWindowFocused();
+
 			auto& editorFramebuffers = mainRegistry.GetContext<std::shared_ptr<EditorFramebuffers>>();
 			const auto& fb = editorFramebuffers->mapFramebuffers[FramebufferType::TILEMAP];
 
@@ -353,14 +538,22 @@ namespace VORTEK_EDITOR
 			// Accept Scene Drop Target
 			if (ImGui::BeginDragDropTarget())
 			{
-				const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(DROP_SCENE_SRC);
-				if (payload)
+
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(DROP_SCENE_SRC))
 				{
 					SCENE_MANAGER().UnloadCurrentScene();
 					SCENE_MANAGER().SetCurrentScene(std::string{ (const char*)payload->Data });
 					SCENE_MANAGER().LoadCurrentScene();
 					LoadNewScene();
 					m_pTilemapCam->Reset();
+				}
+				else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(DROP_PREFAB_SRC))
+				{
+					if (auto pPrefab = ASSET_MANAGER().GetPrefab(std::string{ (const char*)payload->Data }))
+					{
+						const auto& prefabbed = pPrefab->GetPrefabbedEntity();
+						AddPrefabbedEntityToScene(prefabbed);
+					}
 				}
 
 				ImGui::EndDragDropTarget();
@@ -370,6 +563,13 @@ namespace VORTEK_EDITOR
 			if (fb->Width() != static_cast<int>(windowSize.x) || fb->Height() != static_cast<int>(windowSize.y))
 			{
 				fb->Resize(static_cast<int>(windowSize.x), static_cast<int>(windowSize.y));
+
+				auto& pPickingTexture = mainRegistry.GetContext<std::shared_ptr<PickingTexture>>();
+				if (pPickingTexture)
+				{
+					pPickingTexture->Resize(static_cast<int>(windowSize.x), static_cast<int>(windowSize.y));
+				}
+
 				m_pTilemapCam->Resize(static_cast<int>(windowSize.x), static_cast<int>(windowSize.y));
 			}
 

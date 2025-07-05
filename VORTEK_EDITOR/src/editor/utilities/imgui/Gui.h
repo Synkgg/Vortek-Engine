@@ -17,7 +17,6 @@ namespace VORTEK_EDITOR
 		static void Begin();
 		static void End(VORTEK_WINDOWING::Window* pWindow);
 		static void ShowImGuiDemo();
-		void SetDarkThemeColors();
 
 	private:
 		inline static bool m_bInitialized{ false };

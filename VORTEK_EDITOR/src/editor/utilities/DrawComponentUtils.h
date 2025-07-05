@@ -40,8 +40,10 @@ namespace VORTEK_EDITOR
 		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::TransformComponent& transform);
 		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::SpriteComponent& sprite);
 		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::AnimationComponent& animation);
-		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::BoxColliderComponent& boxCollider);
-		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::CircleColliderComponent& circleCollider);
+		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+			VORTEK_CORE::ECS::BoxColliderComponent& boxCollider);
+		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity,
+			VORTEK_CORE::ECS::CircleColliderComponent& circleCollider);
 		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::PhysicsComponent& physics);
 		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::RigidBodyComponent& rigidbody);
 		static void DrawImGuiComponent(VORTEK_CORE::ECS::Entity& entity, VORTEK_CORE::ECS::TextComponent& textComponent);

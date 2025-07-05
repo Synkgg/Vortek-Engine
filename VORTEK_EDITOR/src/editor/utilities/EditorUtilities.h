@@ -14,30 +14,7 @@ namespace VORTEK_EDITOR
 	constexpr const char* DROP_SOUNDFX_SRC = "DropSoundFxSource";
 	constexpr const char* DROP_MUSIC_SRC = "DropMusicSource";
 	constexpr const char* DROP_SCENE_SRC = "DropSceneSource";
-
-#define BASE_PATH                                                                                                      \
-	std::string                                                                                                        \
-	{                                                                                                                  \
-		SDL_GetBasePath()                                                                                              \
-	}
-
-#ifdef _WIN32
-	constexpr char PATH_SEPARATOR = '\\';
-#define DEFAULT_PROJECT_PATH BASE_PATH + "VortekProjects"
-#else
-	constexpr char PATH_SEPARATOR = '/';
-#define DEFAULT_PROJECT_PATH BASE_PATH + PATH_SEPARATOR + "VortekProjects"
-#endif
-
-#define SCRIPTS "scripts"
-#define ASSETS "assets" 
-
-	constexpr const char* PRJ_FILE_EXT = ".veprj";
-
-	struct Canvas
-	{
-		int width{ 640 }, height{ 480 }, tileWidth{ 16 }, tileHeight{ 16 };
-	};
+	constexpr const char* DROP_PREFAB_SRC = "DropPrefabSource";
 
 	struct Tile
 	{
@@ -59,6 +36,12 @@ namespace VORTEK_EDITOR
 	constexpr VORTEK_RENDERING::Color YAXIS_HOVERED_GIZMO_COLOR = { 0, 255, 255, 175 };
 
 	constexpr VORTEK_RENDERING::Color GRAYED_OUT_GIZMO_COLOR = { 135, 135, 135, 175 };
+
+	struct MouseGuiInfo
+	{
+		glm::vec2 position{ 0.f };
+		glm::vec2 windowSize{ 0.f };
+	};
 
 	struct GizmoAxisParams
 	{

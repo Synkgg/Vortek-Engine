@@ -1,8 +1,7 @@
 #include "TranslateGizmo.h"
-#include "../../utilities/EditorUtilities.h"
+#include "editor/utilities/EditorUtilities.h"
 #include "Rendering/Core/BatchRenderer.h"
 #include "Rendering/Core/Camera2D.h"
-
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
@@ -16,111 +15,133 @@ using namespace VORTEK_CORE::ECS;
 namespace VORTEK_EDITOR
 {
 
-	TranslateGizmo::TranslateGizmo()
-		: Gizmo()
+TranslateGizmo::TranslateGizmo()
+	: Gizmo()
+{
+	Init( "x_axis_translate", "y_axis_translate" );
+}
+
+void TranslateGizmo::Update( VORTEK_CORE::Canvas& canvas )
+{
+	Gizmo::Update( canvas );
+
+	if ( m_SelectedEntity == entt::null || !m_pRegistry )
 	{
-		Init("x_axis_translate", "y_axis_translate");
+		Hide();
+		return;
 	}
 
-	void TranslateGizmo::Update(Canvas& canvas)
+	Show();
+
+	Entity selectedEntity{ *m_pRegistry, m_SelectedEntity };
+	auto& selectedTransform = selectedEntity.GetComponent<TransformComponent>();
+	float deltaX{ GetDeltaX() };
+	float deltaY{ GetDeltaY() };
+
+	bool bTransformChanged = ( deltaX != 0.f || deltaY != 0.f );
+
+	if ( auto* relations = m_pRegistry->GetRegistry().try_get<Relationship>( m_SelectedEntity );
+		 relations->parent != entt::null )
 	{
-		Gizmo::Update(canvas);
-
-		if (m_SelectedEntity == entt::null || !m_pRegistry)
-		{
-			Hide();
-			return;
-		}
-
-		Show();
-
-		Entity selectedEntity{ *m_pRegistry, m_SelectedEntity };
-		auto& selectedTransform = selectedEntity.GetComponent<TransformComponent>();
-		float deltaX{ GetDeltaX() };
-		float deltaY{ GetDeltaY() };
-
-		bool bTransformChanged = (deltaX != 0.f || deltaY != 0.f);
-
-		if (auto* relations = m_pRegistry->GetRegistry().try_get<Relationship>(m_SelectedEntity);
-			relations->parent != entt::null)
-		{
-			selectedTransform.localPosition.x += deltaX;
-			selectedTransform.localPosition.y += deltaY;
-		}
-		else
-		{
-			selectedTransform.position.x += deltaX;
-			selectedTransform.position.y += deltaY;
-		}
-
-		if (bTransformChanged)
-		{
-			selectedEntity.UpdateTransform();
-		}
-
-		SetGizmoPosition(selectedEntity);
-
-		ExamineMousePosition();
+		selectedTransform.localPosition.x += deltaX;
+		selectedTransform.localPosition.y += deltaY;
+	}
+	else
+	{
+		selectedTransform.position.x += deltaX;
+		selectedTransform.position.y += deltaY;
 	}
 
-	void TranslateGizmo::Draw()
+	if ( bTransformChanged )
 	{
-		if (m_bHidden)
-			return;
+		selectedEntity.UpdateTransform();
 
-		auto pShader = MAIN_REGISTRY().GetAssetManager().GetShader("basic");
-		if (!pShader)
-			return;
-
-		pShader->Enable();
-		auto camMat = m_pCamera->GetCameraMatrix();
-		pShader->SetUniformMat4("uProjection", camMat);
-
-		m_pBatchRenderer->Begin();
-		const auto& xAxisSprite = m_pXAxisParams->sprite;
-		const auto& xAxisTransform = m_pXAxisParams->transform;
-
-		if (!xAxisSprite.bHidden)
+		// Update sprite cells
+		if ( auto* pSprite = selectedEntity.TryGetComponent<SpriteComponent>() )
 		{
-			glm::vec4 xAxisPosition{ xAxisTransform.position.x,
-									 xAxisTransform.position.y,
-									 xAxisSprite.width * xAxisTransform.scale.x,
-									 xAxisSprite.height * xAxisTransform.scale.y };
-
-			glm::vec4 xAxisUVs{ xAxisSprite.uvs.u, xAxisSprite.uvs.v, xAxisSprite.uvs.uv_width, xAxisSprite.uvs.uv_height };
-
-			const auto pXAxisTexture = MAIN_REGISTRY().GetAssetManager().GetTexture(xAxisSprite.texture_name);
-			if (pXAxisTexture)
+			if ( pSprite->bIsoMetric )
 			{
-				m_pBatchRenderer->AddSprite(
-					xAxisPosition, xAxisUVs, pXAxisTexture->GetID(), 99, glm::mat4{ 1.f }, xAxisSprite.color);
+				auto [ cellX, cellY ] = VORTEK_CORE::ConvertWorldPosToIsoCoords(
+					selectedTransform.position + glm::vec2{ pSprite->width / 2.f, pSprite->height }, canvas );
+				pSprite->isoCellX = cellX;
+				pSprite->isoCellX = cellY;
 			}
 		}
-
-		const auto& yAxisSprite = m_pYAxisParams->sprite;
-		const auto& yAxisTransform = m_pYAxisParams->transform;
-
-		if (!yAxisSprite.bHidden)
-		{
-			glm::vec4 yAxisPosition{ yAxisTransform.position.x,
-									 yAxisTransform.position.y,
-									 yAxisSprite.width * yAxisTransform.scale.x,
-									 yAxisSprite.height * yAxisTransform.scale.y };
-
-			glm::vec4 yAxisUVs{ yAxisSprite.uvs.u, yAxisSprite.uvs.v, yAxisSprite.uvs.uv_width, yAxisSprite.uvs.uv_height };
-
-			const auto pYAxisTexture = MAIN_REGISTRY().GetAssetManager().GetTexture(yAxisSprite.texture_name);
-			if (pYAxisTexture)
-			{
-				m_pBatchRenderer->AddSprite(
-					yAxisPosition, yAxisUVs, pYAxisTexture->GetID(), 99, glm::mat4{ 1.f }, yAxisSprite.color);
-			}
-		}
-
-		m_pBatchRenderer->End();
-		m_pBatchRenderer->Render();
-
-		pShader->Disable();
 	}
+
+	SetGizmoPosition( selectedEntity );
+
+	ExamineMousePosition();
+}
+
+void TranslateGizmo::Draw( VORTEK_RENDERING::Camera2D* pCamera )
+{
+	if ( m_bHidden )
+		return;
+
+	auto pShader = MAIN_REGISTRY().GetAssetManager().GetShader( "basic" );
+	if ( !pShader )
+		return;
+
+	pShader->Enable();
+
+	glm::mat4 camMat{ 1.f };
+	if ( m_bUIComponent && pCamera )
+	{
+		camMat = pCamera->GetCameraMatrix();
+	}
+	else
+	{
+		camMat = m_pCamera->GetCameraMatrix();
+	}
+
+	pShader->SetUniformMat4( "uProjection", camMat );
+
+	m_pBatchRenderer->Begin();
+	const auto& xAxisSprite = m_pXAxisParams->sprite;
+	const auto& xAxisTransform = m_pXAxisParams->transform;
+
+	if ( !xAxisSprite.bHidden )
+	{
+		glm::vec4 xAxisPosition{ xAxisTransform.position.x,
+								 xAxisTransform.position.y,
+								 xAxisSprite.width * xAxisTransform.scale.x,
+								 xAxisSprite.height * xAxisTransform.scale.y };
+
+		glm::vec4 xAxisUVs{ xAxisSprite.uvs.u, xAxisSprite.uvs.v, xAxisSprite.uvs.uv_width, xAxisSprite.uvs.uv_height };
+
+		const auto pXAxisTexture = MAIN_REGISTRY().GetAssetManager().GetTexture( xAxisSprite.sTextureName );
+		if ( pXAxisTexture )
+		{
+			m_pBatchRenderer->AddSprite(
+				xAxisPosition, xAxisUVs, pXAxisTexture->GetID(), 99, glm::mat4{ 1.f }, xAxisSprite.color );
+		}
+	}
+
+	const auto& yAxisSprite = m_pYAxisParams->sprite;
+	const auto& yAxisTransform = m_pYAxisParams->transform;
+
+	if ( !yAxisSprite.bHidden )
+	{
+		glm::vec4 yAxisPosition{ yAxisTransform.position.x,
+								 yAxisTransform.position.y,
+								 yAxisSprite.width * yAxisTransform.scale.x,
+								 yAxisSprite.height * yAxisTransform.scale.y };
+
+		glm::vec4 yAxisUVs{ yAxisSprite.uvs.u, yAxisSprite.uvs.v, yAxisSprite.uvs.uv_width, yAxisSprite.uvs.uv_height };
+
+		const auto pYAxisTexture = MAIN_REGISTRY().GetAssetManager().GetTexture( yAxisSprite.sTextureName );
+		if ( pYAxisTexture )
+		{
+			m_pBatchRenderer->AddSprite(
+				yAxisPosition, yAxisUVs, pYAxisTexture->GetID(), 99, glm::mat4{ 1.f }, yAxisSprite.color );
+		}
+	}
+
+	m_pBatchRenderer->End();
+	m_pBatchRenderer->Render();
+
+	pShader->Disable();
+}
 
 } // namespace VORTEK_EDITOR

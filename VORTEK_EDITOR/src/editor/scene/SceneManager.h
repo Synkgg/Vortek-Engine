@@ -3,62 +3,81 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <sol/sol.hpp>
 
-#define SCENE_MANAGER() VORTEK_EDITOR::SceneManager::GetInstance()
+#include "Core/Scene/SceneManager.h"
+
+#define SCENE_MANAGER() VORTEK_EDITOR::EditorSceneManager::GetInstance()
 #define COMMAND_MANAGER() SCENE_MANAGER().GetCommandManager()
 #define TOOL_MANAGER() SCENE_MANAGER().GetToolManager()
 
+namespace VORTEK_CORE
+{
+enum class EMapType;
+namespace Events
+{
+class EventDispatcher;
+}
+} // namespace VORTEK_CORE
+
 namespace VORTEK_EDITOR
 {
-	class ToolManager;
-	class SceneObject;
-	class CommandManager;
+class ToolManager;
+class SceneObject;
+class CommandManager;
 
-	class SceneManager
+class EditorSceneManager : public VORTEK_CORE::SceneManager
+{
+  public:
+	static EditorSceneManager& GetInstance();
+
+	virtual bool AddScene( const std::string& sSceneName, VORTEK_CORE::EMapType eType ) override;
+	bool AddSceneObject( const std::string& sSceneName, const std::string& sSceneData );
+	bool DeleteScene( const std::string& sSceneName );
+
+	ToolManager& GetToolManager();
+	CommandManager& GetCommandManager();
+	VORTEK_CORE::Events::EventDispatcher& GetDispatcher();
+
+	void SetTileset( const std::string& sTileset );
+
+	SceneObject* GetCurrentSceneObject();
+
+	bool SaveAllScenes();
+
+	bool CheckTagName( const std::string& sTagName );
+
+	void UpdateScenes();
+
+	inline const std::map<std::string, std::shared_ptr<VORTEK_CORE::Scene>>& GetAllScenes() const
 	{
-	private:
-		std::map<std::string, std::shared_ptr<VORTEK_EDITOR::SceneObject>> m_mapScenes;
-		std::string m_sCurrentScene{ "" }, m_sCurrentTileset{ "" };
+		return m_mapScenes;
+	}
 
-		std::unique_ptr<ToolManager> m_pToolManager{ nullptr };
-		std::unique_ptr<CommandManager> m_pCommandManager{ nullptr };
+	inline const std::string& GetCurrentTileset() const { return m_sCurrentTileset; }
 
-	private:
-		SceneManager() = default;
-		~SceneManager() = default;
-		SceneManager(const SceneManager&) = delete;
-		SceneManager& operator=(const SceneManager&) = delete;
+	static void CreateSceneManagerLuaBind( sol::state& lua );
 
-	public:
-		static SceneManager& GetInstance();
+  private:
+	std::unique_ptr<ToolManager> m_pToolManager{ nullptr };
+	std::unique_ptr<CommandManager> m_pCommandManager{ nullptr };
 
-		bool AddScene(const std::string& sSceneName);
-		bool AddScene(const std::string& sSceneName, const std::string& sSceneData);
-		bool HasScene(const std::string& sSceneName);
+	std::unique_ptr<VORTEK_CORE::Events::EventDispatcher> m_pSceneDispatcher{ nullptr };
 
-		std::shared_ptr<VORTEK_EDITOR::SceneObject> GetScene(const std::string& sSceneName);
-		std::shared_ptr<VORTEK_EDITOR::SceneObject> GetCurrentScene();
-
-		// TODO: May not be necessary
-		void AddLayerToCurrentScene(const std::string& sLayerName, bool bVisible);
-
-		std::vector<std::string> GetSceneNames() const;
-		ToolManager& GetToolManager();
-		CommandManager& GetCommandManager();
-
-		void SetTileset(const std::string& sTileset);
-		bool LoadCurrentScene();
-		bool UnloadCurrentScene();
-
-		bool SaveAllScenes();
-
-		inline const std::map<std::string, std::shared_ptr<VORTEK_EDITOR::SceneObject>>& GetAllScenes() const
-		{
-			return m_mapScenes;
-		}
-
-		inline void SetCurrentScene(const std::string& sSceneName) { m_sCurrentScene = sSceneName; }
-		inline const std::string& GetCurrentSceneName() const { return m_sCurrentScene; }
-		inline const std::string& GetCurrentTileset() const { return m_sCurrentTileset; }
-	};
+  private:
+	EditorSceneManager();
+	virtual ~EditorSceneManager() = default;
+	EditorSceneManager( const EditorSceneManager& ) = delete;
+	EditorSceneManager& operator=( const EditorSceneManager& ) = delete;
+};
 } // namespace VORTEK_EDITOR
+
+#define ADD_SWE_HANDLER( Event, Func, Handler )                                                                        \
+	{                                                                                                                  \
+		for ( auto& pDispatcher : TOOL_MANAGER().GetDispatchers() )                                                    \
+		{                                                                                                              \
+			if ( !pDispatcher )                                                                                        \
+				continue;                                                                                              \
+			pDispatcher->AddHandler<Event, Func>( Handler );                                                           \
+		}                                                                                                              \
+	}

@@ -2,19 +2,23 @@
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "VORTEKUtilities/VORTEKUtilities.h"
-#include "../VORTEK_FILESYSTEM/dialogs/FileDialog.h"
-#include "../utilities/EditorUtilities.h"
-#include "../utilities/imgui/ImGuiUtils.h"
-#include "../utilities/fonts/IconsFontAwesome5.h"
+#include "VORTEKUtilities/HelperUtilities.h"
+#include "VortekFilesystem/Dialogs/FileDialog.h"
+#include "editor/utilities/EditorUtilities.h"
+#include "editor/utilities/imgui/ImGuiUtils.h"
+#include "editor/utilities/fonts/IconsFontAwesome5.h"
 #include "Logger/Logger.h"
 
 #include "../events/EditorEventTypes.h"
-#include "../utilities/SaveProject.h"
+#include "Core/CoreUtilities/SaveProject.h"
 #include "Core/Events/EventDispatcher.h"
 
+#include "VortekFilesystem/Process/FileProcessor.h"
+#include "VortekFilesystem/Serializers/LuaSerializer.h"
 #include <imgui.h>
 
 using namespace VORTEK_EDITOR::Events;
+using namespace VORTEK_FILESYSTEM;
 
 namespace fs = std::filesystem;
 
@@ -22,10 +26,11 @@ namespace VORTEK_EDITOR
 {
 	ContentDisplay::ContentDisplay()
 		: m_pFileDispatcher{ std::make_unique<VORTEK_CORE::Events::EventDispatcher>() }
-		, m_CurrentDir{ MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>()->sProjectPath + "content" }
-		, m_sFilepathToAction{ "" }
+		, m_CurrentDir{ MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>()->sProjectPath + "content" }
+		, m_sFilepathToAction{}
 		, m_Selected{ -1 }
 		, m_eFileAction{ Events::EFileAction::NoAction }
+		, m_eCreateAction{ Events::EContentCreateAction::NoAction }
 		, m_bItemCut{ false }
 		, m_bWindowHovered{ false }
 	{
@@ -44,7 +49,7 @@ namespace VORTEK_EDITOR
 
 	void ContentDisplay::Draw()
 	{
-		if (!ImGui::Begin("Content Browser"))
+		if (!ImGui::Begin(ICON_FA_FOLDER " Content Browser"))
 		{
 			ImGui::End();
 			return;
@@ -55,7 +60,7 @@ namespace VORTEK_EDITOR
 
 		if (numCols == 0)
 		{
-			VORTEK_ERROR("NumCols is zero!");
+			// VORTEK_ERROR( "NumCols is zero!" );
 			ImGui::End();
 			return;
 		}
@@ -101,7 +106,8 @@ namespace VORTEK_EDITOR
 					if (itr->is_directory())
 					{
 						// Change to the next Directory
-						ImGui::ImageButton(contentBtn.c_str(), (ImTextureID)(intptr_t)icon->GetID(), ImVec2{ 80.f, 80.f });
+						ImGui::ImageButton(
+							contentBtn.c_str(), (ImTextureID)(intptr_t)icon->GetID(), ImVec2{ 80.f, 80.f });
 						if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 						{
 							m_CurrentDir /= path.filename();
@@ -119,13 +125,17 @@ namespace VORTEK_EDITOR
 					else
 					{
 						ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0.0f, 0.0f });
-						ImGui::ImageButton(contentBtn.c_str(), (ImTextureID)(intptr_t)icon->GetID(), ImVec2{ 80.f, 80.f });
+						ImGui::ImageButton(
+							contentBtn.c_str(), (ImTextureID)(intptr_t)icon->GetID(), ImVec2{ 80.f, 80.f });
 						ImGui::PopStyleVar(1);
 
 						if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 						{
-							// TODO: Open new process to run the file.
-							// Needs to be a cross platform solution
+							VORTEK_FILESYSTEM::FileProcessor fp{};
+							if (!fp.OpenApplicationFromFile(path.string(), {}))
+							{
+								VORTEK_ERROR("Failed to open file {}", path.string());
+							}
 						}
 						else if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0))
 						{
@@ -139,18 +149,18 @@ namespace VORTEK_EDITOR
 						if (m_bItemCut)
 						{
 							ImGui::BeginDisabled();
-							ImGui::Selectable("Cut");
+							ImGui::Selectable(ICON_FA_CUT " Cut");
 							ImGui::EndDisabled();
 						}
 						else
 						{
-							if (ImGui::Selectable("Cut"))
+							if (ImGui::Selectable(ICON_FA_CUT " Cut"))
 							{
 								m_sFilepathToAction = path.string();
 								m_bItemCut = true;
 							}
 
-							if (ImGui::Selectable("Delete"))
+							if (ImGui::Selectable(ICON_FA_TRASH " Delete"))
 							{
 								if (m_Selected == id)
 								{
@@ -184,7 +194,7 @@ namespace VORTEK_EDITOR
 				{
 					if (m_bItemCut && !m_sFilepathToAction.empty())
 					{
-						if (ImGui::Selectable("Paste"))
+						if (ImGui::Selectable(ICON_FA_PASTE " Paste"))
 						{
 							m_pFileDispatcher->EnqueueEvent(FileEvent{ .eAction = EFileAction::Paste });
 						}
@@ -192,9 +202,42 @@ namespace VORTEK_EDITOR
 					else
 					{
 						ImGui::BeginDisabled();
-						ImGui::Selectable("Paste");
+						ImGui::Selectable(ICON_FA_PASTE " Paste");
 						ImGui::EndDisabled();
 					}
+
+					if (ImGui::Selectable(ICON_FA_FOLDER " New Folder"))
+					{
+						m_sFilepathToAction = m_CurrentDir.string();
+						m_eCreateAction = Events::EContentCreateAction::Folder;
+					}
+
+					if (ImGui::TreeNode("Lua Objects"))
+					{
+						if (ImGui::Selectable(ICON_FA_FILE " Create Lua Class"))
+						{
+							m_sFilepathToAction = m_CurrentDir.string();
+							m_eCreateAction = Events::EContentCreateAction::LuaClass;
+						}
+						ImGui::ItemToolTip("Generates an empty lua class.");
+
+						if (ImGui::Selectable(ICON_FA_FILE " Create Lua Table"))
+						{
+							m_sFilepathToAction = m_CurrentDir.string();
+							m_eCreateAction = Events::EContentCreateAction::LuaTable;
+						}
+						ImGui::ItemToolTip("Generates an empty lua table.");
+
+						if (ImGui::Selectable(ICON_FA_FILE " Create Lua File"))
+						{
+							m_sFilepathToAction = m_CurrentDir.string();
+							m_eCreateAction = Events::EContentCreateAction::EmptyLuaFile;
+						}
+						ImGui::ItemToolTip("Generates an empty lua File.");
+
+						ImGui::TreePop();
+					}
+
 					ImGui::EndPopup();
 				}
 			}
@@ -202,7 +245,7 @@ namespace VORTEK_EDITOR
 			ImGui::EndTable();
 		}
 
-		OpenDeletePopup();
+		HandlePopups();
 
 		ImGui::End();
 	}
@@ -213,31 +256,48 @@ namespace VORTEK_EDITOR
 
 		if (ImGui::Button(ICON_FA_FOLDER_PLUS))
 		{
+			m_sFilepathToAction = m_CurrentDir.string();
+			m_eCreateAction = Events::EContentCreateAction::Folder;
 		}
 		ImGui::ItemToolTip("Create Folder");
 		ImGui::SameLine(0.f, 16.f);
 
-		const auto& savedPath = MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>()->sProjectPath;
+		const auto& savedPath = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>()->sProjectPath;
 		std::string pathStr{ m_CurrentDir.string() };
 		std::string pathToSplit = pathStr.substr(pathStr.find(savedPath) + savedPath.size());
 		auto dir = SplitStr(pathToSplit, PATH_SEPARATOR);
+
+		// List all of the folders as buttons -- TODO: Possibly Truncate folders if too deep.
 		for (size_t i = 0; i < dir.size(); i++)
 		{
-			if (ImGui::Button(dir[i].c_str()))
+			// Folders can have the same name if they are not in the same folder.
+			// This will cause an ImGui issue because a button has the same ID. Append the index to the folder name.
+			std::string sFolderName{ fmt::format( "{}##_{}", dir[ i ], i ) };
+			if ( ImGui::Button( sFolderName.c_str() ) )
 			{
-				std::string pathChange = pathStr.substr(0, pathStr.find(dir[i]) + dir[i].size());
-				m_CurrentDir = fs::path{ pathChange };
+				fs::path rebuildPath;
+				for ( size_t j = 0; j <= i; j++ )
+				{
+					rebuildPath /= dir[ j ];
+				}
+
+				fs::path finalPath{ savedPath };
+				finalPath /= rebuildPath;
+
+				m_CurrentDir = finalPath;
 			}
 
 			ImGui::SameLine();
 			ImGui::PushStyleColor(ImGuiCol_Button, BLACK_TRANSPARENT);
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BLACK_TRANSPARENT);
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, BLACK_TRANSPARENT);
-			ImGui::Button(ICON_FA_ANGLE_RIGHT, { 16.f, 18.f });
+			ImGui::Button( fmt::format( "{}##{}", ICON_FA_ANGLE_RIGHT, i ).c_str(), { 16.f, 18.f } );
 			ImGui::PopStyleColor(3);
 
 			if (i < dir.size() - 1)
+			{
 				ImGui::SameLine();
+			}
 		}
 
 		ImGui::Separator();
@@ -314,39 +374,104 @@ namespace VORTEK_EDITOR
 		}
 	}
 
-	void ContentDisplay::HandleFileEvent(const VORTEK_EDITOR::Events::FileEvent& fileEvent)
+	void ContentDisplay::HandleFileEvent( const VORTEK_EDITOR::Events::FileEvent& fileEvent )
 	{
-		if (fileEvent.sFilepath.empty() || fileEvent.eAction == EFileAction::NoAction)
+		if ( fileEvent.sFilepath.empty() || fileEvent.eAction == EFileAction::NoAction )
 			return;
 
-		switch (fileEvent.eAction)
+		switch ( fileEvent.eAction )
 		{
 		case EFileAction::Delete: {
 			fs::path path{ fileEvent.sFilepath };
-			if (fs::is_directory(path))
-				fs::remove_all(path);
-			else if (fs::is_regular_file(path))
-				fs::remove(path);
+			if ( fs::is_directory( path ) )
+			{
+				std::unordered_set<std::string> setFilesToCheck;
+				// Collect all regular file paths inside the directory before deleting it
+				for ( const auto& entry : fs::recursive_directory_iterator( path ) )
+				{
+					if ( entry.is_regular_file() )
+					{
+						setFilesToCheck.insert( entry.path().string() );
+					}
+				}
+
+				// Recursively delete the directory and its contents
+				fs::remove_all( path );
+
+				// Remove each file from the asset manager
+				for ( const auto& sFilepath : setFilesToCheck )
+				{
+					if ( !ASSET_MANAGER().DeleteAssetFromPath( sFilepath ) )
+					{
+						VORTEK_ERROR( "Failed to remove asset from asset manager. [{}]", sFilepath );
+					}
+				}
+			}
+			else if ( fs::is_regular_file( path ) )
+			{
+				// Remove the file from disk
+				if ( fs::remove( path ) )
+				{
+					// Remove the file from the asset manager
+					if ( !ASSET_MANAGER().DeleteAssetFromPath( path.string() ) )
+					{
+						VORTEK_ERROR( "Failed to remove asset from asset manager. [{}]", path.string() );
+					}
+				}
+			}
 			break;
 		}
 		case EFileAction::Paste: {
-			if (fs::is_directory(m_CurrentDir))
+			if ( fs::is_directory( m_CurrentDir ) )
 			{
-				MoveFolderOrFile(m_sFilepathToAction, m_CurrentDir);
+				MoveFolderOrFile( m_sFilepathToAction, m_CurrentDir );
 				m_bItemCut = false;
 				m_sFilepathToAction.clear();
 			}
 			break;
 		}
 		case EFileAction::FileDropped: {
-			if (!m_bWindowHovered || fileEvent.sFilepath.empty())
+			if ( !m_bWindowHovered || fileEvent.sFilepath.empty() )
 				break;
 
-			CopyDroppedFile(fileEvent.sFilepath, m_CurrentDir);
+			CopyDroppedFile( fileEvent.sFilepath, m_CurrentDir );
 
-			VORTEK_LOG("Dropped file: {}", fileEvent.sFilepath);
+			VORTEK_LOG( "Dropped file: {}", fileEvent.sFilepath );
 			break;
 		}
+		}
+	}
+
+	void ContentDisplay::HandleCreateEvent(const VORTEK_EDITOR::Events::ContentCreateEvent& createEvent)
+	{
+		if (createEvent.eAction == EContentCreateAction::NoAction)
+			return;
+
+		switch (createEvent.eAction)
+		{
+		case EContentCreateAction::Folder: OpenCreateFolderPopup(); break;
+		}
+	}
+
+	void ContentDisplay::HandlePopups()
+	{
+		if (m_eFileAction != EFileAction::NoAction)
+		{
+			switch (m_eFileAction)
+			{
+			case EFileAction::Delete: OpenDeletePopup(); break;
+			}
+		}
+
+		if (m_eCreateAction != EContentCreateAction::NoAction)
+		{
+			switch (m_eCreateAction)
+			{
+			case EContentCreateAction::Folder: OpenCreateFolderPopup(); break;
+			case EContentCreateAction::LuaClass: OpenCreateLuaClassPopup(); break;
+			case EContentCreateAction::LuaTable: OpenCreateLuaTablePopup(); break;
+			case EContentCreateAction::EmptyLuaFile: OpenCreateEmptyLuaFilePopup(); break;
+			}
 		}
 	}
 
@@ -372,6 +497,315 @@ namespace VORTEK_EDITOR
 			{
 				m_eFileAction = Events::EFileAction::NoAction;
 			}
+			ImGui::EndPopup();
+		}
+	}
+
+	void ContentDisplay::OpenCreateFolderPopup()
+	{
+		if (m_eCreateAction != EContentCreateAction::Folder)
+			return;
+
+		ImGui::OpenPopup("Create Folder");
+
+		if (ImGui::BeginPopupModal("Create Folder"))
+		{
+			static std::string newFolderStr{};
+			char temp[256];
+			memset(temp, 0, sizeof(temp));
+#ifdef _WIN32
+			strcpy_s(temp, newFolderStr.c_str());
+#else
+			strcpy(temp, newFolderStr.c_str());
+#endif
+			bool bNameEntered{ false }, bExit{ false };
+
+			ImGui::Text("folder name");
+			ImGui::SameLine();
+
+			if (!ImGui::IsAnyItemActive())
+				ImGui::SetKeyboardFocusHere();
+
+			if (ImGui::InputText("##folder name", temp, sizeof(temp), ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				newFolderStr = std::string{ temp };
+				bNameEntered = true;
+			}
+			else if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+			{
+				bExit = true;
+			}
+
+			static std::string errorText{};
+			if (bNameEntered && !newFolderStr.empty())
+			{
+				std::string folderPathStr = m_CurrentDir.string() + PATH_SEPARATOR + newFolderStr;
+				std::error_code error{};
+				if (!fs::create_directory(fs::path{ folderPathStr }, error))
+				{
+					VORTEK_ERROR("Failed to create new folder - {}", error.message());
+					errorText = "Failed to create new folder - " + error.message();
+				}
+				else
+				{
+					m_eCreateAction = EContentCreateAction::NoAction;
+					m_sFilepathToAction.clear();
+					newFolderStr.clear();
+					errorText.clear();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
+			if (ImGui::Button("Cancel") || bExit)
+			{
+				m_eCreateAction = EContentCreateAction::NoAction;
+				m_sFilepathToAction.clear();
+				errorText.clear();
+				newFolderStr.clear();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!errorText.empty())
+			{
+				ImGui::TextColored(ImVec4{ 1.f, 0.f, 0.f, 1.f }, errorText.c_str());
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void ContentDisplay::OpenCreateLuaClassPopup()
+	{
+		if (m_eCreateAction != EContentCreateAction::LuaClass)
+			return;
+
+		ImGui::OpenPopup("Create Lua Class");
+
+		if (ImGui::BeginPopupModal("Create Lua Class"))
+		{
+			char buffer[256];
+			static std::string className{};
+			memset(buffer, 0, sizeof(buffer));
+#ifdef _WIN32
+			strcpy_s(buffer, className.c_str());
+#else
+			strcpy(buffer, className.c_str());
+#endif
+			bool bNameEntered{ false }, bExit{ false };
+			ImGui::Text("Class Name");
+			ImGui::SameLine();
+
+			if (!ImGui::IsAnyItemActive())
+				ImGui::SetKeyboardFocusHere();
+
+			if (ImGui::InputText("##ClassName", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				className = std::string{ buffer };
+				bNameEntered = true;
+			}
+			else if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+			{
+				bExit = true;
+			}
+
+			static std::string errorText{};
+
+			if (bNameEntered && !className.empty())
+			{
+				std::string filename = m_sFilepathToAction + PATH_SEPARATOR + className + ".lua";
+
+				if (fs::exists(fs::path{ filename }))
+				{
+					VORTEK_ERROR("Class file: [{}] already exists at [{}]", className, filename);
+					errorText = "Class file: [" + className + "] already exists at [" + filename + "]";
+				}
+				else
+				{
+					LuaSerializer lw{ filename };
+
+					lw.AddWords(className + " = {}")
+						.AddWords(className + ".__index = " + className, true)
+						.AddWords("function " + className + ":Create(params)", true)
+						.AddWords("local this = {}", true, true)
+						.AddWords("setmetatable(this, self)", true, true)
+						.AddWords("return this", true, true)
+						.AddWords("end", true);
+
+					errorText.clear();
+					className.clear();
+					m_eCreateAction = EContentCreateAction::NoAction;
+					m_sFilepathToAction.clear();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
+			if (ImGui::Button("Cancel") || bExit)
+			{
+				ImGui::CloseCurrentPopup();
+				m_eCreateAction = EContentCreateAction::NoAction;
+				className.clear();
+				errorText.clear();
+				m_sFilepathToAction.clear();
+			}
+
+			if (!errorText.empty())
+			{
+				ImGui::TextColored(ImVec4{ 1.f, 0.f, 0.f, 1.f }, errorText.c_str());
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void ContentDisplay::OpenCreateLuaTablePopup()
+	{
+		if (m_eCreateAction != EContentCreateAction::LuaTable)
+			return;
+
+		ImGui::OpenPopup("Create Lua Table");
+
+		if (ImGui::BeginPopupModal("Create Lua Table"))
+		{
+			char buffer[256];
+			static std::string tableName{};
+			memset(buffer, 0, sizeof(buffer));
+#ifdef _WIN32
+			strcpy_s(buffer, tableName.c_str());
+#else
+			strcpy(buffer, tableName.c_str());
+#endif
+			bool bNameEntered{ false }, bExit{ false };
+			ImGui::Text("Table Name");
+			ImGui::SameLine();
+
+			if (!ImGui::IsAnyItemActive())
+				ImGui::SetKeyboardFocusHere();
+
+			if (ImGui::InputText("##TableName", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				tableName = std::string{ buffer };
+				bNameEntered = true;
+			}
+			else if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+			{
+				bExit = true;
+			}
+
+			static std::string errorText{};
+
+			if (bNameEntered && !tableName.empty())
+			{
+				std::string filename = m_sFilepathToAction + PATH_SEPARATOR + tableName + ".lua";
+
+				if (fs::exists(fs::path{ filename }))
+				{
+					VORTEK_ERROR("Table file: [{}] already exists at [{}]", tableName, filename);
+					errorText = "Table file: [" + tableName + "] already exists at [" + filename + "]";
+				}
+				else
+				{
+					LuaSerializer lw{ filename };
+
+					lw.StartNewTable(tableName).EndTable().FinishStream();
+
+					errorText.clear();
+					tableName.clear();
+					m_eCreateAction = EContentCreateAction::NoAction;
+					m_sFilepathToAction.clear();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
+			if (ImGui::Button("Cancel") || bExit)
+			{
+				ImGui::CloseCurrentPopup();
+				m_eCreateAction = EContentCreateAction::NoAction;
+				tableName.clear();
+				errorText.clear();
+				m_sFilepathToAction.clear();
+			}
+
+			if (!errorText.empty())
+			{
+				ImGui::TextColored(ImVec4{ 1.f, 0.f, 0.f, 1.f }, errorText.c_str());
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void ContentDisplay::OpenCreateEmptyLuaFilePopup()
+	{
+		if (m_eCreateAction != EContentCreateAction::EmptyLuaFile)
+			return;
+
+		ImGui::OpenPopup("Create Lua File");
+
+		if (ImGui::BeginPopupModal("Create Lua File"))
+		{
+			char buffer[256];
+			static std::string tableName{};
+			memset(buffer, 0, sizeof(buffer));
+#ifdef _WIN32
+			strcpy_s(buffer, tableName.c_str());
+#else
+			strcpy(buffer, tableName.c_str());
+#endif
+			bool bNameEntered{ false }, bExit{ false };
+			ImGui::Text("FileName");
+			ImGui::SameLine();
+
+			if (!ImGui::IsAnyItemActive())
+				ImGui::SetKeyboardFocusHere();
+
+			if (ImGui::InputText("##FileName", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				tableName = std::string{ buffer };
+				bNameEntered = true;
+			}
+			else if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+			{
+				bExit = true;
+			}
+
+			static std::string errorText{};
+
+			if (bNameEntered && !tableName.empty())
+			{
+				std::string filename = m_sFilepathToAction + PATH_SEPARATOR + tableName + ".lua";
+
+				if (fs::exists(fs::path{ filename }))
+				{
+					VORTEK_ERROR("File: [{}] already exists at [{}]", tableName, filename);
+					errorText = "File: [" + tableName + "] already exists at [" + filename + "]";
+				}
+				else
+				{
+					LuaSerializer lw{ filename };
+					lw.FinishStream();
+
+					errorText.clear();
+					tableName.clear();
+					m_eCreateAction = EContentCreateAction::NoAction;
+					m_sFilepathToAction.clear();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
+			if (ImGui::Button("Cancel") || bExit)
+			{
+				ImGui::CloseCurrentPopup();
+				m_eCreateAction = EContentCreateAction::NoAction;
+				tableName.clear();
+				errorText.clear();
+				m_sFilepathToAction.clear();
+			}
+
+			if (!errorText.empty())
+			{
+				ImGui::TextColored(ImVec4{ 1.f, 0.f, 0.f, 1.f }, errorText.c_str());
+			}
+
 			ImGui::EndPopup();
 		}
 	}

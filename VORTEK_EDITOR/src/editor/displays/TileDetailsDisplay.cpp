@@ -1,12 +1,12 @@
 #include "TileDetailsDisplay.h"
 
-#include "../utilities/imgui/ImGuiUtils.h"
-#include "../utilities/DrawComponentUtils.h"
-#include "../utilities/fonts/IconsFontAwesome5.h"
-#include "../scene/SceneManager.h"
-#include "../scene/SceneObject.h"
-#include "../tools/ToolManager.h"
-#include "../tools/TileTool.h"
+#include "editor/utilities/imgui/ImGuiUtils.h"
+#include "editor/utilities/DrawComponentUtils.h"
+#include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "editor/scene/SceneManager.h"
+#include "editor/scene/SceneObject.h"
+#include "editor/tools/ToolManager.h"
+#include "editor/tools/TileTool.h"
 
 #include "Core/ECS/MainRegistry.h"
 #include "Core/ECS/Components/AllComponents.h"
@@ -21,7 +21,7 @@ using namespace VORTEK_CORE::ECS;
 
 namespace VORTEK_EDITOR
 {
-	void TileDetailsDisplay::DrawSpriteComponent(VORTEK_CORE::ECS::SpriteComponent& sprite, SceneObject* pScene)
+	void TileDetailsDisplay::DrawSpriteComponent(VORTEK_CORE::ECS::SpriteComponent& sprite, VORTEK_CORE::Scene* pScene)
 	{
 		bool bChanged{ false };
 
@@ -32,9 +32,9 @@ namespace VORTEK_EDITOR
 			ImGui::AddSpaces(2);
 
 			ImGui::InlineLabel("texture: ");
-			ImGui::TextColored(ImVec4{ 0.f, 1.f, 0.f, 1.f }, sprite.texture_name.c_str());
+			ImGui::TextColored(ImVec4{ 0.f, 1.f, 0.f, 1.f }, sprite.sTextureName.c_str());
 
-			std::string sLayer{ "" };
+			std::string sLayer{};
 
 			// Sets the layer description
 			if (sprite.layer >= 0 && sprite.layer < pScene->GetLayerParams().size())
@@ -93,7 +93,7 @@ namespace VORTEK_EDITOR
 			}
 			else // In reality, this should never get here, should probably assert instead.
 			{
-				auto pTexture = MAIN_REGISTRY().GetAssetManager().GetTexture(sprite.texture_name);
+				auto pTexture = MAIN_REGISTRY().GetAssetManager().GetTexture(sprite.sTextureName);
 				if (!pTexture)
 					return;
 
@@ -104,7 +104,7 @@ namespace VORTEK_EDITOR
 
 	TileDetailsDisplay::TileDetailsDisplay()
 		: m_SelectedLayer{ -1 }
-		, m_sRenameLayerBuf{ "" }
+		, m_sRenameLayerBuf{}
 		, m_bRename{ false }
 	{
 	}
@@ -115,7 +115,7 @@ namespace VORTEK_EDITOR
 
 	void TileDetailsDisplay::Draw()
 	{
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
 		auto& toolManager = SCENE_MANAGER().GetToolManager();
 
 		auto pActiveTool = toolManager.GetActiveTool();
@@ -135,7 +135,7 @@ namespace VORTEK_EDITOR
 
 		ImGui::AddSpaces(2);
 		// Sprite
-		DrawSpriteComponent(tileData.sprite, pCurrentScene.get());
+		DrawSpriteComponent(tileData.sprite, pCurrentScene);
 
 		ImGui::AddSpaces(2);
 		ImGui::Separator();
@@ -298,7 +298,7 @@ namespace VORTEK_EDITOR
 				if (!bCheckPassed && bIsSelected)
 				{
 					ImGui::TextColored(ImVec4{ 1.f, 0.f, 0.f, 1.f },
-						format("{} - Already exists.", sCheckName).c_str());
+						std::format("{} - Already exists.", sCheckName).c_str());
 				}
 
 				ImGui::PopID();

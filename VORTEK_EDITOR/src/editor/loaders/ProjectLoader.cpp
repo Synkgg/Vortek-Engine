@@ -1,14 +1,17 @@
 #include "ProjectLoader.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
-#include "../utilities/SaveProject.h"
-#include "../utilities/EditorUtilities.h"
-#include "../scene/SceneManager.h"
-#include "../scene/SceneObject.h"
+#include "Core/CoreUtilities/CoreEngineData.h"
+#include "Core/CoreUtilities/SaveProject.h"
+#include "Core/CoreUtilities/Prefab.h"
+
+#include "editor/utilities/EditorUtilities.h"
+#include "editor/scene/SceneManager.h"
+#include "editor/scene/SceneObject.h"
 #include "Logger/Logger.h"
 
-#include "../VORTEK_FILESYSTEM/Serializers/JSONSerializer.h"
-#include "../VORTEK_FILESYSTEM/Serializers/LuaSerializer.h"
+#include "VortekFilesystem/Serializers/JSONSerializer.h"
+#include "VortekFilesystem/Serializers/LuaSerializer.h"
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
@@ -21,437 +24,514 @@ using namespace VORTEK_FILESYSTEM;
 namespace VORTEK_EDITOR
 {
 
-	bool ProjectLoader::CreateNewProject(const std::string& sProjectName, const std::string& sFilepath)
+bool ProjectLoader::CreateNewProject( const std::string& sProjectName, const std::string& sFilepath )
+{
+	auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
+	VORTEK_ASSERT( pSaveProject && "Save project must exist." );
+
+	// Create the game filepath
+	std::string sGameFilepath =
+		std::format( "{}{}{}{}{}", sFilepath, PATH_SEPARATOR, sProjectName, PATH_SEPARATOR, "Vortek_Engine" );
+
+	if ( fs::is_directory( sGameFilepath ) )
 	{
-		auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>();
-		VORTEK_ASSERT(pSaveProject && "Save project must exist.");
-
-		// Create the game filepath
-		std::string sGameFilepath =
-			std::format("{}{}{}{}{}", sFilepath, PATH_SEPARATOR, sProjectName, PATH_SEPARATOR, "VORTEK_2D");
-
-		if (fs::is_directory(sGameFilepath))
-		{
-			VORTEK_ERROR("Project [{}] at [{}] already exists.", sProjectName, sFilepath);
-			return false;
-		}
-
-		char sep{ PATH_SEPARATOR };
-		sGameFilepath += sep;
-		std::error_code ec;
-		if (!fs::create_directories(sGameFilepath + "content", ec) ||
-			!fs::create_directories(sGameFilepath + "content" + sep + "scripts", ec) ||
-			!fs::create_directories(sGameFilepath + "content" + sep + "assets", ec) ||
-			!fs::create_directories(sGameFilepath + "content" + sep + "assets" + sep + "soundfx", ec) ||
-			!fs::create_directories(sGameFilepath + "content" + sep + "assets" + sep + "music", ec) ||
-			!fs::create_directories(sGameFilepath + "content" + sep + "assets" + sep + "textures", ec) ||
-			!fs::create_directories(sGameFilepath + "content" + sep + "assets" + sep + "shaders", ec) ||
-			!fs::create_directories(sGameFilepath + "content" + sep + "assets" + sep + "fonts", ec) ||
-			!fs::create_directories(sGameFilepath + "content" + sep + "assets" + sep + "scenes", ec))
-		{
-			VORTEK_ERROR("Failed to create directories - {}", ec.message());
-			// TODO: Delete any created directories??
-			return false;
-		}
-
-		pSaveProject->sProjectName = sProjectName;
-		pSaveProject->sProjectPath = sGameFilepath;
-
-		return CreateProjectFile(pSaveProject->sProjectName, pSaveProject->sProjectPath);
+		VORTEK_ERROR( "Project [{}] at [{}] already exists.", sProjectName, sFilepath );
+		return false;
 	}
 
-	bool ProjectLoader::LoadProject(const std::string& sFilepath)
+	char sep{ PATH_SEPARATOR };
+	sGameFilepath += sep;
+	std::error_code ec;
+	if ( !fs::create_directories( sGameFilepath + "content", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "scripts", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "assets", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "assets" + sep + "soundfx", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "assets" + sep + "music", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "assets" + sep + "textures", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "assets" + sep + "shaders", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "assets" + sep + "fonts", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "assets" + sep + "prefabs", ec ) ||
+		 !fs::create_directories( sGameFilepath + "content" + sep + "assets" + sep + "scenes", ec ) )
 	{
-		std::ifstream procFile;
-		procFile.open(sFilepath);
-
-		if (!procFile.is_open())
-		{
-			VORTEK_ERROR("Failed to open project file [{}]", sFilepath);
-			return false;
-		}
-
-		std::stringstream ss;
-		ss << procFile.rdbuf();
-		std::string contents = ss.str();
-		rapidjson::StringStream jsonStr{ contents.c_str() };
-
-		rapidjson::Document doc;
-		doc.ParseStream(jsonStr);
-
-		if (doc.HasParseError() || !doc.IsObject())
-		{
-			VORTEK_ERROR("Failed to load Project: File: [{}] is not valid JSON. - {} - {}",
-				sFilepath,
-				rapidjson::GetParseError_En(doc.GetParseError()),
-				doc.GetErrorOffset());
-			return false;
-		}
-
-		// Get the project data
-		if (!doc.HasMember("project_data"))
-		{
-			VORTEK_ERROR("Failed to load project: File [{}] - Expecting \"project_data\" member in project file.",
-				sFilepath);
-			return false;
-		}
-
-		auto& mainRegistry = MAIN_REGISTRY();
-		auto& pSaveProject = mainRegistry.GetContext<std::shared_ptr<SaveProject>>();
-
-		VORTEK_ASSERT(pSaveProject && "Save Project must be valid!");
-
-		// We need the project filepath saved!
-		pSaveProject->sProjectFilePath = sFilepath;
-
-		const rapidjson::Value& projectData = doc["project_data"];
-
-		// Set the project name. The actual project name might be different to the project files name.
-		pSaveProject->sProjectName = projectData["project_name"].GetString();
-
-		// We need to load all the assets
-		if (!projectData.HasMember("assets"))
-		{
-			VORTEK_ERROR("Failed to load project: File [{}] - Expecting \"assets\" member in project file.", sFilepath);
-			return false;
-		}
-
-		// Get Content Path
-		fs::path filePath{ sFilepath };
-		std::string sContentPath = filePath.parent_path().string();
-
-		// Get the project path before we adjust it to the content path
-		pSaveProject->sProjectPath = sContentPath + PATH_SEPARATOR;
-
-		sContentPath += PATH_SEPARATOR;
-		sContentPath += "content";
-		sContentPath += PATH_SEPARATOR;
-
-		// Check to see if there is a main lua path
-		if (projectData.HasMember("main_lua_script"))
-		{
-			pSaveProject->sMainLuaScript = sContentPath + projectData["main_lua_script"].GetString();
-		}
-
-		const rapidjson::Value& assets = projectData["assets"];
-		auto& assetManager = ASSET_MANAGER();
-
-		// Load all textures into the asset manager
-		if (assets.HasMember("textures"))
-		{
-			const rapidjson::Value& textures = assets["textures"];
-
-			if (!textures.IsArray())
-			{
-				VORTEK_ERROR("Failed to load project: File [{}] - Expecting \"textures \" must be an array.", sFilepath);
-				return false;
-			}
-
-			for (const auto& jsonTexture : textures.GetArray())
-			{
-				// Assets path's should be saved as follows "assets/[asset_type]/[extra_folders opt]/file"
-
-				std::string sTextureName{ jsonTexture["name"].GetString() };
-				std::string sTexturePath{ sContentPath + jsonTexture["path"].GetString() };
-
-				if (!assetManager.AddTexture(sTextureName,
-					sTexturePath,
-					jsonTexture["bPixelArt"].GetBool(),
-					jsonTexture["bTilemap"].GetBool()))
-				{
-					VORTEK_ERROR("Failed to load texture [{}] at path [{}]", sTextureName, sTexturePath);
-					// Should we stop loading or finish??
-				}
-			}
-		}
-
-		// Load all soundfx to the asset manager
-		if (assets.HasMember("soundfx"))
-		{
-			const rapidjson::Value& soundfx = assets["soundfx"];
-
-			if (!soundfx.IsArray())
-			{
-				VORTEK_ERROR("Failed to load project: File [{}] - Expecting \"soundfx\" must be an array.", sFilepath);
-				return false;
-			}
-
-			for (const auto& jsonSoundFx : soundfx.GetArray())
-			{
-				std::string sSoundFxName{ jsonSoundFx["name"].GetString() };
-				std::string sSoundFxPath{ sContentPath + jsonSoundFx["path"].GetString() };
-
-				if (!assetManager.AddSoundFx(sSoundFxName, sSoundFxPath))
-				{
-					VORTEK_ERROR("Failed to load soundfx [{}] at path [{}]", sSoundFxName, sSoundFxPath);
-					// Should we stop loading or finish??
-				}
-			}
-		}
-
-		// Load all music to the asset manager
-		if (assets.HasMember("music"))
-		{
-			const rapidjson::Value& music = assets["music"];
-
-			if (!music.IsArray())
-			{
-				VORTEK_ERROR("Failed to load project: File [{}] - Expecting \"music\" must be an array.", sFilepath);
-				return false;
-			}
-
-			for (const auto& jsonMusic : music.GetArray())
-			{
-				std::string sMusicName{ jsonMusic["name"].GetString() };
-				std::string sMusicPath{ sContentPath + jsonMusic["path"].GetString() };
-
-				if (!assetManager.AddMusic(sMusicName, sMusicPath))
-				{
-					VORTEK_ERROR("Failed to load music [{}] at path [{}]", sMusicName, sMusicPath);
-					// Should we stop loading or finish??
-				}
-			}
-		}
-
-		// Load all fonts to the asset manager
-		if (assets.HasMember("fonts"))
-		{
-			const rapidjson::Value& fonts = assets["fonts"];
-
-			if (!fonts.IsArray())
-			{
-				VORTEK_ERROR("Failed to load project: File [{}] - Expecting \"fonts\" must be an array.", sFilepath);
-				return false;
-			}
-
-			for (const auto& jsonFonts : fonts.GetArray())
-			{
-				std::string sFontName{ jsonFonts["name"].GetString() };
-				std::string sFontPath{ sContentPath + jsonFonts["path"].GetString() };
-
-				if (!assetManager.AddFont(sFontName, sFontPath, jsonFonts["fontSize"].GetFloat()))
-				{
-					VORTEK_ERROR("Failed to load fonts [{}] at path [{}]", sFontName, sFontPath);
-					// Should we stop loading or finish??
-				}
-			}
-		}
-
-		// Load all scenes to the scene manager
-		if (assets.HasMember("scenes"))
-		{
-			const rapidjson::Value& scenes = assets["scenes"];
-
-			if (!scenes.IsArray())
-			{
-				VORTEK_ERROR("Failed to load project: File [{}] - Expecting \"scenes\" must be an array.", sFilepath);
-				return false;
-			}
-
-			auto& sceneManager = SCENE_MANAGER();
-
-			for (const auto& jsonScenes : scenes.GetArray())
-			{
-				std::string sSceneName{ jsonScenes["name"].GetString() };
-				std::string sSceneDataPath{ sContentPath + jsonScenes["sceneData"].GetString() };
-
-				if (!sceneManager.AddScene(sSceneName, sSceneDataPath))
-				{
-					VORTEK_ERROR("Failed to load scene: {}", sSceneName);
-				}
-			}
-		}
-
-		return true;
+		VORTEK_ERROR( "Failed to create directories - {}", ec.message() );
+		// TODO: Delete any created directories??
+		return false;
 	}
 
-	bool ProjectLoader::SaveLoadedProject(SaveProject& save)
+	pSaveProject->sProjectName = sProjectName;
+	pSaveProject->sProjectPath = sGameFilepath;
+
+	return CreateProjectFile( pSaveProject->sProjectName, pSaveProject->sProjectPath );
+}
+
+bool ProjectLoader::LoadProject( const std::string& sFilepath )
+{
+	std::ifstream procFile;
+	procFile.open( sFilepath );
+
+	if ( !procFile.is_open() )
 	{
-		if (!fs::exists(save.sProjectFilePath))
-		{
-			VORTEK_ERROR("Failed to save project file for [{}] at path [{}]", save.sProjectName, save.sProjectFilePath);
-			return false;
-		}
-
-		std::unique_ptr<JSONSerializer> pSerializer{ nullptr };
-
-		try
-		{
-			pSerializer = std::make_unique<JSONSerializer>(save.sProjectFilePath);
-		}
-		catch (const std::exception& ex)
-		{
-			VORTEK_ERROR("Failed to save tilemap [{}] - [{}]", save.sProjectFilePath, ex.what());
-			return false;
-		}
-
-		auto& assetManager = ASSET_MANAGER();
-		auto& sceneMananger = SCENE_MANAGER();
-
-		if (!sceneMananger.SaveAllScenes())
-		{
-			VORTEK_ERROR("Failed to save all scenes.");
-		}
-
-		pSerializer->StartDocument();
-		pSerializer->StartNewObject("warnings");
-		pSerializer->AddKeyValuePair("warning", std::string{ "THIS FILE IS ENGINE GENERATED." })
-			.AddKeyValuePair("warning", std::string{ "DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING." });
-		pSerializer->EndObject(); // Warnings
-
-		pSerializer->StartNewObject("project_data")
-			.AddKeyValuePair("project_name", save.sProjectName)
-			.AddKeyValuePair("main_lua_script",
-				save.sMainLuaScript.substr(save.sMainLuaScript.find(SCRIPTS)))
-			.StartNewObject("assets");
-
-		pSerializer->StartNewArray("textures");
-		for (const auto& [sName, pTexture] : assetManager.GetAllTextures())
-		{
-			if (!pTexture || pTexture->IsEditorTexture())
-				continue;
-
-			// Get Relative to assets path
-			std::string sTexturePath =
-				pTexture->GetPath().substr(pTexture->GetPath().find(ASSETS));
-			VORTEK_ASSERT(!sTexturePath.empty());
-
-			pSerializer->StartNewObject()
-				.AddKeyValuePair("name", sName)
-				.AddKeyValuePair("path", sTexturePath)
-				.AddKeyValuePair("bPixelArt", pTexture->GetType() == VORTEK_RENDERING::Texture::TextureType::PIXEL)
-				.AddKeyValuePair("bTilemap", pTexture->IsTileset())
-				.EndObject();
-		}
-		pSerializer->EndArray(); // Textures
-
-		pSerializer->StartNewArray("soundfx");
-		for (const auto& [sName, pSound] : assetManager.GetAllSoundFx())
-		{
-			std::string sSoundFxPath =
-				pSound->GetFilename().substr(pSound->GetFilename().find(ASSETS));
-			pSerializer->StartNewObject()
-				.AddKeyValuePair("name", sName)
-				.AddKeyValuePair("path", sSoundFxPath)
-				.EndObject();
-		}
-		pSerializer->EndArray(); // SoundFx
-
-		pSerializer->StartNewArray("music");
-		for (const auto& [sName, pMusic] : assetManager.GetAllMusic())
-		{
-			std::string sMusicPath =
-				pMusic->GetFilename().substr(pMusic->GetFilename().find(ASSETS));
-			pSerializer->StartNewObject()
-				.AddKeyValuePair("name", sName)
-				.AddKeyValuePair("path", sMusicPath)
-				.EndObject();
-		}
-		pSerializer->EndArray(); // Music
-
-		pSerializer->StartNewArray("scenes");
-
-		for (const auto& [sName, pScene] : sceneMananger.GetAllScenes())
-		{
-			std::string sScenePath =
-				pScene->GetSceneDataPath().substr(pScene->GetSceneDataPath().find(ASSETS));
-			pSerializer->StartNewObject()
-				.AddKeyValuePair("name", sName)
-				.AddKeyValuePair("sceneData", sScenePath)
-				.EndObject();
-		}
-		pSerializer->EndArray();  // Scenes
-		pSerializer->EndObject(); // Assets
-		pSerializer->EndObject(); // Project Data
-
-		return pSerializer->EndDocument();
+		VORTEK_ERROR( "Failed to open project file [{}]", sFilepath );
+		return false;
 	}
 
-	bool ProjectLoader::CreateProjectFile(const std::string& sProjectName, const std::string& sFilepath)
+	std::stringstream ss;
+	ss << procFile.rdbuf();
+	std::string contents = ss.str();
+	rapidjson::StringStream jsonStr{ contents.c_str() };
+
+	rapidjson::Document doc;
+	doc.ParseStream( jsonStr );
+
+	if ( doc.HasParseError() || !doc.IsObject() )
 	{
-		if (!fs::is_directory(sFilepath))
-		{
-			VORTEK_ERROR("Failed to create project file for [{}] at path [{}]", sProjectName, sFilepath);
-			return false;
-		}
-
-		if (!CreateMainLuaScript(sProjectName, sFilepath))
-		{
-			VORTEK_ERROR("Failed to create main lua script");
-			return false;
-		}
-
-		std::string sProjectFile{ sFilepath + sProjectName + PRJ_FILE_EXT };
-
-		std::unique_ptr<JSONSerializer> pSerializer{ nullptr };
-
-		try
-		{
-			pSerializer = std::make_unique<JSONSerializer>(sProjectFile);
-		}
-		catch (const std::exception& ex)
-		{
-			VORTEK_ERROR("Failed to save tilemap [{}] - [{}]", sProjectFile, ex.what());
-			return false;
-		}
-
-		// We want to grab the project file path
-		auto& pSaveFile = MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>();
-		pSaveFile->sProjectFilePath = sProjectFile;
-
-		pSerializer->StartDocument();
-		pSerializer->StartNewObject("warnings");
-		pSerializer->AddKeyValuePair("warning", std::string{ "THIS FILE IS ENGINE GENERATED." })
-			.AddKeyValuePair("warning", std::string{ "DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING." });
-		pSerializer->EndObject(); // Warnings
-
-		pSerializer->StartNewObject("project_data")
-			.AddKeyValuePair("project_name", sProjectName)
-			.AddKeyValuePair("main_lua_file",
-				pSaveFile->sMainLuaScript.substr(pSaveFile->sMainLuaScript.find(SCRIPTS)))
-			.StartNewObject("assets")
-			.StartNewArray("textures")
-			.EndArray() // Textures
-			.StartNewArray("soundfx")
-			.EndArray() // SoundFx
-			.StartNewArray("music")
-			.EndArray() // Music
-			.StartNewArray("scenes")
-			.EndArray()			  // Scenes
-			.EndObject();		  // Assets
-		pSerializer->EndObject(); // Project Data
-
-		return pSerializer->EndDocument();
+		VORTEK_ERROR( "Failed to load Project: File: [{}] is not valid JSON. - {} - {}",
+					  sFilepath,
+					  rapidjson::GetParseError_En( doc.GetParseError() ),
+					  doc.GetErrorOffset() );
+		return false;
 	}
 
-	bool ProjectLoader::CreateMainLuaScript(const std::string& sProjectName, const std::string& sFilepath)
+	// Get the project data
+	if ( !doc.HasMember( "project_data" ) )
 	{
-		std::string sMainLuaFile =
-			std::format("{}{}{}{}{}main.lua", sFilepath, "content", PATH_SEPARATOR, "scripts", PATH_SEPARATOR);
-
-		auto pLuaSerializer = std::make_unique<LuaSerializer>(sMainLuaFile);
-		VORTEK_ASSERT(pLuaSerializer);
-
-		// Save the main lua file path
-		MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>()->sMainLuaScript = sMainLuaFile;
-
-		pLuaSerializer->AddBlockComment("\tMain Lua script. This is needed to run all scripts in the editor"
-			"\n\tGENERATED BY THE ENGINE ON PROJECT CREATION. DON'T CHANGE UNLESS "
-			"\n\tYOU KNOW WHAT YOU ARE DOING!");
-
-		pLuaSerializer->AddComment("The engine looks for these two functions.")
-			.AddComment("Please add your code inside of the update and render functions as needed.");
-
-		pLuaSerializer->StartNewTable("main")
-			.StartNewTable("1", true, true)
-			.AddKeyValuePair("update", "function() end", true, true)
-			.EndTable()
-			.StartNewTable("2", true, true)
-			.AddKeyValuePair("render", "function() end", true, true)
-			.EndTable()
-			.EndTable();
-
-		return pLuaSerializer->FinishStream();
+		VORTEK_ERROR( "Failed to load project: File [{}] - Expecting \"project_data\" member in project file.",
+					  sFilepath );
+		return false;
 	}
+
+	auto& mainRegistry = MAIN_REGISTRY();
+	auto& pSaveProject = mainRegistry.GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
+
+	VORTEK_ASSERT( pSaveProject && "Save Project must be valid!" );
+
+	// We need the project filepath saved!
+	pSaveProject->sProjectFilePath = sFilepath;
+
+	const rapidjson::Value& projectData = doc[ "project_data" ];
+
+	// Set the project name. The actual project name might be different to the project files name.
+	pSaveProject->sProjectName = projectData[ "project_name" ].GetString();
+
+	// We need to load all the assets
+	if ( !projectData.HasMember( "assets" ) )
+	{
+		VORTEK_ERROR( "Failed to load project: File [{}] - Expecting \"assets\" member in project file.", sFilepath );
+		return false;
+	}
+
+	// Get Content Path
+	fs::path filePath{ sFilepath };
+	std::string sContentPath = filePath.parent_path().string();
+
+	// Get the project path before we adjust it to the content path
+	pSaveProject->sProjectPath = sContentPath + PATH_SEPARATOR;
+	CORE_GLOBALS().SetProjectPath( pSaveProject->sProjectPath );
+
+	sContentPath += PATH_SEPARATOR;
+	sContentPath += "content";
+	sContentPath += PATH_SEPARATOR;
+
+	// Check to see if there is a main lua path
+	if ( projectData.HasMember( "main_lua_script" ) )
+	{
+		pSaveProject->sMainLuaScript = sContentPath + projectData[ "main_lua_script" ].GetString();
+	}
+
+	auto& coreGlobals = CORE_GLOBALS();
+
+	if ( projectData.HasMember( "game_type" ) )
+	{
+		coreGlobals.SetGameType( coreGlobals.GetGameTypeFromStr( projectData[ "game_type" ].GetString() ) );
+	}
+
+	const rapidjson::Value& assets = projectData[ "assets" ];
+	auto& assetManager = ASSET_MANAGER();
+
+	// Load all textures into the asset manager
+	if ( assets.HasMember( "textures" ) )
+	{
+		const rapidjson::Value& textures = assets[ "textures" ];
+
+		if ( !textures.IsArray() )
+		{
+			VORTEK_ERROR( "Failed to load project: File [{}] - Expecting \"textures \" must be an array.", sFilepath );
+			return false;
+		}
+
+		for ( const auto& jsonTexture : textures.GetArray() )
+		{
+			// Assets path's should be saved as follows "assets/[asset_type]/[extra_folders opt]/file"
+
+			std::string sTextureName{ jsonTexture[ "name" ].GetString() };
+			std::string sTexturePath{ sContentPath + jsonTexture[ "path" ].GetString() };
+
+			if ( !assetManager.AddTexture( sTextureName,
+										   sTexturePath,
+										   jsonTexture[ "bPixelArt" ].GetBool(),
+										   jsonTexture[ "bTilemap" ].GetBool() ) )
+			{
+				VORTEK_ERROR( "Failed to load texture [{}] at path [{}]", sTextureName, sTexturePath );
+				// Should we stop loading or finish??
+			}
+		}
+	}
+
+	// Load all soundfx to the asset manager
+	if ( assets.HasMember( "soundfx" ) )
+	{
+		const rapidjson::Value& soundfx = assets[ "soundfx" ];
+
+		if ( !soundfx.IsArray() )
+		{
+			VORTEK_ERROR( "Failed to load project: File [{}] - Expecting \"soundfx\" must be an array.", sFilepath );
+			return false;
+		}
+
+		for ( const auto& jsonSoundFx : soundfx.GetArray() )
+		{
+			std::string sSoundFxName{ jsonSoundFx[ "name" ].GetString() };
+			std::string sSoundFxPath{ sContentPath + jsonSoundFx[ "path" ].GetString() };
+
+			if ( !assetManager.AddSoundFx( sSoundFxName, sSoundFxPath ) )
+			{
+				VORTEK_ERROR( "Failed to load soundfx [{}] at path [{}]", sSoundFxName, sSoundFxPath );
+				// Should we stop loading or finish??
+			}
+		}
+	}
+
+	// Load all music to the asset manager
+	if ( assets.HasMember( "music" ) )
+	{
+		const rapidjson::Value& music = assets[ "music" ];
+
+		if ( !music.IsArray() )
+		{
+			VORTEK_ERROR( "Failed to load project: File [{}] - Expecting \"music\" must be an array.", sFilepath );
+			return false;
+		}
+
+		for ( const auto& jsonMusic : music.GetArray() )
+		{
+			std::string sMusicName{ jsonMusic[ "name" ].GetString() };
+			std::string sMusicPath{ sContentPath + jsonMusic[ "path" ].GetString() };
+
+			if ( !assetManager.AddMusic( sMusicName, sMusicPath ) )
+			{
+				VORTEK_ERROR( "Failed to load music [{}] at path [{}]", sMusicName, sMusicPath );
+				// Should we stop loading or finish??
+			}
+		}
+	}
+
+	// Load all fonts to the asset manager
+	if ( assets.HasMember( "fonts" ) )
+	{
+		const rapidjson::Value& fonts = assets[ "fonts" ];
+
+		if ( !fonts.IsArray() )
+		{
+			VORTEK_ERROR( "Failed to load project: File [{}] - Expecting \"fonts\" must be an array.", sFilepath );
+			return false;
+		}
+
+		for ( const auto& jsonFonts : fonts.GetArray() )
+		{
+			std::string sFontName{ jsonFonts[ "name" ].GetString() };
+			std::string sFontPath{ sContentPath + jsonFonts[ "path" ].GetString() };
+
+			if ( !assetManager.AddFont( sFontName, sFontPath, jsonFonts[ "fontSize" ].GetFloat() ) )
+			{
+				VORTEK_ERROR( "Failed to load fonts [{}] at path [{}]", sFontName, sFontPath );
+				// Should we stop loading or finish??
+			}
+		}
+	}
+
+	// Load all scenes to the scene manager
+	if ( assets.HasMember( "scenes" ) )
+	{
+		const rapidjson::Value& scenes = assets[ "scenes" ];
+
+		if ( !scenes.IsArray() )
+		{
+			VORTEK_ERROR( "Failed to load project: File [{}] - Expecting \"scenes\" must be an array.", sFilepath );
+			return false;
+		}
+
+		auto& sceneManager = SCENE_MANAGER();
+
+		for ( const auto& jsonScenes : scenes.GetArray() )
+		{
+			std::string sSceneName{ jsonScenes[ "name" ].GetString() };
+			std::string sSceneDataPath{ sContentPath + jsonScenes[ "sceneData" ].GetString() };
+
+			if ( !sceneManager.AddSceneObject( sSceneName, sSceneDataPath ) )
+			{
+				VORTEK_ERROR( "Failed to load scene: {}", sSceneName );
+			}
+		}
+	}
+
+	// Load all prefabs to the scene manager
+	if ( assets.HasMember( "prefabs" ) )
+	{
+		const rapidjson::Value& prefabs = assets[ "prefabs" ];
+
+		if ( !prefabs.IsArray() )
+		{
+			VORTEK_ERROR( "Failed to load project: File [{}] - Expecting \"prefabs\" must be an array.", sFilepath );
+			return false;
+		}
+
+		for ( const auto& jsonPrefab : prefabs.GetArray() )
+		{
+			std::string sName{ jsonPrefab[ "name" ].GetString() };
+			std::string sFilepath{ sContentPath + jsonPrefab[ "path" ].GetString() };
+
+			if ( auto pPrefab = VORTEK_CORE::PrefabCreator::CreatePrefab( sFilepath ) )
+			{
+				if ( !assetManager.AddPrefab( sName, std::move( pPrefab ) ) )
+				{
+					VORTEK_ERROR( "Failed to load scene: {}", sName );
+				}
+			}
+			else
+			{
+				VORTEK_ERROR( "Failed to load prefab [{}] from path [{}].", sName, sFilepath );
+			}
+		}
+	}
+
+	if ( projectData.HasMember( "physics" ) )
+	{
+		const rapidjson::Value& physics = projectData[ "physics" ];
+		bool bEnabled = physics[ "enabled" ].GetBool();
+		if ( bEnabled )
+		{
+			coreGlobals.EnablePhysics();
+		}
+		else
+		{
+			coreGlobals.DisablePhysics();
+		}
+
+		coreGlobals.SetGravity( physics[ "gravity" ].GetFloat() );
+		coreGlobals.SetVelocityIterations( physics[ "velocityIterations" ].GetInt() );
+		coreGlobals.SetPositionIterations( physics[ "positionIterations" ].GetInt() );
+	}
+
+	return true;
+}
+
+bool ProjectLoader::SaveLoadedProject( VORTEK_CORE::SaveProject& save )
+{
+	if ( !fs::exists( save.sProjectFilePath ) )
+	{
+		VORTEK_ERROR( "Failed to save project file for [{}] at path [{}]", save.sProjectName, save.sProjectFilePath );
+		return false;
+	}
+
+	std::unique_ptr<JSONSerializer> pSerializer{ nullptr };
+
+	try
+	{
+		pSerializer = std::make_unique<JSONSerializer>( save.sProjectFilePath );
+	}
+	catch ( const std::exception& ex )
+	{
+		VORTEK_ERROR( "Failed to save tilemap [{}] - [{}]", save.sProjectFilePath, ex.what() );
+		return false;
+	}
+
+	auto& assetManager = ASSET_MANAGER();
+	auto& sceneMananger = SCENE_MANAGER();
+
+	if ( !sceneMananger.SaveAllScenes() )
+	{
+		VORTEK_ERROR( "Failed to save all scenes." );
+	}
+	auto& coreGlobals = CORE_GLOBALS();
+	pSerializer->StartDocument();
+	pSerializer->StartNewObject( "warnings" );
+	pSerializer->AddKeyValuePair( "warning", std::string{ "THIS FILE IS ENGINE GENERATED." } )
+		.AddKeyValuePair( "warning", std::string{ "DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING." } );
+	pSerializer->EndObject(); // Warnings
+
+	pSerializer->StartNewObject( "project_data" )
+		.AddKeyValuePair( "project_name", save.sProjectName )
+		.AddKeyValuePair( "main_lua_script", save.sMainLuaScript.substr( save.sMainLuaScript.find( SCRIPTS ) ) )
+		.AddKeyValuePair( "game_type", coreGlobals.GetGameTypeStr( coreGlobals.GetGameType() ) )
+		.StartNewObject( "assets" );
+
+	pSerializer->StartNewArray( "textures" );
+	for ( const auto& [ sName, pTexture ] : assetManager.GetAllTextures() )
+	{
+		if ( !pTexture || pTexture->IsEditorTexture() )
+			continue;
+
+		// Get Relative to assets path
+		std::string sTexturePath = pTexture->GetPath().substr( pTexture->GetPath().find( ASSETS ) );
+		VORTEK_ASSERT( !sTexturePath.empty() );
+
+		pSerializer->StartNewObject()
+			.AddKeyValuePair( "name", sName )
+			.AddKeyValuePair( "path", sTexturePath )
+			.AddKeyValuePair( "bPixelArt", pTexture->GetType() == VORTEK_RENDERING::Texture::TextureType::PIXEL )
+			.AddKeyValuePair( "bTilemap", pTexture->IsTileset() )
+			.EndObject();
+	}
+	pSerializer->EndArray(); // Textures
+
+	pSerializer->StartNewArray( "soundfx" );
+	for ( const auto& [ sName, pSound ] : assetManager.GetAllSoundFx() )
+	{
+		std::string sSoundFxPath = pSound->GetFilename().substr( pSound->GetFilename().find( ASSETS ) );
+		pSerializer->StartNewObject()
+			.AddKeyValuePair( "name", sName )
+			.AddKeyValuePair( "path", sSoundFxPath )
+			.EndObject();
+	}
+	pSerializer->EndArray(); // SoundFx
+
+	pSerializer->StartNewArray( "music" );
+	for ( const auto& [ sName, pMusic ] : assetManager.GetAllMusic() )
+	{
+		std::string sMusicPath = pMusic->GetFilename().substr( pMusic->GetFilename().find( ASSETS ) );
+		pSerializer->StartNewObject()
+			.AddKeyValuePair( "name", sName )
+			.AddKeyValuePair( "path", sMusicPath )
+			.EndObject();
+	}
+	pSerializer->EndArray(); // Music
+
+	pSerializer->StartNewArray( "scenes" );
+
+	for ( const auto& [ sName, pScene ] : sceneMananger.GetAllScenes() )
+	{
+		std::string sScenePath = pScene->GetSceneDataPath().substr( pScene->GetSceneDataPath().find( ASSETS ) );
+		pSerializer->StartNewObject()
+			.AddKeyValuePair( "name", sName )
+			.AddKeyValuePair( "sceneData", sScenePath )
+			.EndObject();
+	}
+	pSerializer->EndArray(); // Scenes
+
+	pSerializer->StartNewArray( "prefabs" );
+
+	for ( const auto& [ sName, pPrefab ] : assetManager.GetAllPrefabs() )
+	{
+		std::string sFilepath = pPrefab->GetFilepath().substr( pPrefab->GetFilepath().find( ASSETS ) );
+		pSerializer->StartNewObject().AddKeyValuePair( "name", sName ).AddKeyValuePair( "path", sFilepath ).EndObject();
+	}
+
+	pSerializer->EndArray(); // Prefabs
+
+	pSerializer->EndObject(); // Assets
+	pSerializer->StartNewObject( "physics" )
+		.AddKeyValuePair( "enabled", coreGlobals.IsPhysicsEnabled() )
+		.AddKeyValuePair( "gravity", coreGlobals.GetGravity() )
+		.AddKeyValuePair( "velocityIterations", coreGlobals.GetVelocityIterations() )
+		.AddKeyValuePair( "positionIterations", coreGlobals.GetPositionIterations() )
+		.EndObject();		  // Physics
+	pSerializer->EndObject(); // Project Data
+
+	return pSerializer->EndDocument();
+}
+
+bool ProjectLoader::CreateProjectFile( const std::string& sProjectName, const std::string& sFilepath )
+{
+	if ( !fs::is_directory( sFilepath ) )
+	{
+		VORTEK_ERROR( "Failed to create project file for [{}] at path [{}]", sProjectName, sFilepath );
+		return false;
+	}
+
+	if ( !CreateMainLuaScript( sProjectName, sFilepath ) )
+	{
+		VORTEK_ERROR( "Failed to create main lua script" );
+		return false;
+	}
+
+	std::string sProjectFile{ sFilepath + sProjectName + PRJ_FILE_EXT };
+
+	std::unique_ptr<JSONSerializer> pSerializer{ nullptr };
+
+	try
+	{
+		pSerializer = std::make_unique<JSONSerializer>( sProjectFile );
+	}
+	catch ( const std::exception& ex )
+	{
+		VORTEK_ERROR( "Failed to save tilemap [{}] - [{}]", sProjectFile, ex.what() );
+		return false;
+	}
+
+	// We want to grab the project file path
+	auto& pSaveFile = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
+	pSaveFile->sProjectFilePath = sProjectFile;
+
+	pSerializer->StartDocument();
+	pSerializer->StartNewObject( "warnings" );
+	pSerializer->AddKeyValuePair( "warning", std::string{ "THIS FILE IS ENGINE GENERATED." } )
+		.AddKeyValuePair( "warning", std::string{ "DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING." } );
+	pSerializer->EndObject(); // Warnings
+
+	pSerializer->StartNewObject( "project_data" )
+		.AddKeyValuePair( "project_name", sProjectName )
+		.AddKeyValuePair( "main_lua_file",
+						  pSaveFile->sMainLuaScript.substr( pSaveFile->sMainLuaScript.find( SCRIPTS ) ) )
+		.AddKeyValuePair( "game_type", std::string{ "No Type" } )
+		.StartNewObject( "assets" )
+		.StartNewArray( "textures" )
+		.EndArray() // Textures
+		.StartNewArray( "soundfx" )
+		.EndArray() // SoundFx
+		.StartNewArray( "music" )
+		.EndArray() // Music
+		.StartNewArray( "scenes" )
+		.EndArray()	 // Scenes
+		.EndObject() // Assets
+		.StartNewObject( "physics" )
+		.AddKeyValuePair( "enabled", true )
+		.AddKeyValuePair( "gravity", 9.8f )
+		.AddKeyValuePair( "velocityIterations", 8 )
+		.AddKeyValuePair( "positionIterations", 10 )
+		.EndObject();		  // Physics
+	pSerializer->EndObject(); // Project Data
+
+	return pSerializer->EndDocument();
+}
+
+bool ProjectLoader::CreateMainLuaScript( const std::string& sProjectName, const std::string& sFilepath )
+{
+	std::string sMainLuaFile =
+		std::format( "{}{}{}{}{}main.lua", sFilepath, "content", PATH_SEPARATOR, "scripts", PATH_SEPARATOR );
+
+	auto pLuaSerializer = std::make_unique<LuaSerializer>( sMainLuaFile );
+	VORTEK_ASSERT( pLuaSerializer );
+
+	// Save the main lua file path
+	MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>()->sMainLuaScript = sMainLuaFile;
+
+	pLuaSerializer->AddBlockComment( "\tMain Lua script. This is needed to run all scripts in the editor"
+									 "\n\tGENERATED BY THE ENGINE ON PROJECT CREATION. DON'T CHANGE UNLESS "
+									 "\n\tYOU KNOW WHAT YOU ARE DOING!" );
+
+	pLuaSerializer->AddComment( "The engine looks for these two functions." )
+		.AddComment( "Please add your code inside of the update and render functions as needed." );
+
+	pLuaSerializer->StartNewTable( "main" )
+		.StartNewTable( "1", true, true )
+		.AddKeyValuePair( "update", "function() end", true, true )
+		.EndTable()
+		.StartNewTable( "2", true, true )
+		.AddKeyValuePair( "render", "function() end", true, true )
+		.EndTable()
+		.EndTable();
+
+	return pLuaSerializer->FinishStream();
+}
 
 } // namespace VORTEK_EDITOR

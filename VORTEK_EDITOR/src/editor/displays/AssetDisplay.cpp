@@ -6,10 +6,14 @@
 #include "Core/Resources/AssetManager.h"
 #include "Logger/Logger.h"
 
-#include "../utilities/EditorUtilities.h"
-#include "../utilities/imgui/ImGuiUtils.h"
-#include "../utilities/fonts/IconsFontAwesome5.h"
-#include "../scene/SceneManager.h"
+#include "editor/utilities/EditorUtilities.h"
+#include "editor/utilities/imgui/ImGuiUtils.h"
+#include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "editor/scene/SceneManager.h"
+#include "editor/loaders/ProjectLoader.h"
+
+#include "Core/CoreUtilities/Prefab.h"
+#include "Core/CoreUtilities/SaveProject.h"
 
 #include <imgui.h>
 
@@ -47,6 +51,11 @@ namespace VORTEK_EDITOR
 		{
 			m_eSelectedType = VORTEK_UTIL::AssetType::SCENE;
 			m_sDragSource = std::string{ DROP_SCENE_SRC };
+		}
+		else if (m_sSelectedType == "PREFABS")
+		{
+			m_eSelectedType = VORTEK_UTIL::AssetType::PREFAB;
+			m_sDragSource = std::string{ DROP_PREFAB_SRC };
 		}
 		else
 		{
@@ -91,6 +100,20 @@ namespace VORTEK_EDITOR
 
 			break;
 		}
+		case VORTEK_UTIL::AssetType::PREFAB: {
+			if (auto pPrefab = assetManager.GetPrefab(sAssetName))
+			{
+				if (auto& sprite = pPrefab->GetPrefabbedEntity().sprite)
+				{
+					if (auto pTexture = assetManager.GetTexture(sprite->sTextureName))
+					{
+						return pTexture->GetID();
+					}
+				}
+			}
+
+			break;
+		}
 		}
 
 		return 0;
@@ -103,12 +126,11 @@ namespace VORTEK_EDITOR
 
 		if (m_eSelectedType == VORTEK_UTIL::AssetType::SCENE)
 		{
-			// TODO: Change the scene name
+			return SCENE_MANAGER().ChangeSceneName(sOldName, sNewName);
 		}
 		else
 		{
-			auto& assetManager = MAIN_REGISTRY().GetAssetManager();
-			return assetManager.ChangeAssetName(sOldName, sNewName, m_eSelectedType);
+			return ASSET_MANAGER().ChangeAssetName(sOldName, sNewName, m_eSelectedType);
 		}
 
 		VORTEK_ASSERT(false && "How did it get here??");
@@ -127,7 +149,8 @@ namespace VORTEK_EDITOR
 
 		if (m_eSelectedType == VORTEK_UTIL::AssetType::SCENE)
 		{
-			// TODO: Check is scene name already exists
+			if (SCENE_MANAGER().CheckHasScene(sCheckName))
+				bHasAsset = true;
 		}
 		else
 		{
@@ -150,16 +173,40 @@ namespace VORTEK_EDITOR
 
 		if (ImGui::Selectable("delete"))
 		{
+			bool bSuccess{ false };
 			if (m_eSelectedType == VORTEK_UTIL::AssetType::SCENE)
 			{
-				// TODO: Check is scene name already exists
+				if (!SCENE_MANAGER().DeleteScene(sAssetName))
+				{
+					VORTEK_ERROR("Failed to delete scene [{}]", sAssetName);
+				}
+
+				bSuccess = true;
 			}
 			else
 			{
-				auto& assetManager = MAIN_REGISTRY().GetAssetManager();
-				if (!assetManager.DeleteAsset(sAssetName, m_eSelectedType))
+				if (!ASSET_MANAGER().DeleteAsset(sAssetName, m_eSelectedType))
 				{
-					VORTEK_ERROR("Failed to delete asset {}.", sAssetName);
+					VORTEK_ERROR("Failed to delete asset [{}].", sAssetName);
+				}
+
+				bSuccess = true;
+			}
+
+			// Whenever an asset is deleted, we want to save the project.
+			// There should be some sort of message to the user before deleting??
+			if (bSuccess)
+			{
+				auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
+				VORTEK_ASSERT(pSaveProject && "Save Project must exist!");
+				// Save entire project
+				ProjectLoader pl{};
+				if (!pl.SaveLoadedProject(*pSaveProject))
+				{
+					VORTEK_ERROR("Failed to save project [{}] at file [{}] after deleting asset [{}].",
+						pSaveProject->sProjectName,
+						pSaveProject->sProjectFilePath,
+						sAssetName);
 				}
 			}
 		}
@@ -177,7 +224,9 @@ namespace VORTEK_EDITOR
 			assetNames = SCENE_MANAGER().GetSceneNames();
 		}
 		else
+		{
 			assetNames = assetManager.GetAssetKeyNames(m_eSelectedType);
+		}
 
 		if (assetNames.empty())
 			return;
@@ -224,8 +273,29 @@ namespace VORTEK_EDITOR
 
 					std::string assetBtn = "##asset" + std::to_string(id);
 
-					ImGui::ImageButton(
-						assetBtn.c_str(), (ImTextureID)(intptr_t)textureID, ImVec2{ m_AssetSize, m_AssetSize });
+					if (m_eSelectedType == VORTEK_UTIL::AssetType::PREFAB)
+					{
+						// TODO: We are currently assuming that all prefabs will have a sprite component.
+						// We need to create an engine/editor texture that will be used in case of the prefab
+						// not having a sprite.
+						if (auto pPrefab = assetManager.GetPrefab(*assetItr))
+						{
+							auto& sprite = pPrefab->GetPrefabbedEntity().sprite;
+							if (textureID && sprite)
+							{
+								ImGui::ImageButton(assetBtn.c_str(),
+									(ImTextureID)(intptr_t)textureID,
+									ImVec2{ m_AssetSize, m_AssetSize },
+									ImVec2{ sprite->uvs.u, sprite->uvs.v },
+									ImVec2{ sprite->uvs.uv_width, sprite->uvs.uv_height });
+							}
+						}
+					}
+					else
+					{
+						ImGui::ImageButton(
+							assetBtn.c_str(), (ImTextureID)(intptr_t)textureID, ImVec2{ m_AssetSize, m_AssetSize });
+					}
 
 					if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0) && !m_bRename)
 						m_SelectedID = id;
@@ -295,6 +365,12 @@ namespace VORTEK_EDITOR
 
 			ImGui::EndTable();
 		}
+
+		// If we are clicking on the display and no item, we want to reset the selection.
+		if (!ImGui::IsAnyItemHovered() && ImGui::IsMouseClicked(0) && !m_bRename)
+		{
+			m_SelectedID = -1;
+		}
 	}
 
 	AssetDisplay::AssetDisplay()
@@ -303,10 +379,10 @@ namespace VORTEK_EDITOR
 		, m_bWindowSelected{ false }
 		, m_bWindowHovered{ false }
 		, m_bOpenAddAssetModal{ false }
-		, m_sSelectedAssetName{ "" }
+		, m_sSelectedAssetName{}
 		, m_sSelectedType{ "TEXTURES" }
-		, m_sDragSource{ "" }
-		, m_sRenameBuf{ "" }
+		, m_sDragSource{}
+		, m_sRenameBuf{}
 		, m_eSelectedType{ VORTEK_UTIL::AssetType::TEXTURE }
 		, m_AssetSize{ DEFAULT_ASSET_SIZE }
 		, m_SelectedID{ -1 }
@@ -316,7 +392,7 @@ namespace VORTEK_EDITOR
 
 	void AssetDisplay::Draw()
 	{
-		if (!ImGui::Begin("Assets"))
+		if (!ImGui::Begin(ICON_FA_TOOLBOX " Assets"))
 		{
 			ImGui::End();
 			return;
@@ -326,7 +402,7 @@ namespace VORTEK_EDITOR
 
 		if (ImGui::BeginChild("##AssetTable",
 			ImVec2{ 0.f, 0.f },
-			NULL,
+			ImGuiChildFlags_None,
 			ImGuiWindowFlags_AlwaysVerticalScrollbar | ImGuiWindowFlags_ChildWindow))
 		{
 			m_bWindowHovered = ImGui::IsWindowHovered();
@@ -363,6 +439,7 @@ namespace VORTEK_EDITOR
 		auto& mainRegistry = MAIN_REGISTRY();
 		auto& assetManager = mainRegistry.GetAssetManager();
 
+		ImGui::Separator();
 		ImGui::PushStyleColor(ImGuiCol_Button, BLACK_TRANSPARENT);
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BLACK_TRANSPARENT);
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, BLACK_TRANSPARENT);
@@ -393,4 +470,5 @@ namespace VORTEK_EDITOR
 
 		ImGui::Separator();
 	}
+
 } // namespace VORTEK_EDITOR

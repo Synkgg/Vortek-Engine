@@ -141,7 +141,6 @@ namespace VORTEK_EDITOR
 
 	EditorStyleToolDisplay::EditorStyleToolDisplay()
 	{
-
 	}
 
 	void EditorStyleToolDisplay::Draw()

@@ -6,11 +6,9 @@ namespace ImGui
 
 	void InitDefaultStyles()
 	{
-		// TODO: Add this to a custom init file that we can change/adjust easier.
+		ImGui::StyleColorsDark();
 
-		// Get the styles
 		ImGuiStyle& style = ImGui::GetStyle();
-
 		style.TabRounding = 4.f;
 		style.TabBorderSize = 1.f;
 		style.FrameBorderSize = 0.1f;
@@ -29,19 +27,66 @@ namespace ImGui
 		style.ItemInnerSpacing.y = 4.f;
 		style.ButtonTextAlign.x = 0.5f;
 		style.ButtonTextAlign.y = 0.5f;
+		style.ItemInnerSpacing.x = 2.f;
 
-		// TODO: Adjust colors
+		auto& colors = ImGui::GetStyle().Colors;
+		colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
+
+		// Headers
+		colors[ImGuiCol_Header] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+		colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
+		colors[ImGuiCol_HeaderActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+
+		// Buttons
+		colors[ImGuiCol_Button] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+		colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
+		colors[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+
+		// Frame BG
+		colors[ImGuiCol_FrameBg] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+		colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
+		colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+
+		// Tabs
+		colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colors[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.3805f, 0.381f, 1.0f };
+		colors[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.2805f, 0.281f, 1.0f };
+		colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+
+		// Title
+		colors[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 	}
 
-	void ColoredLabel(const std::string& label, const ImVec2& size, const ImVec4& color)
+	void ColoredLabel(const std::string& label, const ImVec2& size, const ImVec4& color, const bool bold)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Button, color);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
-		ImGui::Button(label.c_str(), size);
-		ImGui::PopStyleColor();
-		ImGui::PopStyleColor();
-		ImGui::PopStyleColor();
+		ImGuiIO& io = ImGui::GetIO();
+		auto boldFont = io.Fonts->Fonts[0];
+
+		if(!bold)
+		{			ImGui::PushFont(boldFont);
+			ImGui::PushStyleColor(ImGuiCol_Button, color);
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+			ImGui::Button(label.c_str(), size);
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+		}
+		else
+		{
+			ImGui::PushFont(boldFont);
+			ImGui::PushStyleColor(ImGuiCol_Button, color);
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+			ImGui::Button(label.c_str(), size);
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			ImGui::PopFont();
+		}
 	}
 
 	void OffsetTextX(const std::string& label, float position)
@@ -63,6 +108,7 @@ namespace ImGui
 		ImGui::SameLine();
 		ImGui::SetCursorPosX(spaceSize);
 	}
+
 	void ActiveButton(const char* label, ImVec2 size)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, BUTTON_HELD);
