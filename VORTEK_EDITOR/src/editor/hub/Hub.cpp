@@ -28,7 +28,7 @@
 namespace fs = std::filesystem;
 
 constexpr ImVec2 BUTTON_SIZE = ImVec2{ 100.f, 25.f };
-constexpr ImVec2 PROJECT_BUTTON_SIZE = ImVec2{ 400.f, 115.f };
+constexpr ImVec2 PROJECT_BUTTON_SIZE = ImVec2{ 400.f, 135.f };
 
 std::vector<VORTEK_EDITOR::RecentProject> m_RecentProjects;
 const std::string RECENT_PROJECTS_FILE = "recent_projects.txt";
@@ -282,16 +282,75 @@ void Hub::DrawOpenProject()
 		{
 			ImGui::PushID( project.path.c_str() );
 			ImGui::PushStyleColor( ImGuiCol_ChildBg, IM_COL32( 40, 40, 40, 255 ) );
-			ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 10, 10 ) );
 
 			ImGui::SetCursorPosX( ( scrollWidth - PROJECT_BUTTON_SIZE.x ) * 0.5f );
 
 			if ( ImGui::BeginChild( "ProjectTile", PROJECT_BUTTON_SIZE, true ) )
 			{
-				ImGui::Text( "%s", fs::path( project.path ).stem().string().c_str() );
-				ImGui::TextDisabled( "Last edited: %s", project.lastOpened.c_str() );
+				ImVec2 childStart = ImGui::GetCursorScreenPos();
 
-				ImGui::SetCursorPosY( ImGui::GetCursorPosY() + 15 );
+				// Title first, so we get its position
+				ImGui::Text( "%s", fs::path( project.path ).stem().string().c_str() );
+				ImVec2 titleStart = ImGui::GetItemRectMin();
+
+				// Position red X to the left of the edge (more spacing)
+				ImVec2 alignedCloseBtnPos = ImVec2( childStart.x + PROJECT_BUTTON_SIZE.x - 45, // ← More to the left
+													titleStart.y );
+				ImGui::SetCursorScreenPos( alignedCloseBtnPos );
+
+				ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.7f, 0.1f, 0.1f, 1.0f ) );
+				ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 1.0f, 0.2f, 0.2f, 1.0f ) );
+				ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( 0.8f, 0.0f, 0.0f, 1.0f ) );
+
+				ImGui::PushID( "close_btn" );
+				if ( ImGui::Button( "X", ImVec2( 20, 20 ) ) )
+				{
+					// Remove from list
+					m_RecentProjects.erase( std::remove_if( m_RecentProjects.begin(),
+															m_RecentProjects.end(),
+															[ & ]( const VORTEK_EDITOR::RecentProject& p ) {
+																return p.path == project.path;
+															} ),
+											m_RecentProjects.end() );
+
+					std::ofstream file( RECENT_PROJECTS_FILE, std::ios::trunc );
+					for ( const auto& entry : m_RecentProjects )
+						file << entry.path << "|" << entry.lastOpened << "\n";
+
+					ImGui::PopID();
+					ImGui::PopStyleColor( 3 );
+					ImGui::EndChild();
+					continue;
+				}
+				ImGui::PopID();
+
+				if ( ImGui::IsItemHovered() )
+					ImGui::SetTooltip( "Remove from recent projects" );
+
+				ImGui::PopStyleColor( 3 );
+
+				ImGui::TextDisabled( "Last edited: %s", ConvertTo12HourFormat( project.lastOpened ).c_str() );
+
+				fs::path fullPath( project.path );
+				std::string parentDir = fullPath.has_parent_path() ? fullPath.parent_path().filename().string() : "";
+				std::string folderName = fullPath.filename().string();
+
+				std::string displayPath;
+				if ( !parentDir.empty() )
+					displayPath = parentDir + " / " + folderName;
+				else
+					displayPath = folderName;
+
+				ImGui::PushStyleColor( ImGuiCol_Text, ImGui::GetStyleColorVec4( ImGuiCol_TextDisabled ) );
+				ImGui::Text( "%s", displayPath.c_str() );
+				ImGui::PopStyleColor();
+
+				if ( ImGui::IsItemHovered() )
+				{
+					ImGui::SetTooltip( "%s", fullPath.string().c_str() );
+				}
+
+				ImGui::SetCursorPosY( ImGui::GetCursorPosY() + 10 );
 				if ( ImGui::Button( "Open", ImVec2( 100, 35 ) ) )
 				{
 					TryOpenProject( project.path );
@@ -299,7 +358,6 @@ void Hub::DrawOpenProject()
 			}
 			ImGui::EndChild();
 
-			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();
 			ImGui::PopID();
 			ImGui::Spacing();
@@ -437,6 +495,29 @@ void Hub::SaveRecentProject( const std::string& path )
 	std::ofstream file( RECENT_PROJECTS_FILE, std::ios::trunc );
 	for ( const auto& entry : m_RecentProjects )
 		file << entry.path << "|" << entry.lastOpened << "\n";
+}
+
+std::string Hub::ConvertTo12HourFormat( const std::string& time )
+{
+	// Expecting format: "YYYY-MM-DD HH:MM:SS"
+	if ( time.size() < 16 )
+		return time; // invalid format, just return original
+
+	int hour = std::stoi( time.substr( 11, 2 ) );
+	int minute = std::stoi( time.substr( 14, 2 ) );
+
+	std::string ampm = ( hour >= 12 ) ? "PM" : "AM";
+	hour = hour % 12;
+	if ( hour == 0 )
+		hour = 12;
+
+	std::ostringstream oss;
+	oss << time.substr( 0, 11 ); // date part "YYYY-MM-DD "
+	oss << std::setw( 2 ) << std::setfill( '0' ) << hour << ":";
+	oss << std::setw( 2 ) << std::setfill( '0' ) << minute << " ";
+	oss << ampm;
+
+	return oss.str();
 }
 
 
