@@ -6,6 +6,8 @@
 #include "Core/Resources/AssetManager.h"
 #include "Core/ECS/Registry.h"
 
+#include <Rendering/Essentials/Font.h>
+
 using namespace VORTEK_CORE::ECS;
 
 namespace VORTEK_CORE

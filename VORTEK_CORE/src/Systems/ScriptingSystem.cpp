@@ -20,7 +20,7 @@
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
 #include "Core/CoreUtilities/FollowCamera.h"
-#include "Core/CoreUtilities/SaveProject.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 
 #include "Core/States/State.h"
 #include "Core/States/StateStack.h"
@@ -38,6 +38,10 @@
 #include "VORTEKUtilities/Tween.h"
 
 #include "Core/Scene/Scene.h"
+
+#include "Rendering/Essentials/Texture.h"
+#include "Rendering/Essentials/Shader.h"
+#include "Rendering/Essentials/Font.h"
 
 #include <filesystem>
 
@@ -104,30 +108,22 @@ bool ScriptingSystem::LoadMainScript( const std::string& sMainLuaFile, VORTEK_CO
 	return true;
 }
 
-bool ScriptingSystem::LoadMainScript( const VORTEK_CORE::SaveProject& save, VORTEK_CORE::ECS::Registry& registry,
+bool ScriptingSystem::LoadMainScript( VORTEK_CORE::ProjectInfo& projectInfo, VORTEK_CORE::ECS::Registry& registry,
 									  sol::state& lua )
 {
-	std::error_code ec;
-	fs::path mainLuaPath = { save.sMainLuaScript };
-
-	if ( !fs::exists( mainLuaPath, ec ) )
-	{
-		VORTEK_ERROR( "Failed to load main lua script: {}", ec.message() );
-		return false;
-	}
-
-	fs::path parentPath = mainLuaPath.parent_path();
-	fs::path scriptListPath = parentPath / "script_list.lua";
-	fs::path contentPath = fs::path{ save.sProjectPath } / "content";
+	auto optScriptListPath = projectInfo.GetScriptListPath();
+	VORTEK_ASSERT( optScriptListPath && "Script List Path not setup correctly in project info." );
+	auto optContentPath = projectInfo.TryGetFolderPath( VORTEK_CORE::EProjectFolderType::Content );
+	VORTEK_ASSERT( optContentPath && "Content Path not setup correctly in project info." );
 
 	// Try to load script list files
-	if ( fs::exists( scriptListPath ) && fs::exists( contentPath ) )
+	if ( fs::exists( *optScriptListPath ) && fs::exists( *optContentPath ) )
 	{
 		try
 		{
 			sol::state scriptLua;
-			auto result = scriptLua.safe_script_file( scriptListPath.string() );
-			if (!result.valid())
+			auto result = scriptLua.safe_script_file( optScriptListPath->string() );
+			if ( !result.valid() )
 			{
 				sol::error err = result;
 				throw err;
@@ -140,33 +136,36 @@ bool ScriptingSystem::LoadMainScript( const VORTEK_CORE::SaveProject& save, VORT
 				return false;
 			}
 
-			for (const auto& [_, script] : *scriptList)
+			for ( const auto& [ _, script ] : *scriptList )
 			{
 				try
 				{
-					fs::path scriptPath = contentPath / script.as<std::string>();
+					fs::path scriptPath = *optContentPath / script.as<std::string>();
 					auto result = lua.safe_script_file( scriptPath.string() );
-					if (!result.valid())
+					if ( !result.valid() )
 					{
 						sol::error error = result;
 						throw error;
 					}
 				}
-				catch (const sol::error& error)
+				catch ( const sol::error& error )
 				{
 					VORTEK_ERROR( "Failed to load script: {}, Error: {}", script.as<std::string>(), error.what() );
 					return false;
 				}
 			}
 		}
-		catch (const sol::error& error)
+		catch ( const sol::error& error )
 		{
 			VORTEK_ERROR( "Error Loading script_list.lua: {}", error.what() );
 			return false;
 		}
 	}
 
-	return LoadMainScript(save.sMainLuaScript, registry, lua);
+	auto optMainLuaScript = projectInfo.GetMainLuaScriptPath();
+	VORTEK_ASSERT( optMainLuaScript && "Main lua script has not been set correctly in project info." );
+
+	return LoadMainScript( optMainLuaScript->string(), registry, lua );
 }
 
 void ScriptingSystem::Update( VORTEK_CORE::ECS::Registry& registry )

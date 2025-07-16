@@ -45,10 +45,10 @@ function TriggerSystem:Update()
 end
 
 function TriggerSystem:OnPlayerTriggered(trigger, player)
-	log("%s has been activated by %s", trigger.group, player.tag)
+	S2D_log("%s has been activated by %s", trigger.group, player.tag)
 	g_DebounceTimer:start()
 	local playerEntity = Entity(player.entityID)
-	local physics = playerEntity:get_component(PhysicsComponent)
+	local physics = playerEntity:get_component(PhysicsComp)
 	physics:set_transform(vec2(16, 416))
 	physics:linear_impulse(vec2(0, 5))
 end

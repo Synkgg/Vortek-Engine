@@ -9,14 +9,8 @@
 #include <atomic>
 #include <thread>
 
-#include <Rendering/Essentials/Shader.h>
-#include <Rendering/Essentials/Texture.h>
-#include <Rendering/Essentials/Font.h>
-#include <Sounds/Essentials/Music.h>
-#include <Sounds/Essentials/SoundFX.h>
-
-#include "Core/ECS/Registry.h"
 #include <sol/sol.hpp>
+#include <SDL_mixer.h>
 
 namespace VORTEK_UTIL
 {
@@ -27,6 +21,19 @@ namespace VORTEK_CORE
 {
 class Prefab;
 }
+
+namespace VORTEK_RENDERING
+{
+class Texture;
+class Shader;
+class Font;
+} // namespace VORTEK_RENDERING
+
+namespace VORTEK_SOUNDS
+{
+class Music;
+class SoundFX;
+} // namespace VORTEK_SOUNDS
 
 namespace VORTEK_RESOURCES
 {
@@ -140,11 +147,30 @@ class AssetManager
 	bool AddMusic( const std::string& musicName, const std::string& filepath );
 
 	/*
+	 * @brief Checks to see if the Music exists, and if not, creates and loads the Music into the
+	 * asset manager.
+	 * @param An std::string for the Music name to be use as the key.
+	 * @param const unsigned char* to the music data
+	 * @param size_t The size of the music sent in.
+	 * @return Returns true if the Music was created and loaded successfully, false otherwise.
+	 */
+	bool AddMusicFromMemory( const std::string& musicName, const unsigned char* musicData, size_t dataSize );
+
+	/*
 	 * @brief Checks to see if the music exists based on the name and returns shared_ptr<Music>.
 	 * @param An std::string for the music name to lookup.
 	 * @return Returns an std::shared_ptr<Music> if it exists, else returns nullptr
 	 */
 	std::shared_ptr<VORTEK_SOUNDS::Music> GetMusic( const std::string& musicName );
+
+
+	/*
+	 * @brief Detects the audio format of an in-memory data buffer.
+	 * @param audioData pointer to the beginning of the audio data in memory.
+	 * @param dataSize Size of the audio data buffer in bytes.
+	 * @return An enum representing the audio format. (e.g. MUS_WAV, MUS_MP3, MUS_OGG)
+	 */
+	Mix_MusicType DetectAudioFormat( const unsigned char* audioData, size_t dataSize );
 
 	/*
 	 * @brief Checks to see if the SoundFx exists, and if not, creates and loads the SoundFx into the
@@ -154,6 +180,16 @@ class AssetManager
 	 * @return Returns true if the Soundfx was created and loaded successfully, false otherwise.
 	 */
 	bool AddSoundFx( const std::string& soundFxName, const std::string& filepath );
+
+	/*
+	 * @brief Checks to see if the SoundFx exists, and if not, creates and loads the SoundFx into the
+	 * asset manager.
+	 * @param An std::string for the SoundFx name to be use as the key.
+	 * @param const unsigned char* to the soundfx data
+	 * @param size_t The size of the soundfx sent in.
+	 * @return Returns true if the Soundfx was created and loaded successfully, false otherwise.
+	 */
+	bool AddSoundFxFromMemory( const std::string& soundFxName, const unsigned char* soundFxData, size_t dataSize );
 
 	/*
 	 * @brief Checks to see if the soundFx exists based on the name and returns shared_ptr<SoundFX>.
@@ -186,7 +222,10 @@ class AssetManager
 		return m_mapFonts;
 	}
 
-	inline const std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::Music>>& GetAllMusic() const { return m_mapMusic; }
+	inline const std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::Music>>& GetAllMusic() const
+	{
+		return m_mapMusic;
+	}
 
 	inline const std::map<std::string, std::shared_ptr<VORTEK_CORE::Prefab>>& GetAllPrefabs() const
 	{

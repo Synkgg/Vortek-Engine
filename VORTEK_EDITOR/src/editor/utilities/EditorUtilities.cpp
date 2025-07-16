@@ -2,58 +2,118 @@
 #include <filesystem>
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 
 namespace fs = std::filesystem;
 
+// clang-format off
+#ifdef _WIN32
+static const std::unordered_set<std::string> g_setReservedSystemDirs
+{
+	"c:\\windows",
+	"c:\\program files",
+	"c:\\program files (x86)",
+	"c:\\users\\default",
+	"c:\\users\\public",
+	"c:\\sysyem32"
+};
+#else
+static const std::unordered_set<std::string> g_setReservedSystemDirs
+{
+	"/proc",
+	"/sys",
+	"/dev",
+	"/run",
+	"/boot",
+	"/lib",
+	"/lib64"
+};
+#endif
+// clang-format on
+
 namespace VORTEK_EDITOR
 {
-	EFileType GetFileType(const std::string& sPath)
+EFileType GetFileType( const std::string& sPath )
+{
+	fs::path path{ sPath };
+
+	if ( !fs::exists( path ) )
+		return EFileType::INVALID_TYPE;
+
+	if ( fs::is_directory( path ) )
+		return EFileType::FOLDER;
+
+	std::string sExt = path.extension().string();
+	if ( sExt == ".wav" || sExt == ".mp3" || sExt == ".ogg" )
+		return EFileType::SOUND;
+	else if ( sExt == ".png" || sExt == ".mp3" || sExt == ".ogg" )
+		return EFileType::IMAGE;
+	else if ( sExt == ".lua" || sExt == ".cpp" || sExt == ".h" || sExt == ".txt" )
+		return EFileType::TXT;
+	else
+		return EFileType::TXT;
+}
+
+std::vector<std::string> SplitStr( const std::string& str, char delimiter )
+{
+	std::vector<std::string> tokens;
+	size_t start{ 0 };
+	size_t end{ str.find( delimiter ) };
+
+	while ( end != std::string::npos )
 	{
-		fs::path path{ sPath };
+		tokens.push_back( str.substr( start, end - start ) );
+		start = end + 1;
+		end = str.find( delimiter, start );
+	}
+	tokens.push_back( str.substr( start ) );
+	return tokens;
+}
 
-		if (!fs::exists(path))
-			return EFileType::INVALID_TYPE;
+VORTEK_RENDERING::Texture* GetIconTexture( const std::string& sPath )
+{
+	auto& assetManager = ASSET_MANAGER();
+	switch ( GetFileType( sPath ) )
+	{
+	case EFileType::SOUND: return assetManager.GetTexture( "music_icon" ).get();
+	case EFileType::IMAGE: return assetManager.GetTexture( "image_icon" ).get();
+	case EFileType::TXT: return assetManager.GetTexture( "file_icon" ).get();
+	case EFileType::FOLDER: return assetManager.GetTexture( "folder_icon" ).get();
+	default: return nullptr;
+	}
+}
 
-		if (fs::is_directory(path))
-			return EFileType::FOLDER;
+bool IsReservedPathOrFile( const std::filesystem::path& path )
+{
+	std::string lowerPath = path.string();
+	std::ranges::transform( lowerPath, lowerPath.begin(), ::tolower );
+	return std::ranges::any_of( g_setReservedSystemDirs,
+								[ & ]( const auto& dir ) { return lowerPath.starts_with( dir ); } );
+}
 
-		std::string sExt = path.extension().string();
-		if (sExt == ".wav" || sExt == ".mp3" || sExt == ".ogg")
-			return EFileType::SOUND;
-		else if (sExt == ".png" || sExt == ".mp3" || sExt == ".ogg")
-			return EFileType::IMAGE;
-		else if (sExt == ".lua" || sExt == ".cpp" || sExt == ".h" || sExt == ".txt")
-			return EFileType::TXT;
-		else
-			return EFileType::TXT;
+bool IsDefaultProjectPathOrFile( const std::filesystem::path& path, const VORTEK_CORE::ProjectInfo& projectInfo )
+{
+	if ( fs::is_directory( path ) )
+	{
+		bool bIsProjectPath = std::ranges::any_of( projectInfo.GetProjectPaths(),
+												   [ & ]( const auto& pair ) { return pair.second == path; } );
+
+		if ( bIsProjectPath )
+			return true;
 	}
 
-	std::vector<std::string> SplitStr(const std::string& str, char delimiter)
+	if ( fs::is_regular_file( path ) )
 	{
-		std::vector<std::string> tokens;
-		size_t start{ 0 };
-		size_t end{ str.find(delimiter) };
+		auto optMainLuaScript = projectInfo.GetMainLuaScriptPath();
+		if ( optMainLuaScript && *optMainLuaScript == path )
+			return true;
 
-		while (end != std::string::npos)
-		{
-			tokens.push_back(str.substr(start, end - start));
-			start = end + 1;
-			end = str.find(delimiter, start);
-		}
-		tokens.push_back(str.substr(start));
-		return tokens;
+		auto optScriptList = projectInfo.GetScriptListPath();
+		if ( optScriptList && *optScriptList == path )
+			return true;
 	}
 
-	VORTEK_RENDERING::Texture* GetIconTexture(const std::string& sPath)
-	{
-		auto& assetManager = ASSET_MANAGER();
-		switch (GetFileType(sPath))
-		{
-		case EFileType::SOUND: return assetManager.GetTexture("music_icon").get();
-		case EFileType::IMAGE: return assetManager.GetTexture("image_icon").get();
-		case EFileType::TXT: return assetManager.GetTexture("file_icon").get();
-		case EFileType::FOLDER: return assetManager.GetTexture("folder_icon").get();
-		default: return nullptr;
-		}
-	}
+	return false;
+}
+
 } // namespace VORTEK_EDITOR

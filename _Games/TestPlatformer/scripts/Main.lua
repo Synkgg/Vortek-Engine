@@ -1,13 +1,10 @@
 -- Main Lua Script!
-RunScript("assets/scripts/platformer/script_list.lua")
+-- [[
+S2D_RunScript("assets/scripts/Platformer/script_list.lua")
 
-LoadScriptTable(ScriptList)
+S2D_LoadScriptTable(ScriptList)
 
 LoadAssets(AssetDefs)
-log("Reloaded")
-
---[[
-
 gFollowCam = nil 
 gCollisionEvent = nil 
 gTriggerSystem = nil 
@@ -19,9 +16,6 @@ gStateStack = StateStack()
 local title = TitleState:Create(gStateStack)
 gStateStack:change_state(title)
 --]]
-
-log("Running new change!")
-
 main = {
 	[1] = {
 		update = function()
@@ -32,7 +26,7 @@ main = {
 	},
 	[2] = {
 		render = function()
-			if gStateStack then
+			if gStateStack then 
 				gStateStack:render()
 			end
 		end

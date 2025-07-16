@@ -7,7 +7,7 @@ add_library(VORTEK_CORE
     "include/Core/CoreUtilities/FollowCamera.h"
     "src/CoreUtilities/FollowCamera.cpp"
 	"include/Core/CoreUtilities/EngineShaders.h"
-	"include/Core/CoreUtilities/SaveProject.h"
+	
 	"include/Core/CoreUtilities/Prefab.h"
 	"src/CoreUtilities/Prefab.cpp"
 
@@ -126,7 +126,7 @@ add_library(VORTEK_CORE
 	"src/Scene/Scene.cpp"
 	"include/Core/Scene/SceneManager.h"
 	"src/Scene/SceneManager.cpp"	
-)
+ "include/Core/CoreUtilities/ProjectInfo.h" "src/CoreUtilities/ProjectInfo.cpp")
 
 target_include_directories(
     VORTEK_CORE PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include

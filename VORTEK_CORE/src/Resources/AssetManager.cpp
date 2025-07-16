@@ -2,10 +2,17 @@
 #include "Core/Resources/fonts/default_fonts.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/CoreUtilities/Prefab.h"
+#include "Core/ECS/Registry.h"
 
 #include <Rendering/Essentials/TextureLoader.h>
 #include <Rendering/Essentials/ShaderLoader.h>
 #include <Rendering/Essentials/FontLoader.h>
+#include <Rendering/Essentials/Shader.h>
+#include <Rendering/Essentials/Texture.h>
+#include <Rendering/Essentials/Font.h>
+#include <Sounds/Essentials/Music.h>
+#include <Sounds/Essentials/SoundFX.h>
+
 #include <VORTEKUtilities/VORTEKUtilities.h>
 #include <Logger/Logger.h>
 
@@ -62,9 +69,9 @@ bool AssetManager::AddTexture( const std::string& textureName, const std::string
 	}
 
 	auto pTexture = VORTEK_RENDERING::TextureLoader::Create( pixelArt ? VORTEK_RENDERING::Texture::TextureType::PIXEL
-																	 : VORTEK_RENDERING::Texture::TextureType::BLENDED,
-															texturePath,
-															bTileset );
+																	  : VORTEK_RENDERING::Texture::TextureType::BLENDED,
+															 texturePath,
+															 bTileset );
 
 	if ( !pTexture )
 	{
@@ -80,8 +87,8 @@ bool AssetManager::AddTexture( const std::string& textureName, const std::string
 
 		fs::path path{ texturePath };
 		auto lastWrite = fs::last_write_time( path );
-		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											 [ & ]( const auto& params ) { return params.sFilepath == texturePath; } ) )
+		if ( VORTEK_UTIL::CheckContainsValue(
+				 m_FilewatchParams, [ & ]( const auto& params ) { return params.sFilepath == texturePath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = textureName,
 															  .sFilepath = texturePath,
@@ -160,7 +167,7 @@ bool AssetManager::AddFont( const std::string& fontName, const std::string& font
 		fs::path path{ fontPath };
 		auto lastWrite = fs::last_write_time( path );
 		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											 [ & ]( const auto& params ) { return params.sFilepath == fontPath; } ) )
+											  [ & ]( const auto& params ) { return params.sFilepath == fontPath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = fontName,
 															  .sFilepath = fontPath,
@@ -222,9 +229,9 @@ bool AssetManager::AddShader( const std::string& shaderName, const std::string& 
 	if ( !pShader )
 	{
 		VORTEK_ERROR( "Failed to load Shader [{0}] at vert path [{1}] and frag path [{2}]",
-					 shaderName,
-					 vertexPath,
-					 fragmentPath );
+					  shaderName,
+					  vertexPath,
+					  fragmentPath );
 		return false;
 	}
 
@@ -237,7 +244,7 @@ bool AssetManager::AddShader( const std::string& shaderName, const std::string& 
 		fs::path pathVert{ vertexPath };
 		auto lastWriteVert = fs::last_write_time( pathVert );
 		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											 [ & ]( const auto& params ) { return params.sFilepath == vertexPath; } ) )
+											  [ & ]( const auto& params ) { return params.sFilepath == vertexPath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = shaderName + "_vert",
 															  .sFilepath = vertexPath,
@@ -324,7 +331,7 @@ bool AssetManager::AddMusic( const std::string& musicName, const std::string& fi
 		fs::path path{ filepath };
 		auto lastWrite = fs::last_write_time( path );
 		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											 [ & ]( const auto& params ) { return params.sFilepath == filepath; } ) )
+											  [ & ]( const auto& params ) { return params.sFilepath == filepath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = musicName,
 															  .sFilepath = filepath,
@@ -332,6 +339,47 @@ bool AssetManager::AddMusic( const std::string& musicName, const std::string& fi
 															  .eType = VORTEK_UTIL::AssetType::MUSIC } );
 		}
 	}
+
+	return bSuccess;
+}
+
+bool AssetManager::AddMusicFromMemory( const std::string& musicName, const unsigned char* musicData, size_t dataSize )
+{
+	if ( m_mapMusic.contains( musicName ) )
+	{
+		VORTEK_ERROR( "Failed to add music [{}] -- Already exists!", musicName );
+		return false;
+	}
+
+	SDL_RWops* rw = SDL_RWFromMem( (void*)musicData, static_cast<int>( dataSize ) );
+	Mix_MusicType type = DetectAudioFormat( musicData, dataSize );
+
+	if ( type == MUS_NONE )
+	{
+		VORTEK_ERROR( "Failed to add music [{}] from memory. Unable to determine music type.", musicName );
+		return false;
+	}
+
+	auto pMusic = Mix_LoadMUSType_RW( rw, type, 1 );
+	if ( !pMusic )
+	{
+		VORTEK_ERROR( "Failed to add music [{}] from memory.", musicName );
+		return false;
+	}
+
+	// Create the sound parameters
+	VORTEK_SOUNDS::SoundParams params{
+		.name = musicName, .filename = "From Data", .duration = Mix_MusicDuration( pMusic ) };
+
+	// Create the music Pointer
+	auto pMusicPtr = std::make_shared<VORTEK_SOUNDS::Music>( params, MusicPtr{ pMusic } );
+	if ( !pMusicPtr )
+	{
+		VORTEK_ERROR( "Failed to create the music ptr for [{}]", musicName );
+		return false;
+	}
+
+	auto [ itr, bSuccess ] = m_mapMusic.emplace( musicName, std::move( pMusicPtr ) );
 
 	return bSuccess;
 }
@@ -346,6 +394,48 @@ std::shared_ptr<VORTEK_SOUNDS::Music> AssetManager::GetMusic( const std::string&
 	}
 
 	return musicItr->second;
+}
+
+Mix_MusicType AssetManager::DetectAudioFormat( const unsigned char* audioData, size_t dataSize )
+{
+	if ( !audioData || dataSize < 12 )
+	{
+		VORTEK_ERROR( "Failed to detect the audio format. Data or size is invalid." );
+		return MUS_NONE;
+	}
+
+	// WAV Format
+	if ( std::memcmp( audioData, "RIFF", 4 ) == 0 && std::memcmp( audioData + 8, "WAVE", 4 ) == 0 )
+	{
+		return MUS_WAV;
+	}
+
+	// MP3 Format
+	if ( std::memcmp( audioData, "ID3", 3 ) == 0 || audioData[ 0 ] == 0xFF && ( audioData[ 1 ] & 0xE0 ) == 0xE0 )
+	{
+		return MUS_MP3;
+	}
+
+	// OGG Format
+	if ( std::memcmp( audioData, "OggS", 4 ) == 0 )
+	{
+		return MUS_OGG;
+	}
+
+	// Flac Format
+	if ( std::memcmp( audioData, "fLaC", 4 ) == 0 )
+	{
+		return MUS_FLAC;
+	}
+
+	if ( dataSize >= 36 && std::memcmp( audioData + 28, "OpusHead", 8 ) == 0 )
+	{
+		return MUS_OPUS;
+	}
+
+	VORTEK_ERROR( "Failed to detect audio type - Unknown or unsupported format." );
+
+	return MUS_NONE;
 }
 
 bool AssetManager::AddSoundFx( const std::string& soundFxName, const std::string& filepath )
@@ -376,7 +466,7 @@ bool AssetManager::AddSoundFx( const std::string& soundFxName, const std::string
 		fs::path path{ filepath };
 		auto lastWrite = fs::last_write_time( path );
 		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											 [ & ]( const auto& params ) { return params.sFilepath == filepath; } ) )
+											  [ & ]( const auto& params ) { return params.sFilepath == filepath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = soundFxName,
 															  .sFilepath = filepath,
@@ -384,6 +474,31 @@ bool AssetManager::AddSoundFx( const std::string& soundFxName, const std::string
 															  .eType = VORTEK_UTIL::AssetType::SOUNDFX } );
 		}
 	}
+
+	return bSuccess;
+}
+
+bool AssetManager::AddSoundFxFromMemory( const std::string& soundFxName, const unsigned char* soundFxData,
+										 size_t dataSize )
+{
+	if ( m_mapSoundFx.contains( soundFxName ) )
+	{
+		VORTEK_ERROR( "Failed to add soundfx [{}] -- Already exists!", soundFxName );
+		return false;
+	}
+
+	SDL_RWops* rw = SDL_RWFromMem( (void*)soundFxData, static_cast<int>( dataSize ) );
+	auto pChunk = Mix_LoadWAV_RW( rw, 1 );
+	if ( !pChunk )
+	{
+		VORTEK_ERROR( "Failed to add soundfx [{}] from memory.", soundFxName );
+		return false;
+	}
+
+	VORTEK_SOUNDS::SoundParams params{ .name = soundFxName, .filename = "From Data", .duration = pChunk->alen / 179.4 };
+
+	auto pSoundFx = std::make_shared<VORTEK_SOUNDS::SoundFX>( params, SoundFxPtr{ pChunk } );
+	auto [ itr, bSuccess ] = m_mapSoundFx.emplace( soundFxName, std::move( pSoundFx ) );
 
 	return bSuccess;
 }
@@ -429,7 +544,8 @@ std::vector<std::string> AssetManager::GetAssetKeyNames( VORTEK_UTIL::AssetType 
 	switch ( eAssetType )
 	{
 	case VORTEK_UTIL::AssetType::TEXTURE:
-		return VORTEK_UTIL::GetKeys( m_mapTextures, []( const auto& pair ) { return !pair.second->IsEditorTexture(); } );
+		return VORTEK_UTIL::GetKeys( m_mapTextures,
+									 []( const auto& pair ) { return !pair.second->IsEditorTexture(); } );
 	case VORTEK_UTIL::AssetType::FONT: return VORTEK_UTIL::GetKeys( m_mapFonts );
 	case VORTEK_UTIL::AssetType::SOUNDFX: return VORTEK_UTIL::GetKeys( m_mapSoundFx );
 	case VORTEK_UTIL::AssetType::MUSIC: return VORTEK_UTIL::GetKeys( m_mapMusic );

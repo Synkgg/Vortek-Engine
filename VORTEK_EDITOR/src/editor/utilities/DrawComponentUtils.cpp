@@ -3,7 +3,8 @@
 #include "Core/Resources/AssetManager.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
 #include "Core/Events/EventDispatcher.h"
-#include "VORTEKUtilities/VORTEKUtilities.h"
+#include "VortekUtilities/VortekUtilities.h"
+#include "Rendering/Essentials/Texture.h"
 #include "Physics/PhysicsUtilities.h"
 #include "Logger/Logger.h"
 
@@ -568,6 +569,12 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TextComponent& te
 			textComponent.color.g = static_cast<GLubyte>( col.y * 255.f );
 			textComponent.color.b = static_cast<GLubyte>( col.z * 255.f );
 			textComponent.color.a = static_cast<GLubyte>( col.w * 255.f );
+		}
+
+		ImGui::InlineLabel( "Invisible" );
+		if (ImGui::Checkbox("##invis", &textComponent.bHidden))
+		{
+			textComponent.bDirty = true;
 		}
 
 		std::string sFontName{ textComponent.sFontName };

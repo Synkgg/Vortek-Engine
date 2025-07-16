@@ -9,6 +9,9 @@
 #include "../tools/TileTool.h"
 #include "../utilities/imgui/ImGuiUtils.h"
 #include "../utilities/fonts/IconsFontAwesome5.h"
+
+#include <Rendering/Essentials/Texture.h>
+
 #include <algorithm>
 
 #include <imgui.h>

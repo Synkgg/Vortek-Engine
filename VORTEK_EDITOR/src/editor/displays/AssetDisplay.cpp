@@ -13,7 +13,13 @@
 #include "editor/loaders/ProjectLoader.h"
 
 #include "Core/CoreUtilities/Prefab.h"
-#include "Core/CoreUtilities/SaveProject.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
+
+#include <Rendering/Essentials/Shader.h>
+#include <Rendering/Essentials/Texture.h>
+#include <Rendering/Essentials/Font.h>
+#include <Sounds/Essentials/Music.h>
+#include <Sounds/Essentials/SoundFX.h>
 
 #include <imgui.h>
 
@@ -197,16 +203,19 @@ namespace VORTEK_EDITOR
 			// There should be some sort of message to the user before deleting??
 			if (bSuccess)
 			{
-				auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
-				VORTEK_ASSERT(pSaveProject && "Save Project must exist!");
+				auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+				VORTEK_ASSERT( pProjectInfo && "Project Info must exist!" );
 				// Save entire project
 				ProjectLoader pl{};
-				if (!pl.SaveLoadedProject(*pSaveProject))
+				if ( !pl.SaveLoadedProject( *pProjectInfo ) )
 				{
-					VORTEK_ERROR("Failed to save project [{}] at file [{}] after deleting asset [{}].",
-						pSaveProject->sProjectName,
-						pSaveProject->sProjectFilePath,
-						sAssetName);
+					auto optProjectFilePath = pProjectInfo->GetProjectFilePath();
+					VORTEK_ASSERT( optProjectFilePath && "Project file path not set correctly in project info." );
+
+					VORTEK_ERROR( "Failed to save project [{}] at file [{}] after deleting asset [{}].",
+								 pProjectInfo->GetProjectName(),
+								 optProjectFilePath->string(),
+								 sAssetName );
 				}
 			}
 		}
@@ -289,10 +298,20 @@ namespace VORTEK_EDITOR
 									ImVec2{ sprite->uvs.u, sprite->uvs.v },
 									ImVec2{ sprite->uvs.uv_width, sprite->uvs.uv_height });
 							}
+							else
+							{
+								ImGui::Button( assetBtn.c_str(), ImVec2{ m_AssetSize, m_AssetSize } );
+							}
 						}
 					}
 					else
 					{
+						if ( textureID == 0 )
+						{
+							ImGui::PopID();
+							break;
+						}
+
 						ImGui::ImageButton(
 							assetBtn.c_str(), (ImTextureID)(intptr_t)textureID, ImVec2{ m_AssetSize, m_AssetSize });
 					}

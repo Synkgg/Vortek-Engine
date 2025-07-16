@@ -29,7 +29,7 @@ function MoveState:OnEnter(params) end
 function MoveState:OnExit() end
 function MoveState:OnUpdate(dt) 
 	local player = Entity(self.m_EntityID)
-	local physics = player:get_component(PhysicsComponent)
+	local physics = player:get_component(PhysicsComp)
 	local velocity = physics:get_linear_velocity()
 	local sprite = player:get_component(Sprite)
 
@@ -57,7 +57,6 @@ function MoveState:OnUpdate(dt)
 		self.m_bAttacking = false 
 	end 
 
-
 	-- Move player left or right
 	if Keyboard.pressed(KEY_A) then 
 		physics:set_linear_velocity(vec2(-10, velocity.y))
@@ -82,7 +81,7 @@ function MoveState:OnUpdate(dt)
 	end
 
 	-- Make the player Jump
-	if Keyboard.pressed(KEY_W) or Keyboard.pressed(KEY_SPACE)then
+	if Keyboard.pressed(KEY_W) then
 		if self.m_JumpSteps < self.m_MaxJumpSteps then 
 			local upVelocity = (self.m_MaxJumpSteps - self.m_JumpSteps) * -jump_pwr
 			physics:linear_impulse(vec2(velocity.x, upVelocity))
@@ -96,7 +95,7 @@ function MoveState:OnUpdate(dt)
 		end
 	end
 
-	if Keyboard.just_released(KEY_W) or Keyboard.just_released(KEY_SPACE) then 
+	if Keyboard.just_released(KEY_W) then 
 		physics:set_linear_velocity(vec2(velocity.x, 0))
 		self.m_JumpSteps = self.m_MaxJumpSteps 
 		if self.m_NumJumps == 0 then 

@@ -1,6 +1,6 @@
 AssetDefs = 
 {
-	textures =
+	textures = 
 	{
 		{ name = "collider", path = "assets/textures/collider.png", pixel_art = true},
 		{ name = "trigger", path = "assets/textures/trigger.png", pixel_art = true},
@@ -13,10 +13,14 @@ AssetDefs =
 	},
 	music = 
 	{
-		{ name = "snowfall", path = "assets/soundfx/snowfall.ogg"},
+		-- TODO: Add Music
 	},
 	sound_fx = 
 	{
-		{ name = "rain", path = "assets/soundfx/rain_loop.mp3"},
+		-- TODO: Add Sounds
+	},
+	fonts = 
+	{
+		-- TODO: Add Fonts
 	}
 }

@@ -1,4 +1,4 @@
-﻿Rain = {}
+Rain = {}
 Rain.__index = Rain
 function Rain:Create(params)
 	params = params or {} -- If no params are sent in, use the default values
@@ -128,7 +128,7 @@ function RainGenerator:Update(dt)
 	for k, v in pairs(self.m_RainTable) do
 		--[[	
 		local transform = v.m_Entity:get_component(Transform)
-		if not EntityInView(transform, v.m_Width * 6, v.m_Height * 6) then
+		if not S2D_EntityInView(transform, v.m_Width * 6, v.m_Height * 6) then
 			--print("skipping:" ..v.m_Entity:id())
 			goto continue 
 		end
@@ -144,8 +144,8 @@ end
 
 function RainGenerator:ReGenerate()
 	if #self.m_RainTable == 0 then 
-		local maxWidth = WindowWidth()
-		local maxHeight = WindowHeight()
+		local maxWidth = S2D_WindowWidth()
+		local maxHeight = S2D_WindowHeight()
 
 		local rows = maxHeight / self.m_yOffset
 		local cols = maxWidth / self.m_xOffset
@@ -153,8 +153,8 @@ function RainGenerator:ReGenerate()
 		-- Populate rain
 		for i = 0, rows do 
 			for j = 0, cols do 
-				local start_x = clamp(self.m_xOffset * j, 0, maxWidth) 
-				local start_y = clamp(self.m_yOffset * i, 0, maxHeight) 
+				local start_x = S2D_clamp(self.m_xOffset * j, 0, maxWidth) 
+				local start_y = S2D_clamp(self.m_yOffset * i, 0, maxHeight) 
 				local rain_velocity = RandomFloat(self.m_RainVelMin, self.m_RainVelMax):get_value()
 				local rain = Rain:Create(
 					{

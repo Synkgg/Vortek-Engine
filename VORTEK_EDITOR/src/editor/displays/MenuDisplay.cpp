@@ -12,7 +12,7 @@
 #include "editor/tools/ToolManager.h"
 #include "editor/utilities/imgui/ImGuiUtils.h"
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
-#include "Core/CoreUtilities/SaveProject.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 #include "editor/loaders/ProjectLoader.h"
 
 #include "Core/Events/EventDispatcher.h"
@@ -119,21 +119,23 @@ namespace VORTEK_EDITOR
 				ImGui::InlineLabel(ICON_FA_SAVE, 32.f);
 				if (ImGui::MenuItem("Save", "Ctrl + S"))
 				{
-					auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
-					VORTEK_ASSERT(pSaveProject && "Save Project must exist!");
+					auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+					VORTEK_ASSERT( pProjectInfo && "Project Info must exist!" );
 					// Save entire project
 					ProjectLoader pl{};
-					if (pl.SaveLoadedProject(*pSaveProject))
+					if ( !pl.SaveLoadedProject( *pProjectInfo ) )
 					{
-						ImGui::InsertNotification({ ImGuiToastType_Success, 3000, "Project save was a success!" });
+						auto optProjectFilePath = pProjectInfo->GetProjectFilePath();
+						VORTEK_ASSERT( optProjectFilePath && "Project file path not setup correctly." );
+						VORTEK_ERROR( "Failed to save project [{}] at file [{}]",
+									  pProjectInfo->GetProjectName(),
+									  optProjectFilePath->string() );
+
+						ImGui::InsertNotification( { ImGuiToastType_Error, 3000, "Project failed to save!" } );
 					}
 					else
 					{
-						VORTEK_ERROR("Failed to save project [{}] at file [{}]",
-							pSaveProject->sProjectName,
-							pSaveProject->sProjectFilePath);
-
-						ImGui::InsertNotification({ ImGuiToastType_Error, 3000, "Project failed to save!" });
+						ImGui::InsertNotification( { ImGuiToastType_Success, 3000, "Project save was a success!" } );
 					}
 				}
 
@@ -162,7 +164,7 @@ namespace VORTEK_EDITOR
 					SCENE_MANAGER().GetToolManager().EnableGridSnap(bGridSnap);
 				}
 
-				static bool bShowCollision{ false };
+				static bool bShowCollision{ coreGlobals.RenderCollidersEnabled() };
 				if (ImGui::Checkbox("Show Collision", &bShowCollision))
 				{
 					if (bShowCollision)
@@ -171,26 +173,17 @@ namespace VORTEK_EDITOR
 						coreGlobals.DisableColliderRender();
 				}
 
-				static bool bShowAnimations{ true };
-				if (ImGui::Checkbox("Show Animations", &bShowAnimations))
+				static bool bShowAnimations{ coreGlobals.AnimationRenderEnabled() };
+				if ( ImGui::Checkbox( "Show Animations", &bShowAnimations ) )
 				{
 					if (bShowAnimations)
+					{
 						coreGlobals.EnableAnimationRender();
+					}
 					else
+					{
 						coreGlobals.DisableAnimationRender();
-				}
-
-				if (ImGui::TreeNode("Project Settings"))
-				{
-					// TODO: Add specific Project settings
-					/*
-					 * Desired Settings
-					 * - Window Size
-					 * - Window Position
-					 * - Window flags
-					 *
-					 */
-					ImGui::TreePop();
+					}
 				}
 
 				ImGui::EndMenu();
@@ -209,7 +202,7 @@ namespace VORTEK_EDITOR
 				{
 					ImGui::Text("Current Scene");
 					ImGui::Separator();
-					if (ImGui::TreeNode("Canvas"))
+					if ( ImGui::TreeNode( ICON_FA_FILE_IMAGE " Canvas" ) )
 					{
 						auto& canvas = pCurrentScene->GetCanvas();
 
@@ -246,7 +239,7 @@ namespace VORTEK_EDITOR
 						ImGui::TreePop();
 					}
 					ImGui::Separator();
-					if (ImGui::TreeNode("Settings"))
+					if ( ImGui::TreeNode( ICON_FA_COG " Settings" ) )
 					{
 						bool bChanged{ false };
 						bool bPlayerStartEnabled{ pCurrentScene->IsPlayerStartEnabled() };
@@ -340,77 +333,6 @@ namespace VORTEK_EDITOR
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu(ICON_FA_COG " Settings"))
-			{
-				if (ImGui::TreeNode("Physics"))
-				{
-					ImGui::Separator();
-					auto& coreGlobals = CORE_GLOBALS();
-					bool bEnablePhysics = coreGlobals.IsPhysicsEnabled();
-					ImGui::InlineLabel("Enable Physics", 176.f);
-					if (ImGui::Checkbox("##enable_physics", &bEnablePhysics))
-					{
-						if (bEnablePhysics)
-							coreGlobals.EnablePhysics();
-						else
-							coreGlobals.DisablePhysics();
-					}
-
-					int32 velocityIterations = coreGlobals.GetVelocityIterations();
-					int32 positionIterations = coreGlobals.GetPositionIterations();
-					float gravity = coreGlobals.GetGravity();
-					ImGui::InlineLabel("Gravity", 176.f);
-					if (ImGui::InputFloat("##Gravity", &gravity, .1f, .1f, "%.1f"))
-					{
-						coreGlobals.SetGravity(gravity);
-					}
-
-					ImGui::InlineLabel("Velocity Iterations", 176.f);
-					if (ImGui::InputInt("##VelocityIterations", &velocityIterations, 1, 1))
-					{
-						coreGlobals.SetVelocityIterations(velocityIterations);
-					}
-
-					ImGui::InlineLabel("Position Iterations", 176.f);
-					if (ImGui::InputInt("##PositionIterations", &positionIterations, 1, 1))
-					{
-						coreGlobals.SetPositionIterations(positionIterations);
-					}
-					ImGui::TreePop();
-				}
-
-				auto& coreGlobals = CORE_GLOBALS();
-				bool bChanged{ false };
-				std::string sGameType{ coreGlobals.GetGameTypeStr(coreGlobals.GetGameType()) };
-				VORTEK_CORE::EGameType eGameType{ coreGlobals.GetGameType() };
-
-				ImGui::InlineLabel(ICON_FA_GAMEPAD " Game Type:");
-				ImGui::SetCursorPosX(250.f);
-				ImGui::ItemToolTip("The type of game this is going to be.");
-
-				if (ImGui::BeginCombo("##DefaultMusic", sGameType.c_str()))
-				{
-					for (const auto& [eType, sTypeStr] : coreGlobals.GetGameTypesMap())
-					{
-						if (ImGui::Selectable(sTypeStr.c_str(), sTypeStr == sGameType))
-						{
-							sGameType = sTypeStr;
-							eGameType = eType;
-							bChanged = true;
-						}
-					}
-
-					ImGui::EndCombo();
-				}
-
-				if (bChanged)
-				{
-					coreGlobals.SetGameType(eGameType);
-				}
-
-				ImGui::EndMenu();
-			}
-
 			if (ImGui::BeginMenu(ICON_FA_QUESTION_CIRCLE " Help"))
 			{
 				if (ImGui::TreeNode("About Vortek Engine"))
@@ -483,6 +405,7 @@ namespace VORTEK_EDITOR
 
 				ImGui::End();
 			}
+
 		}
 	}
 } // namespace VORTEK_EDITOR

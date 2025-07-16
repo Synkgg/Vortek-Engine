@@ -66,3 +66,4 @@ function Character:InitStateMachine (def, character)
 	character.m_bInitialized = true
 
 end 
+

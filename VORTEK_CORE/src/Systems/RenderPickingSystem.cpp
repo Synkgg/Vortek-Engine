@@ -7,6 +7,8 @@
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include "Rendering/Core/Camera2D.h"
 #include "Rendering/Core/PickingBatchRenderer.h"
+#include "Rendering/Essentials/Texture.h"
+#include "Rendering/Essentials/Shader.h"
 
 #include "Logger/Logger.h"
 

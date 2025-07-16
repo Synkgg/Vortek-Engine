@@ -24,7 +24,7 @@ add_library(VORTEK_FILESYSTEM
 	# Utilities
 	"include/VortekFilesystem/Utilities/DirectoryWatcher.h"
 	"src/DirectoryWatcher.cpp"
-)
+ "include/VortekFilesystem/Utilities/FilesystemUtilities.h" "include/VortekFilesystem/Utilities/FilesystemUtilities.cpp")
 
 target_include_directories(
 	VORTEK_FILESYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include

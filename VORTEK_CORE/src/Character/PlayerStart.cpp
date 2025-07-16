@@ -8,9 +8,11 @@
 #include "Core/CoreUtilities/CoreUtilities.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
 
+#include <Rendering/Essentials/Texture.h>
+
 using namespace VORTEK_CORE::ECS;
 
-constexpr const char* PlayerStartTag = "PlayerStart";
+constexpr const std::string_view PlayerStartTag = "PlayerStart";
 
 namespace VORTEK_CORE
 {
@@ -165,7 +167,8 @@ void PlayerStart::LoadVisualEntity()
 
 	if ( !m_pVisualEntity )
 	{
-		m_pVisualEntity = std::make_shared<Entity>( Entity{ m_SceneRef.GetRegistry(), PlayerStartTag, "" } );
+		m_pVisualEntity =
+			std::make_shared<Entity>( Entity{ m_SceneRef.GetRegistry(), std::string{ PlayerStartTag }, "" } );
 	}
 
 	m_pVisualEntity->AddComponent<TransformComponent>( TransformComponent{} );

@@ -105,7 +105,7 @@ add_executable(VORTEK_EDITOR
 	${APP_ICON_RESOURCE}
 	"src/editor/scripting/EditorCoreLuaWrappers.h"
 	"src/editor/scripting/EditorCoreLuaWrappers.cpp"
- "src/editor/utilities/EditorSettings.h")
+ "src/editor/utilities/EditorSettings.h" "src/editor/packaging/ScriptCompiler.h" "src/editor/packaging/ScriptCompiler.cpp" "src/editor/packaging/IconReplacer.h" "src/editor/packaging/IconReplacer.cpp" "src/editor/displays/ProjectSettingsDisplay.h" "src/editor/displays/ProjectSettingsDisplay.cpp" "src/editor/utilities/editor_textures.cpp")
 
 target_sources(
 	VORTEK_EDITOR PRIVATE

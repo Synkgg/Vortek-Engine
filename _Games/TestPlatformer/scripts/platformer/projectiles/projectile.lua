@@ -34,9 +34,9 @@ end
 
 function Projectile:Update(dt)
 	local projectile = Entity(self.m_EntityID)
-	local physics = projectile:get_component(PhysicsComponent)
+	local physics = projectile:get_component(PhysicsComp)
 
-	physics:set_linear_velocity(vec2(self.m_Dir * self.m_Speed * dt, 0))
+	physics:set_linear_velocity (vec2(self.m_Dir * self.m_Speed * dt, 0))
 end
 
 function Projectile:TimesUp()
@@ -45,5 +45,6 @@ end
 
 function Projectile:Destroy()
 	Entity(self.m_EntityID):kill()
-	warn("Killed projectile with id: %d", self.m_EntityID)
+	S2D_warn("Killed projectile with id: %d", self.m_EntityID)
 end
+

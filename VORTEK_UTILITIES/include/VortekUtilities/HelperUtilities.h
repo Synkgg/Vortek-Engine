@@ -17,8 +17,10 @@ constexpr char PATH_SEPARATOR = '/';
 
 #define SCRIPTS "scripts"
 #define ASSETS "assets"
+#define CONTENT "content"
 
-constexpr const char* PRJ_FILE_EXT = ".veprj";
+constexpr const std::string_view CONTENT_FOLDER = "content";
+constexpr const std::string_view PRJ_FILE_EXT = ".veprj";
 
 namespace VORTEK_UTIL
 {

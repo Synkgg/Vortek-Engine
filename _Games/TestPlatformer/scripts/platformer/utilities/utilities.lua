@@ -140,7 +140,7 @@ function LoadEntity(def)
 			newEntity:id()
 		)
 		
-		newEntity:add_component(PhysicsComponent(newPhysicsAttr))
+		newEntity:add_component(PhysicsComp(newPhysicsAttr))
 	end
 
 	return newEntity:id()
@@ -284,7 +284,7 @@ function LoadMap(mapDef)
 					)
 					
 					-- If Box2d is enable, create a physics component
-					if IsPhysicsEnabled() then 
+					if S2D_IsPhysicsEnabled() then 
 						local physicsAttribs = PhysicsAttributes()
 
 						-- Adjust properties to desired values, properties that are unchanged use default
@@ -306,7 +306,7 @@ function LoadMap(mapDef)
 							physicsAttribs.objectData = ObjectData("", "ground", true, true, true, tile:id())
 						end
 
-						tile:add_component(PhysicsComponent(physicsAttribs))
+						tile:add_component(PhysicsComp(physicsAttribs))
 					end
 					bIsCollider = true 
 				end
@@ -350,25 +350,25 @@ function LoadAssets(assets)
 		end 
 
 		if not AssetManager.add_texture(v.name, v.path, v.pixel_art, bTileset) then
-			error("Failed to load texture [%s] at path [%s]",v.name, v.path)
+			S2D_error("Failed to load texture [%s] at path [%s]",v.name, v.path)
 		else
-			log("Loaded Texture [%s]", v.name)
+			S2D_log("Loaded Texture [%s]", v.name)
 		end
 	end
 
 	for k, v in pairs(assets.music) do 
 		if not AssetManager.add_music(v.name, v.path) then 
-			error("Failed to load music [%s] at path [%s]",v.name, v.path)
+			S2D_error("Failed to load music [%s] at path [%s]",v.name, v.path)
 		else
-			log("Loaded Music [%s]", v.name)
+			S2D_log("Loaded Music [%s]", v.name)
 		end
 	end
 
 	for k, v in pairs(assets.sound_fx) do
 		if not AssetManager.add_soundfx(v.name, v.path) then
-			error("Failed to load soundfx [%s] at path [%s]",v.name, v.path)
+			S2D_error("Failed to load soundfx [%s] at path [%s]",v.name, v.path)
 		else
-			log("Loaded soundfx [%s]", v.name)
+			S2D_log("Loaded soundfx [%s]", v.name)
 		end
 	end
 	-- TODO: Add other loading of assets as needed
@@ -377,10 +377,10 @@ end
 
 function Debug()
 	if Keyboard.just_pressed(KEY_C) then 
-		if CollisionRenderingEnabled() then 
-			DisableCollisionRendering()
+		if S2D_CollisionRenderingEnabled() then 
+			S2D_DisableCollisionRendering()
 		else 
-			EnableCollisionRendering()
+			S2D_EnableCollisionRendering()
 		end 
 	end
 end

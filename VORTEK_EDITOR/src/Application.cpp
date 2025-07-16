@@ -32,13 +32,14 @@
 #include "editor/displays/LogDisplay.h"
 #include "editor/displays/EditorStyleToolDisplay.h"
 #include "editor/displays/ContentDisplay.h"
+#include "editor/displays/ProjectSettingsDisplay.h"
 
 #include "editor/scene/SceneManager.h"
 
 #include "editor/utilities/editor_textures.h"
 #include "editor/utilities/EditorFramebuffers.h"
 #include "editor/utilities/DrawComponentUtils.h"
-#include "Core/CoreUtilities/SaveProject.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 #include "editor/systems/GridSystem.h"
 
 #include "editor/events/EditorEventTypes.h"
@@ -194,7 +195,7 @@ bool Application::Initialize()
 		return false;
 	}
 
-	mainRegistry.AddToContext<std::shared_ptr<VORTEK_CORE::SaveProject>>( std::make_shared<VORTEK_CORE::SaveProject>() );
+	mainRegistry.AddToContext<VORTEK_CORE::ProjectInfoPtr>( std::make_shared<VORTEK_CORE::ProjectInfo>() );
 	m_pHub = std::make_unique<Hub>( *m_pWindow );
 
 	return true;
@@ -267,7 +268,8 @@ bool Application::InitApp()
 
 	// We can now set the Crash Logger path to the running project
 	const auto& sProjectPath = CORE_GLOBALS().GetProjectPath();
-	VORTEK_CRASH_LOGGER().SetProjectPath( sProjectPath );
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	VORTEK_CRASH_LOGGER().SetProjectPath( pProjectInfo->GetProjectPath().string() );
 
 	return true;
 }
@@ -321,7 +323,7 @@ bool Application::LoadEditorTextures()
 	auto& assetManager = mainRegistry.GetAssetManager();
 
 	if ( !assetManager.AddTextureFromMemory(
-			 "play_button", play_button, sizeof( play_button ) / sizeof( play_button[ 0 ] ) ) )
+			 "play_button", EditorTextures::g_PlayButton, EditorTextures::g_PlayButtonSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [play_button] from memory." );
 		return false;
@@ -330,7 +332,7 @@ bool Application::LoadEditorTextures()
 	assetManager.GetTexture( "play_button" )->SetIsEditorTexture( true );
 
 	if ( !assetManager.AddTextureFromMemory(
-			 "stop_button", stop_button, sizeof( stop_button ) / sizeof( stop_button[ 0 ] ) ) )
+			 "stop_button", EditorTextures::g_StopButton, EditorTextures::g_StopButtonSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [stop_button] from memory." );
 		return false;
@@ -339,16 +341,7 @@ bool Application::LoadEditorTextures()
 	assetManager.GetTexture( "stop_button" )->SetIsEditorTexture( true );
 
 	if ( !assetManager.AddTextureFromMemory(
-			 "music_icon", music_icon, sizeof( music_icon ) / sizeof( music_icon[ 0 ] ) ) )
-	{
-		VORTEK_ERROR( "Failed to load texture [music_icon] from memory." );
-		return false;
-	}
-
-	assetManager.GetTexture( "music_icon" )->SetIsEditorTexture( true );
-
-	if ( !assetManager.AddTextureFromMemory(
-			 "scene_icon", scene_icon, sizeof( scene_icon ) / sizeof( scene_icon[ 0 ] ) ) )
+			 "scene_icon", EditorTextures::g_SceneIcon, EditorTextures::g_SceneIconSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [scene_icon] from memory." );
 		return false;
@@ -358,7 +351,8 @@ bool Application::LoadEditorTextures()
 
 	// ====== Gizmo Textures Start ======
 
-	if ( !assetManager.AddTextureFromMemory( "x_axis_translate", x_axis_arrow, x_axis_arrow_size ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "x_axis_translate", EditorTextures::g_XAxisArrow, EditorTextures::g_XAxisArrowSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [x_axis_translate] from memory." );
 		return false;
@@ -366,7 +360,8 @@ bool Application::LoadEditorTextures()
 
 	assetManager.GetTexture( "x_axis_translate" )->SetIsEditorTexture( true );
 
-	if ( !assetManager.AddTextureFromMemory( "y_axis_translate", y_axis_arrow, y_axis_arrow_size ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "y_axis_translate", EditorTextures::g_YAxisArrow, EditorTextures::g_YAxisArrowSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [y_axis_translate] from memory." );
 		return false;
@@ -374,7 +369,8 @@ bool Application::LoadEditorTextures()
 
 	assetManager.GetTexture( "y_axis_translate" )->SetIsEditorTexture( true );
 
-	if ( !assetManager.AddTextureFromMemory( "x_axis_scale", x_axis_scale, x_axis_scale_size ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "x_axis_scale", EditorTextures::g_XAxisScale, EditorTextures::g_XAxisScaleSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [x_axis_scale] from memory." );
 		return false;
@@ -382,7 +378,8 @@ bool Application::LoadEditorTextures()
 
 	assetManager.GetTexture( "x_axis_scale" )->SetIsEditorTexture( true );
 
-	if ( !assetManager.AddTextureFromMemory( "y_axis_scale", y_axis_scale, y_axis_scale_size ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "y_axis_scale", EditorTextures::g_YAxisScale, EditorTextures::g_YAxisScaleSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [y_axis_scale] from memory." );
 		return false;
@@ -390,7 +387,8 @@ bool Application::LoadEditorTextures()
 
 	assetManager.GetTexture( "y_axis_scale" )->SetIsEditorTexture( true );
 
-	if ( !assetManager.AddTextureFromMemory( "rotate_tool", rotate_tool, rotate_tool_size ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "rotate_tool", EditorTextures::g_RotateTool, EditorTextures::g_RotateToolSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [rotate_tool] from memory." );
 		return false;
@@ -401,7 +399,8 @@ bool Application::LoadEditorTextures()
 	// ====== Gizmo Textures End   ======
 
 	// ====== Content Display Textures Start ======
-	if ( !assetManager.AddTextureFromMemory( "file_icon", file_icon, sizeof( file_icon ) / sizeof( file_icon[ 0 ] ) ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "file_icon", EditorTextures::g_FileIcon, EditorTextures::g_FileIconSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [file_icon] from memory." );
 		return false;
@@ -410,7 +409,16 @@ bool Application::LoadEditorTextures()
 	assetManager.GetTexture( "file_icon" )->SetIsEditorTexture( true );
 
 	if ( !assetManager.AddTextureFromMemory(
-			 "folder_icon", folder_icon, sizeof( folder_icon ) / sizeof( folder_icon[ 0 ] ) ) )
+			 "music_icon", EditorTextures::g_MusicIcon, EditorTextures::g_MusicIconSize ) )
+	{
+		VORTEK_ERROR( "Failed to load texture [music_icon] from memory." );
+		return false;
+	}
+
+	assetManager.GetTexture( "music_icon" )->SetIsEditorTexture( true );
+
+	if ( !assetManager.AddTextureFromMemory(
+			 "folder_icon", EditorTextures::g_FolderIcon, EditorTextures::g_FolderIconSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [folder_icon] from memory." );
 		return false;
@@ -419,7 +427,7 @@ bool Application::LoadEditorTextures()
 	assetManager.GetTexture( "folder_icon" )->SetIsEditorTexture( true );
 
 	if ( !assetManager.AddTextureFromMemory(
-			 "image_icon", image_icon, sizeof( image_icon ) / sizeof( image_icon[ 0 ] ) ) )
+			 "image_icon", EditorTextures::g_ImageIcon, EditorTextures::g_ImageIconSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [image_icon] from memory." );
 		return false;
@@ -428,7 +436,8 @@ bool Application::LoadEditorTextures()
 	assetManager.GetTexture( "image_icon" )->SetIsEditorTexture( true );
 	// ====== Content Display Textures End   ======
 
-	if ( !assetManager.AddTextureFromMemory( "vortek_logo", vortek_logo, sizeof( vortek_logo ) ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "vortek_logo", EditorTextures::g_VortekLogo, EditorTextures::g_VortekLogoSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [vortek_logo] from memory." );
 		return false;
@@ -436,7 +445,8 @@ bool Application::LoadEditorTextures()
 
 	assetManager.GetTexture( "vortek_logo" )->SetIsEditorTexture( true );
 
-	if ( !assetManager.AddTextureFromMemory( "ZZ_PlayerStart", ZZ_PlayerStart, ZZ_PlayerStart_size ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "ZZ_PlayerStart", EditorTextures::g_PlayerStart, EditorTextures::g_PlayerStartSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [ZZ_PlayerStart] from memory." );
 		return false;
@@ -444,7 +454,8 @@ bool Application::LoadEditorTextures()
 
 	assetManager.GetTexture( "ZZ_PlayerStart" )->SetIsEditorTexture( true );
 
-	if ( !assetManager.AddTextureFromMemory( "ZZ_default_player", ZZ_default_player, ZZ_default_player_size ) )
+	if ( !assetManager.AddTextureFromMemory(
+			 "ZZ_default_player", EditorTextures::g_DefaultPlayer, EditorTextures::g_DefaultPlayerSize ) )
 	{
 		VORTEK_ERROR( "Failed to load texture [ZZ_default_player] from memory." );
 		return false;
@@ -454,6 +465,7 @@ bool Application::LoadEditorTextures()
 
 	return true;
 }
+
 
 void Application::ProcessEvents()
 {
@@ -668,6 +680,7 @@ bool Application::CreateDisplays()
 	pDisplayHolder->displays.push_back( std::move( pScriptDisplay ) );
 	pDisplayHolder->displays.push_back( std::move( pScriptEditorDisplay ) );
 	pDisplayHolder->displays.push_back( std::move( pPackageDisplay ) );
+	pDisplayHolder->displays.push_back( std::make_unique<ProjectSettingsDisplay>() );
 
 	return true;
 }
@@ -703,6 +716,7 @@ void Application::InitDisplays()
 		ImGui::DockBuilderDockWindow( ICON_FA_LIST " Script List", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_DESKTOP " Script Editor", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_GAMEPAD " Game Packager", centerNodeId );
+		ImGui::DockBuilderDockWindow( "Project Settings", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_PAINT_BRUSH " Tilemap Editor", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_TERMINAL " Console", LogNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_TOOLBOX " Assets", LogNodeId );

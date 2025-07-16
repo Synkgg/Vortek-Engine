@@ -30,6 +30,6 @@ class PackageGameDisplay : public IDisplay
 	bool m_bFullscreen;
 	bool m_bTitlebar;
 
-	bool m_bScriptListExist;
+	bool m_bScriptListExists;
 };
 } // namespace VORTEK_EDITOR

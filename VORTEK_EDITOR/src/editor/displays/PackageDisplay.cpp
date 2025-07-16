@@ -1,19 +1,18 @@
 #include "PackageDisplay.h"
-#include "Core/CoreUtilities/SaveProject.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include "Core/ECS/MainRegistry.h"
 #include "VortekUtilities/HelperUtilities.h"
 #include "editor/utilities/imgui/ImGuiUtils.h"
+#include "editor/utilities/EditorUtilities.h"
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
-#include "editor/scene/scenemanager.h"
-
-#include <Logger/Logger.h>
+#include "editor/scene/SceneManager.h"
+#include "VortekFilesystem/Dialogs/FileDialog.h"
+#include "Logger/Logger.h"
 
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <filesystem>
-
-#include <fmt/format.h>
 
 namespace fs = std::filesystem;
 
@@ -28,13 +27,14 @@ PackageGameDisplay::PackageGameDisplay()
 	, m_bBorderless{ false }
 	, m_bFullscreen{ false }
 	, m_bTitlebar{ false }
-	, m_bScriptListExist{ false }
+	, m_bScriptListExists{ false }
 {
-	const auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
-	m_sScriptListPath = fmt::format(
-		"{0}{1}{2}{3}{2}{4}", pSaveProject->sProjectPath, "content", PATH_SEPARATOR, "scripts", "script_list.lua" );
+	const auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto optScriptListPath = pProjectInfo->GetScriptListPath();
+	VORTEK_ASSERT( optScriptListPath && "Script List path not set correctly in project info." );
 
-	m_bScriptListExist = fs::exists( fs::path{ m_sScriptListPath } );
+	m_sScriptListPath = optScriptListPath->string();
+	m_bScriptListExists = fs::exists( *optScriptListPath );
 }
 PackageGameDisplay::~PackageGameDisplay() = default;
 
@@ -51,6 +51,8 @@ void PackageGameDisplay::Draw()
 		return;
 	}
 
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+
 	ImGui::SeparatorText( "Package and Export Gane" );
 	ImGui::NewLine();
 
@@ -59,27 +61,44 @@ void PackageGameDisplay::Draw()
 		ImGui::SeparatorText( "File Information" );
 		ImGui::PushItemWidth( 256.f );
 		ImGui::InlineLabel( "Game Title" );
-		ImGui::InputText( "##gameTitle", &m_pGameConfig->sGameName );
+		std::string sProjectName{ pProjectInfo->GetProjectName() };
+		ImGui::InputTextReadOnly( "##gameTitle", &sProjectName );
 
+		static bool bDestinationError{ false };
 		ImGui::InlineLabel( "Export Destination" );
-		ImGui::InputText( "##destination", &m_sDestinationPath );
+		ImGui::InputTextReadOnly( "##destination", &m_sDestinationPath );
 		ImGui::SameLine();
 		if ( ImGui::Button( "..."
 							"##dest" ) )
 		{
-			// TODO: Open file dialog and set destination path.
-		}
-		ImGui::PopItemWidth();
+			VORTEK_FILESYSTEM::FileDialog fd{};
+			const auto sFilepath = fd.SelectFolderDialog( "Choose Destination Folder", BASE_PATH );
+			if ( !sFilepath.empty() )
+			{
+				if ( !IsReservedPathOrFile( fs::path{ sFilepath } ) )
+				{
+					m_sDestinationPath = sFilepath;
+					bDestinationError = false;
+				}
+				else
+				{
+					VORTEK_ERROR( "Failed to set destination. "
+								 "Destination [{}] is a reserved path. "
+								 "Please select a different path.",
+								 sFilepath );
 
-		ImGui::InlineLabel( "Icon" );
-		ImGui::PushItemWidth( 256.f );
-		ImGui::InputText( "##icon", &m_sFileIconPath );
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		if ( ImGui::Button( "..."
-							"##iconpath" ) )
+					bDestinationError = true;
+				}
+			}
+			else
+			{
+				bDestinationError = false;
+			}
+		}
+		if ( bDestinationError )
 		{
-			// TODO: Open file dialog and set file icon path.
+			ImGui::TextColored( ImVec4{ 1.f, 0.f, 0.f, 1.f },
+								"Invalid Destination. Destinations cannot be reserved paths." );
 		}
 
 		ImGui::InlineLabel( "Package Assets" );
@@ -182,7 +201,6 @@ void PackageGameDisplay::Draw()
 
 	if ( ImGui::Button( "Package Game" ) )
 	{
-		VORTEK_LOG( "PACKAGED THE GAME!" );
 	}
 
 	ImGui::End();

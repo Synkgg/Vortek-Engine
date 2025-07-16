@@ -1,7 +1,6 @@
 TitleState = {}
 TitleState.__index = TitleState
 
-
 function TitleState:Create(stack)
 	local this = 
 	{
@@ -10,17 +9,17 @@ function TitleState:Create(stack)
 		m_PressEnter = Entity("press_enter", "")
 	}
 	
-	this.m_Title:add_component(Transform(vec2(250, 100), vec2(1, 1), 0))
-	this.m_Title:add_component(TextComponent("SourceSans", "Title State"))
+	this.m_Title:add_component(Transform(vec2(100, 100), vec2(1, 1), 0))
+	this.m_Title:add_component(TextComponent("pixel", "Title State"))
 
-	this.m_PressEnter:add_component(Transform(vec2(235, 200), vec2(1, 1), 0))
-	this.m_PressEnter:add_component(TextComponent("SourceSans", "PRESS ENTER!"))
+	this.m_PressEnter:add_component(Transform(vec2(100, 200), vec2(1, 1), 0))
+	this.m_PressEnter:add_component(TextComponent("pixel", "PRESS ENTER!"))
 
 	local state = State("title state")
 	state:set_variable_table(this)
 	state:set_on_enter(
 		function()
-			log("Enter Title State")
+			S2D_log("Enter Title State")
 		end
 	)
 	state:set_on_exit(

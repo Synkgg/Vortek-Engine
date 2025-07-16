@@ -27,7 +27,7 @@
 #include "editor/utilities/EditorUtilities.h"
 #include "editor/utilities/imgui/ImGuiUtils.h"
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
-#include "Core/CoreUtilities/SaveProject.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 #include "editor/scene/SceneManager.h"
 #include "editor/scene/SceneObject.h"
 
@@ -158,8 +158,8 @@ namespace VORTEK_EDITOR
 		}
 
 		// Get the main script path
-		auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
-		if ( !scriptSystem->LoadMainScript( *pSaveProject, runtimeRegistry, *lua ) )
+		auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+		if ( !scriptSystem->LoadMainScript( *pProjectInfo, runtimeRegistry, *lua ) )
 		{
 			VORTEK_ERROR("Failed to load the main lua script!");
 			return;

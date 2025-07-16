@@ -60,11 +60,11 @@ end
 
 function GameState:OnEnter()
 	LoadMap(CreateTestPlatformerMap())
-	Sound.play("rain", -1, 1)
-	Sound.set_volume(1, 10)
-
-	Music.play("snowfall", -1)
-	Music.set_volume(25)
+	--Sound.play("rain", -1, 1)
+	--Sound.set_volume(1, 30)
+	--
+	--Music.play("snowfall", -1)
+	--Music.set_volume(50)
 end
 
 function GameState:OnExit()

@@ -3,24 +3,23 @@
 
 namespace VORTEK_CORE
 {
-struct SaveProject;
+class ProjectInfo;
 }
 
 namespace VORTEK_EDITOR
 {
-
-class SaveProject;
 
 class ProjectLoader
 {
   public:
 	bool CreateNewProject( const std::string& sProjectName, const std::string& sFilepath );
 	bool LoadProject( const std::string& sFilepath );
-	bool SaveLoadedProject( VORTEK_CORE::SaveProject& save );
+	bool SaveLoadedProject( const VORTEK_CORE::ProjectInfo& projectInfo );
 
   private:
 	bool CreateProjectFile( const std::string& sProjectName, const std::string& sFilepath );
 	bool CreateMainLuaScript( const std::string& sProjectName, const std::string& sFilepath );
+	bool CreateScriptListFile();
 };
 
 } // namespace VORTEK_EDITOR

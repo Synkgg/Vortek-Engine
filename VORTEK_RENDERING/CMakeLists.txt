@@ -40,7 +40,7 @@ add_library(VORTEK_RENDERING
 	"src/PickingTexture.cpp"
 	"include/Rendering/Core/PickingBatchRenderer.h"
 	"src/PickingBatchRenderer.cpp"
-)
+ "include/Rendering/Essentials/IconInfo.h")
 
 target_include_directories(
     VORTEK_RENDERING PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

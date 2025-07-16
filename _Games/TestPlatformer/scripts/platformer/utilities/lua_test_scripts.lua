@@ -17,7 +17,7 @@ physAttr.scale = transform.scale
 physAttr.bCircle = true 
 physAttr.bFixedRotation = false 
 
-ball:add_component(PhysicsComponent(physAttr))
+ball:add_component(PhysicsComp(physAttr))
 
 local sprite = ball:add_component(Sprite("soccer_ball", 128, 128, 0, 0, 0))
 sprite:generate_uvs()
@@ -52,7 +52,7 @@ bottomPhys.boxSize = vec2(bottomBox.width, bottomBox.height)
 bottomPhys.bBoxShape = true 
 bottomPhys.bFixedRotation = true
 
-bottomEnt:add_component(PhysicsComponent(bottomPhys))
+bottomEnt:add_component(PhysicsComp(bottomPhys))
 
 --]]
 -- [[
@@ -72,7 +72,7 @@ leftPhys.boxSize = vec2(leftBox.width, leftBox.height)
 leftPhys.bBoxShape = true 
 leftPhys.bFixedRotation = true
 
-leftEnt:add_component(PhysicsComponent(leftPhys))
+leftEnt:add_component(PhysicsComp(leftPhys))
 
 local rightEnt = Entity("", "")
 local rightBox = rightEnt:add_component(BoxCollider(16, 480, vec2(0, 0)))
@@ -90,7 +90,7 @@ rightPhys.boxSize = vec2(rightBox.width, rightBox.height)
 rightPhys.bBoxShape = true 
 rightPhys.bFixedRotation = true
 
-rightEnt:add_component(PhysicsComponent(rightPhys))
+rightEnt:add_component(PhysicsComp(rightPhys))
 
 local topEnt = Entity("", "")
 local topBox = topEnt:add_component(BoxCollider(608, 16, vec2(0, 0)))
@@ -108,7 +108,7 @@ topPhys.boxSize = vec2(topBox.width, topBox.height)
 topPhys.bBoxShape = true 
 topPhys.bFixedRotation = true
 
-topEnt:add_component(PhysicsComponent(topPhys))
+topEnt:add_component(PhysicsComp(topPhys))
 --]]
 -----------------------------------------------------------------------------------------
 
@@ -116,11 +116,11 @@ topEnt:add_component(PhysicsComponent(topPhys))
 local ballCount = 0
 local countEnt = Entity("", "")
 countEnt:add_component(Transform(vec2(10, 32), vec2(1, 1), 0))
-countEnt:add_component(TextComponent("SourceSans", "Ball Count: ", Color(255, 255, 255, 255), 4, -1.0))
+countEnt:add_component(TextComponent("pixel", "Ball Count: ", Color(255, 255, 255, 255), 4, -1.0))
 
 local valEnt = Entity("", "")
 valEnt:add_component(Transform(vec2(352, 32), vec2(1, 1), 0))
-local valText = valEnt:add_component(TextComponent("SourceSans", "0", Color(255, 255, 255, 255), 4, -1.0))
+local valText = valEnt:add_component(TextComponent("pixel", "0", Color(255, 255, 255, 255), 4, -1.0))
 
 
 function createBall()
@@ -142,7 +142,7 @@ function createBall()
 		physAttr.bCircle = true 
 		physAttr.bFixedRotation = false 
 
-		ball:add_component(PhysicsComponent(physAttr))
+		ball:add_component(PhysicsComp(physAttr))
 
 		local sprite = ball:add_component(Sprite("soccer_ball", 128, 128, 0, 0, 0))
 		sprite:generate_uvs()
@@ -152,7 +152,7 @@ function createBall()
 end
 
 function updateEntity(entity)
-	local physics = entity:get_component(PhysicsComponent)
+	local physics = entity:get_component(PhysicsComp)
 	local transform = entity:get_component(Transform)
 
 	local velocity = physics:get_linear_velocity()

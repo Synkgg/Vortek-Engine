@@ -1,6 +1,8 @@
 #pragma once
 #include <SDL.h>
 #include <string>
+#include <fstream>
+#include <algorithm>
 
 namespace VORTEK_WINDOWING
 {
@@ -18,6 +20,12 @@ enum class EHubState
 	OpenProject,
 	Close,
 	NoState
+};
+
+struct RecentProject
+{
+	std::string path;
+	std::string lastOpened;
 };
 
 class Hub
@@ -38,6 +46,11 @@ class Hub
 	void ProcessEvents();
 	void Update();
 	void Render();
+
+	bool TryOpenProject( const std::string& path );
+
+	void LoadRecentProjects();
+	void SaveRecentProject( const std::string& path );
 
   private:
 	VORTEK_WINDOWING::Window& m_Window;

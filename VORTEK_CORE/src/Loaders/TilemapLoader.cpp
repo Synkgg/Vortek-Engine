@@ -123,7 +123,7 @@ bool TilemapLoader::LoadTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const
 	const rapidjson::Value& tilemap = doc[ "tilemap" ];
 	if ( !tilemap.IsArray() || tilemap.Size() < 1 )
 	{
-		VORTEK_ERROR( "Failed to load tilemap: File: [{}] - There needs to be at least 1 tile.", sTilemapFile );
+		VORTEK_WARN( "Failed to load tilemap: File: [{}] - There needs to be at least 1 tile.", sTilemapFile );
 		return false;
 	}
 
@@ -352,7 +352,7 @@ bool TilemapLoader::LoadObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 	const rapidjson::Value& gameObjects = doc[ "game_objects" ];
 	if ( !gameObjects.IsArray() || gameObjects.Size() < 1 )
 	{
-		VORTEK_ERROR( "Failed to load Game Objects: File: [{}] - There needs to be at least 1 tile.", sObjectMapFile );
+		VORTEK_WARN( "Failed to load Game Objects: File: [{}] - There needs to be at least 1 tile.", sObjectMapFile );
 		return false;
 	}
 

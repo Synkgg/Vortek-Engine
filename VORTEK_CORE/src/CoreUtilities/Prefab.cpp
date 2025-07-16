@@ -2,7 +2,7 @@
 #include "Core/ECS/MainRegistry.h"
 #include "Core/ECS/Entity.h"
 #include "Core/ECS/Components/ComponentSerializer.h"
-#include "Core/Coreutilities/SaveProject.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
 #include "Core/Scene/Scene.h"
 
@@ -11,6 +11,8 @@
 #include "VortekFileSystem/Serializers/JSONSerializer.h"
 #include "VORTEKUtilities/VORTEKUtilities.h"
 #include "VORTEKUtilities/HelperUtilities.h"
+
+#include <Rendering/Essentials/Texture.h>
 
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
@@ -51,21 +53,21 @@ Prefab::Prefab( EPrefabType eType, const PrefabbedEntity& prefabbed )
 	m_sName = prefabbed.id->name + "_pfab";
 	m_Entity.id->name = m_sName;
 
-	auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<VORTEK_CORE::SaveProject>>();
-	VORTEK_ASSERT( pSaveProject && "SaveProject must exists here!" );
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	VORTEK_ASSERT( pProjectInfo && "Project Info must exist!" );
 
-	m_sPrefabPath = std::format( "{}content{}assets{}prefabs{}{}",
-								 pSaveProject->sProjectPath,
-								 PATH_SEPARATOR,
-								 PATH_SEPARATOR,
-								 PATH_SEPARATOR,
-								 m_sName + ".json" );
+	auto optPrefabPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::Prefabs );
+	VORTEK_ASSERT( optPrefabPath && "Prefab folder path not set correctly." );
 
-	if ( fs::exists( m_sPrefabPath ) )
+	fs::path prefabPath = *optPrefabPath / fs::path{ m_sName + ".json" };
+
+	if ( fs::exists( prefabPath ) )
 	{
 		VORTEK_ERROR( "Failed to create prefab. [{}] Already exists!", m_sName );
 		throw std::runtime_error( std::format( "Failed to create prefab. [{}] Already exists!", m_sName ).c_str() );
 	}
+
+	m_sPrefabPath = prefabPath.string();
 
 	Save();
 }
@@ -344,12 +346,11 @@ bool Prefab::Save()
 		SERIALIZE_COMPONENT( *pSerializer, textComp );
 	}
 
-	// TODO: Create serialize UI component
-	/*if (m_Entity.uiComp)
+	if (m_Entity.uiComp)
 	{
 		const auto& ui = m_Entity.uiComp.value();
 		SERIALIZE_COMPONENT( *pSerializer, ui );
-	}*/
+	}
 
 	pSerializer->EndObject(); // End Components
 	pSerializer->EndObject(); // End Prefab

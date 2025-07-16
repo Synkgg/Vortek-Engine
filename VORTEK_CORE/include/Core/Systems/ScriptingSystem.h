@@ -4,7 +4,7 @@
 
 namespace VORTEK_CORE
 {
-struct SaveProject;
+struct ProjectInfo;
 
 namespace ECS
 {
@@ -21,7 +21,7 @@ class ScriptingSystem
 	~ScriptingSystem() = default;
 
 	bool LoadMainScript( const std::string& sMainLuaFile, VORTEK_CORE::ECS::Registry& registry, sol::state& lua );
-	bool LoadMainScript( const VORTEK_CORE::SaveProject& save, VORTEK_CORE::ECS::Registry& registry, sol::state& lua );
+	bool LoadMainScript( VORTEK_CORE::ProjectInfo& projectInfo, VORTEK_CORE::ECS::Registry& registry, sol::state& lua );
 	void Update( VORTEK_CORE::ECS::Registry& registry );
 	void Render( VORTEK_CORE::ECS::Registry& registry );
 

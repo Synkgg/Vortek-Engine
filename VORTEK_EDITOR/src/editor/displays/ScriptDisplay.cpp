@@ -1,6 +1,6 @@
 #include "ScriptDisplay.h"
 #include "Core/ECS/MainRegistry.h"
-#include "Core/CoreUtilities/SaveProject.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 
 #include "VortekUtilities/HelperUtilities.h"
 #include "VortekUtilities/VortekUtilities.h"
@@ -32,29 +32,28 @@ ScriptDisplay::ScriptDisplay()
 	, m_pDirWatcher{ nullptr }
 	, m_bFilesChanged{ false }
 {
-	auto& pSaveProject = MAIN_REGISTRY().GetContext<std::shared_ptr<SaveProject>>();
-	m_sScriptsDirectory = fmt::format( "{}{}{}{}", pSaveProject->sProjectPath, "content", PATH_SEPARATOR, "scripts" );
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<ProjectInfoPtr>();
+	auto optScriptsPath = pProjectInfo->TryGetFolderPath( EProjectFolderType::Scripts );
+	VORTEK_ASSERT( optScriptsPath && "Scipts Directory was not set correctly." );
+	VORTEK_ASSERT( fs::exists( *optScriptsPath ) && "Scripts directory must exist." );
 
-	VORTEK_ASSERT( fs::exists( fs::path{ m_sScriptsDirectory } ) && "Scripts directory must exist." );
-	const std::string sScriptListPath = m_sScriptsDirectory + PATH_SEPARATOR + "script_list.lua";
+	m_sScriptsDirectory = optScriptsPath->string();
 
-	if ( !fs::exists( fs::path{ sScriptListPath } ) )
+	auto optScriptListPath = pProjectInfo->GetScriptListPath();
+	VORTEK_ASSERT( optScriptListPath && "Script list path not set correctly in project info." );
+
+	if ( !fs::exists( *optScriptListPath ) )
 	{
-		std::ofstream file{ sScriptListPath };
+		std::ofstream file{ optScriptListPath->string() };
 		file.close();
 
-		if ( !fs::exists( fs::path{ sScriptListPath } ) )
+		if ( !fs::exists( *optScriptListPath ) )
 		{
 			VORTEK_ASSERT( false && "Failed to create script list file." );
-			VORTEK_ERROR( "Failed to create script list file at path: [{}].", m_sScriptsDirectory );
+			VORTEK_ERROR( "Failed to create script list file at path: [{}].",
+						 optScriptListPath->parent_path().string() );
 			return;
 		}
-	}
-
-	// Set the script list path if not already set
-	if ( pSaveProject->sScriptListPath.empty() )
-	{
-		pSaveProject->sScriptListPath = sScriptListPath;
 	}
 
 	GenerateScriptList();
@@ -211,11 +210,18 @@ void ScriptDisplay::GenerateScriptList()
 {
 	if ( m_ScriptList.empty() )
 	{
-		const std::string sScriptListPath = m_sScriptsDirectory + PATH_SEPARATOR + "script_list.lua";
-		if ( fs::exists( fs::path{ sScriptListPath } ) )
+		auto optScriptListPath = MAIN_REGISTRY().GetContext<ProjectInfoPtr>()->GetScriptListPath();
+		VORTEK_ASSERT( optScriptListPath && "ScriptList Path not set correctly in project info." );
+
+		if ( !optScriptListPath )
+		{
+			VORTEK_ERROR( "Failed to load script list. Not set correctly in project info." );
+			return;
+		}
+		if ( fs::exists( *optScriptListPath ) )
 		{
 			sol::state lua{};
-			auto result = lua.safe_script_file( sScriptListPath );
+			auto result = lua.safe_script_file( optScriptListPath->string() );
 			if ( !result.valid() )
 			{
 				sol::error err = result;
@@ -245,17 +251,21 @@ void ScriptDisplay::GenerateScriptList()
 
 void ScriptDisplay::WriteScriptListToFile()
 {
-	const std::string sScriptListPath = m_sScriptsDirectory + PATH_SEPARATOR + "script_list.lua";
-	if ( !fs::exists( fs::path{ sScriptListPath } ) )
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	VORTEK_ASSERT( pProjectInfo && "Project info must exist." );
+	auto optScriptListPath = pProjectInfo->GetScriptListPath();
+	VORTEK_ASSERT( optScriptListPath && "Script list path not setup correctly in project info." );
+
+	if ( !fs::exists( *optScriptListPath ) )
 	{
-		VORTEK_ERROR( "Failed to write script list. File [{}] does not exist.", sScriptListPath );
+		VORTEK_ERROR( "Failed to write script list. File [{}] does not exist.", optScriptListPath->string() );
 		return;
 	}
 
 	std::unique_ptr<LuaSerializer> pSerializer{ nullptr };
 	try
 	{
-		pSerializer = std::make_unique<LuaSerializer>( sScriptListPath );
+		pSerializer = std::make_unique<LuaSerializer>( optScriptListPath->string() );
 	}
 	catch ( const std::exception& ex )
 	{
