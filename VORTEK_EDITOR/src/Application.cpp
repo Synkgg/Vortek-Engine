@@ -39,6 +39,7 @@
 #include "editor/utilities/editor_textures.h"
 #include "editor/utilities/EditorFramebuffers.h"
 #include "editor/utilities/DrawComponentUtils.h"
+#include "editor/utilities/EditorSettings.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "editor/systems/GridSystem.h"
 

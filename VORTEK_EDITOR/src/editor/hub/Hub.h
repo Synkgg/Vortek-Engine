@@ -43,6 +43,9 @@ class Hub
 	void DrawNewProject();
 	void DrawOpenProject();
 
+	void DrawOldOpenProject(); // ← the "classic" UI
+	void DrawNewOpenProject(); // ← your new UI
+
 	void ProcessEvents();
 	void Update();
 	void Render();

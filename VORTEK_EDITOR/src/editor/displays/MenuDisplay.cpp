@@ -91,6 +91,7 @@ namespace VORTEK_EDITOR
 
 	void MenuDisplay::Draw()
 	{
+
 		static bool bThemeInitialized = false;
 
 		if ( !bThemeInitialized )
@@ -390,12 +391,21 @@ namespace VORTEK_EDITOR
 					{
 						g_AppliedThemeIndex = g_SelectedThemeIndex; // Set the active one
 						ApplyThemeByIndex( g_AppliedThemeIndex );
-						SaveEditorConfig( g_AppliedThemeIndex );
+						VORTEK_EDITOR::SaveEditorConfig( VORTEK_EDITOR::g_SelectedThemeIndex,
+														 VORTEK_EDITOR::g_UseNewHubUI );
 					}
 				}
 				else if (selectedTab == 1)
 				{
-					ImGui::Text("General Settings");
+					ImGui::Text( "General Settings" );
+					ImGui::Separator();
+
+					if ( ImGui::Checkbox( "Use New Hub UI", &VORTEK_EDITOR::g_UseNewHubUI ) )
+					{
+						// Save config immediately on toggle
+						VORTEK_EDITOR::SaveEditorConfig( VORTEK_EDITOR::g_SelectedThemeIndex,
+														 VORTEK_EDITOR::g_UseNewHubUI );
+					}
 				}
 				else if (selectedTab == 2)
 				{
