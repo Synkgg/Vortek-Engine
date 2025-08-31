@@ -48,4 +48,10 @@ bool FileProcessor::OpenApplicationFromFile( const std::string& sFilename, std::
 	return bSuccess;
 }
 
+bool FileProcessor::OpenFileLocation( const std::string& sFilename )
+{
+	VORKTEK_ERROR( "Not Implemented" );
+	return false;
+}
+
 } // namespace VORTEK_FILESYSTEM

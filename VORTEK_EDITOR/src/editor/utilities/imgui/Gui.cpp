@@ -5,7 +5,7 @@
 #include <Windowing/Window/Window.h>
 #include "../fonts/fonts_editor.h"
 
-// IMGUI 
+// IMGUI
 // ===================================
 #include "ImGuiUtils.h"
 #include "imgui.h"
@@ -17,85 +17,98 @@
 
 namespace VORTEK_EDITOR
 {
-	bool Gui::InitImGui(VORTEK_WINDOWING::Window* pWindow)
+bool Gui::InitImGui( VORTEK_WINDOWING::Window* pWindow )
+{
+	if ( m_bInitialized )
+		return false;
+
+	const char* glslVersion = "#version 450";
+	IMGUI_CHECKVERSION();
+
+	if ( !ImGui::CreateContext() )
 	{
-		if (m_bInitialized)
-			return false;
-
-		const char* glslVersion = "#version 450";
-		IMGUI_CHECKVERSION();
-
-		if (!ImGui::CreateContext())
-		{
-			VORTEK_ERROR("Failed to create ImGui Context");
-			return false;
-		}
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-		io.ConfigWindowsMoveFromTitleBarOnly = true;
-
-		io.Fonts->AddFontFromMemoryTTF(OpenSans_ExtraBold, sizeof(OpenSans_ExtraBold), 18.0f, NULL);
-
-		io.Fonts->AddFontDefault();
-		io.FontDefault = io.Fonts->AddFontFromMemoryTTF(OpenSans_Regular, sizeof(OpenSans_Regular), 18.0f, NULL);
-		float baseFontSize = 16.0f;
-		float iconFontSize = baseFontSize * 2.0f / 3.0f;
-
-		// merge in icons from Font Awesome
-		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
-		ImFontConfig icons_config;
-		icons_config.MergeMode = true;
-		icons_config.PixelSnapH = true;
-		icons_config.GlyphMinAdvanceX = iconFontSize;
-		io.Fonts->AddFontFromMemoryTTF(fa_solid_900, fa_solid_900_size, baseFontSize, &icons_config, icons_ranges);
-		io.ConfigViewportsNoDecoration = false;
-
-		if (!ImGui_ImplSDL2_InitForOpenGL(pWindow->GetWindow().get(), pWindow->GetGLContext()))
-		{
-			VORTEK_ERROR("Failed to intialize ImGui SDL2 for OpenGL!");
-			return false;
-		}
-
-		if (!ImGui_ImplOpenGL3_Init(glslVersion))
-		{
-			VORTEK_ERROR("Failed to intialize ImGui OpenGL3!");
-			return false;
-		}
-
-		ImGui::InitDefaultStyles();
-
-		return true;
-	}
-	void Gui::Begin()
-	{
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
+		VORTEK_ERROR( "Failed to create ImGui Context" );
+		return false;
 	}
 
-	void Gui::End(VORTEK_WINDOWING::Window* pWindow)
-	{
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-		ImGuiIO& io = ImGui::GetIO();
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
-			SDL_Window* backupCurrentWindow = SDL_GL_GetCurrentWindow();
-			SDL_GLContext backupCurrentContext = SDL_GL_GetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			SDL_GL_MakeCurrent(backupCurrentWindow, backupCurrentContext);
-		}
+	io.ConfigWindowsMoveFromTitleBarOnly = true;
+
+	float baseFontSize = 16.0f;
+	float iconFontSize = baseFontSize * 2.0f / 3.0f;
+
+	// 1. Load ExtraBold first (optional heading font)
+	ImFont* fontExtraBold = io.Fonts->AddFontFromMemoryTTF( OpenSans_ExtraBold, sizeof( OpenSans_ExtraBold ), 18.0f );
+
+	// 2. Load ImGui default font (optional)
+	ImFont* fontDefault = io.Fonts->AddFontDefault();
+
+	// 3. Load Regular font and make it default
+	ImFont* fontRegular = io.Fonts->AddFontFromMemoryTTF( OpenSans_Regular, sizeof( OpenSans_Regular ), 18.0f );
+	io.FontDefault = fontRegular;
+
+	// 4. Merge Font Awesome icons into Regular font
+	static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
+	ImFontConfig icons_config;
+	icons_config.MergeMode = true; // merge into last-added font
+	icons_config.PixelSnapH = true;
+	icons_config.GlyphMinAdvanceX = iconFontSize;
+	icons_config.GlyphOffset = ImVec2{ 0.f, 2.f };
+
+	io.Fonts->AddFontFromMemoryTTF( fa_solid_900, fa_solid_900_size, baseFontSize, &icons_config, icons_ranges );
+
+	// 5. Optional: register named fonts for easy reference
+	ImGui::AddFont( "OpenSans-Regular", fontRegular, 18.f );
+	ImGui::AddFont( "OpenSans-ExtraBold", fontExtraBold, 18.f );
+
+	io.ConfigViewportsNoDecoration = false;
+
+	if ( !ImGui_ImplSDL2_InitForOpenGL( pWindow->GetWindow().get(), pWindow->GetGLContext() ) )
+	{
+		VORTEK_ERROR( "Failed to intialize ImGui SDL2 for OpenGL!" );
+		return false;
 	}
 
-	void Gui::ShowImGuiDemo()
+	if ( !ImGui_ImplOpenGL3_Init( glslVersion ) )
 	{
-		ImGui::ShowDemoWindow();
+		VORTEK_ERROR( "Failed to intialize ImGui OpenGL3!" );
+		return false;
 	}
+
+	ImGui::InitDefaultStyles();
+
+	return true;
+}
+void Gui::Begin()
+{
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplSDL2_NewFrame();
+	ImGui::NewFrame();
+}
+
+void Gui::End( VORTEK_WINDOWING::Window* pWindow )
+{
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+
+	ImGuiIO& io = ImGui::GetIO();
+	if ( io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable )
+	{
+		SDL_Window* backupCurrentWindow = SDL_GL_GetCurrentWindow();
+		SDL_GLContext backupCurrentContext = SDL_GL_GetCurrentContext();
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+		SDL_GL_MakeCurrent( backupCurrentWindow, backupCurrentContext );
+	}
+}
+
+void Gui::ShowImGuiDemo()
+{
+	ImGui::ShowDemoWindow();
+}
 
 } // namespace VORTEK_EDITOR

@@ -20,6 +20,7 @@
 #include "Rendering/Essentials/PickingTexture.h"
 
 #include "editor/systems/GridSystem.h"
+#include "editor/systems/EditorRenderSystem.h"
 #include "editor/utilities/EditorFramebuffers.h"
 #include "editor/utilities/EditorUtilities.h"
 #include "editor/utilities/imgui/ImGuiUtils.h"
@@ -39,6 +40,9 @@
 
 #include "Core/Scripting/InputManager.h"
 #include "Windowing/Inputs/Mouse.h"
+#include "Windowing/Inputs/Keyboard.h"
+
+using namespace VORTEK_WINDOWING::Inputs;
 
 #include "Logger/Logger.h"
 #include <imgui.h>
@@ -60,7 +64,7 @@ void TilemapDisplay::RenderTilemap()
 	auto& editorFramebuffers = mainRegistry.GetContext<std::shared_ptr<EditorFramebuffers>>();
 	auto& renderer = mainRegistry.GetContext<std::shared_ptr<VORTEK_RENDERING::Renderer>>();
 
-	auto& renderSystem = mainRegistry.GetRenderSystem();
+	auto& renderSystem = mainRegistry.GetContext<EditorRenderSystemPtr>();
 	auto& renderUISystem = mainRegistry.GetRenderUISystem();
 	auto& renderShapeSystem = mainRegistry.GetRenderShapeSystem();
 
@@ -128,7 +132,7 @@ void TilemapDisplay::RenderTilemap()
 	auto& gridSystem = mainRegistry.GetContext<std::shared_ptr<GridSystem>>();
 	gridSystem->Update( *pCurrentScene, *m_pTilemapCam );
 
-	renderSystem.Update( pCurrentScene->GetRegistry(), *m_pTilemapCam, pCurrentScene->GetLayerParams() );
+	renderSystem->Update( pCurrentScene->GetRegistry(), *m_pTilemapCam, pCurrentScene->GetLayerParams() );
 
 	if ( CORE_GLOBALS().RenderCollidersEnabled() )
 	{
@@ -183,6 +187,14 @@ void TilemapDisplay::PanZoomCamera( const glm::vec2& mousePos )
 	if ( !mouse.IsBtnJustPressed( VORTEK_MOUSE_MIDDLE ) && !mouse.IsBtnPressed( VORTEK_MOUSE_MIDDLE ) &&
 		 mouse.GetMouseWheelY() == 0 )
 	{
+		if ( auto* pCursor = ASSET_MANAGER().GetCursor( "default" ) )
+		{
+			if ( SDL_GetCursor() != pCursor )
+			{
+				SDL_SetCursor( pCursor );
+			}
+		}
+
 		return;
 	}
 
@@ -199,6 +211,11 @@ void TilemapDisplay::PanZoomCamera( const glm::vec2& mousePos )
 	{
 		screenOffset += ( mousePos - startPosition );
 		bOffsetChanged = true;
+
+		if ( auto* pCursor = ASSET_MANAGER().GetCursor( "ZZ_PanningCursor" ) )
+		{
+			SDL_SetCursor( pCursor );
+		}
 	}
 
 	glm::vec2 currentWorldPos = m_pTilemapCam->ScreenCoordsToWorld( mousePos );
@@ -494,7 +511,7 @@ TilemapDisplay::~TilemapDisplay()
 
 void TilemapDisplay::Draw()
 {
-	if ( !ImGui::Begin( ICON_FA_PAINT_BRUSH " Tilemap Editor" ) )
+	if ( !ImGui::Begin( ICON_FA_MAP " Tilemap Editor" ) )
 	{
 		ImGui::End();
 		return;
@@ -602,9 +619,12 @@ void TilemapDisplay::Update()
 		pActiveGizmo->Update( pCurrentScene->GetCanvas() );
 	}
 
-	auto& mainRegistry = MAIN_REGISTRY();
-	auto& animationSystem = mainRegistry.GetAnimationSystem();
-	animationSystem.Update( pCurrentScene->GetRegistry(), *m_pTilemapCam );
+	if ( CORE_GLOBALS().AnimationRenderEnabled() )
+	{
+		auto& mainRegistry = MAIN_REGISTRY();
+		auto& animationSystem = mainRegistry.GetAnimationSystem();
+		animationSystem.Update( pCurrentScene->GetRegistry(), *m_pTilemapCam );
+	}
 
 	m_pTilemapCam->Update();
 

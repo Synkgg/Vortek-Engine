@@ -20,6 +20,11 @@
 #include "Core/CoreUtilities/Prefab.h"
 #include "Core/Resources/AssetManager.h"
 
+#include "Windowing/Inputs/Mouse.h"
+#include "Windowing/Inputs/Keyboard.h"
+
+using namespace VORTEK_WINDOWING::Inputs;
+
 #include <imgui.h>
 
 using namespace VORTEK_CORE::Events;
@@ -49,7 +54,7 @@ namespace VORTEK_EDITOR
 
 		bool bTreeNodeOpen{ false };
 
-		bTreeNodeOpen = ImGui::TreeNodeEx(name.c_str(), nodeFlags);
+		bTreeNodeOpen = ImGui::TreeNodeEx( fmt::format( "{} {}", ICON_FA_CUBE, name ).c_str(), nodeFlags );
 		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
 
 		if (ImGui::IsItemClicked())
@@ -221,7 +226,7 @@ namespace VORTEK_EDITOR
 
 	void SceneHierarchyDisplay::DrawGameObjectDetails()
 	{
-		if (!ImGui::Begin("Object Details"))
+		if ( !ImGui::Begin( ICON_FA_LIST " Object Details" ) )
 		{
 			ImGui::End();
 			return;
@@ -505,7 +510,7 @@ namespace VORTEK_EDITOR
 	void SceneHierarchyDisplay::Draw()
 	{
 		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
-		if (!ImGui::Begin(ICON_FA_TREE " Scene Hierarchy") || !pCurrentScene)
+		if ( !ImGui::Begin( ICON_FA_SITEMAP " Scene Hierarchy" ) || !pCurrentScene )
 		{
 			ImGui::End();
 			return;

@@ -1,4 +1,5 @@
 #include "VortekUtilities/VortekUtilities.h"
+#include <chrono>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -7,6 +8,42 @@
 
 namespace VORTEK_UTIL
 {
+std::string AssetTypeToStr( AssetType eAssetType )
+{
+	switch ( eAssetType )
+	{
+	case AssetType::TEXTURE: return "TEXTURE";
+	case AssetType::FONT: return "FONT";
+	case AssetType::SOUNDFX: return "SOUNDFX";
+	case AssetType::MUSIC: return "MUSIC";
+	case AssetType::SCENE: return "SCENE";
+	case AssetType::SHADER: return "SHADER";
+	case AssetType::PREFAB: return "PREFAB";
+	case AssetType::NO_TYPE: return "NO_TYPE";
+	}
+	return { "NO_TYPE" };
+}
+
+AssetType StrToAssetType( const std::string& sAssetType )
+{
+	if ( sAssetType == "TEXTURE" )
+		return AssetType::TEXTURE;
+	else if ( sAssetType == "FONT" )
+		return AssetType::FONT;
+	else if ( sAssetType == "SOUNDFX" )
+		return AssetType::SOUNDFX;
+	else if ( sAssetType == "MUSIC" )
+		return AssetType::MUSIC;
+	else if ( sAssetType == "SCENE" )
+		return AssetType::SCENE;
+	else if ( sAssetType == "SHADER" )
+		return AssetType::SHADER;
+	else if ( sAssetType == "PREFAB" )
+		return AssetType::PREFAB;
+
+	return AssetType::NO_TYPE;
+}
+
 std::string GetSubstring( std::string_view str, std::string_view find )
 {
 	if ( find.empty() )
@@ -26,6 +63,29 @@ std::string GetSubstring( std::string_view str, std::string_view find )
 		return {};
 
 	return std::string{ str.substr( found + 1 ) };
+}
+
+std::string ConvertTo12HourFormat( const std::string& time )
+{
+	// Expecting format: "YYYY-MM-DD HH:MM:SS"
+	if ( time.size() < 16 )
+		return time; // Invalid format; return original
+
+	int hour = std::stoi( time.substr( 11, 2 ) );
+	int minute = std::stoi( time.substr( 14, 2 ) );
+
+	const char* ampm = ( hour >= 12 ) ? "PM" : "AM";
+	hour = hour % 12;
+	if ( hour == 0 )
+		hour = 12;
+
+	std::ostringstream oss;
+	oss << time.substr( 0, 11 ); // date part "YYYY-MM-DD "
+	oss << std::setw( 2 ) << std::setfill( '0' ) << hour << ":";
+	oss << std::setw( 2 ) << std::setfill( '0' ) << minute << " ";
+	oss << ampm;
+
+	return oss.str();
 }
 
 std::string ConvertWideToANSI( const std::wstring& wstr )

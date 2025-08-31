@@ -13,3 +13,5 @@ target_link_libraries(VORTEK_LOGGER PUBLIC fmt::fmt)
 
 target_compile_options( 
     VORTEK_LOGGER PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+
+target_precompile_headers(VORTEK_LOGGER REUSE_FROM PCH)

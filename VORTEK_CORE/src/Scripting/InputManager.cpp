@@ -1,9 +1,15 @@
 #include "Core/Scripting/InputManager.h"
+#include <Windowing/Inputs/Keyboard.h>
+#include <Windowing/Inputs/Mouse.h>
+#include <Windowing/Inputs/Gamepad.h>
+
 #include <Logger/Logger.h>
 #include <VORTEKUtilities/SDL_Wrappers.h>
 #include <glm/glm.hpp>
 
 #include <Rendering/Core/Camera2D.h>
+
+using namespace VORTEK_WINDOWING::Inputs;
 
 namespace VORTEK_CORE
 {
@@ -203,13 +209,13 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 	lua.new_usertype<Keyboard>(
 		"Keyboard",
 		sol::no_constructor,
-		"just_pressed",
+		"justPressed",
 		[ & ]( int key ) { return keyboard.IsKeyJustPressed( key ); },
-		"just_released",
+		"justReleased",
 		[ & ]( int key ) { return keyboard.IsKeyJustReleased( key ); },
 		"pressed",
 		[ & ]( int key ) { return keyboard.IsKeyPressed( key ); },
-		"pressed_keys",
+		"pressedKeys",
 		[ & ]() {
 			std::vector<int> keys;
 			for ( const auto& [ key, button ] : keyboard.GetButtonMap() )
@@ -220,43 +226,43 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 			return keys;
 		} );
 
-	/*
-	 * In order for this to work in the editor, we need to take into account
-	 * the imgui window position, to get the world position.
-	 * There is new bindings inside the editor that handles this.
-	 */
-	#ifndef IN_VORTEK_EDITOR
+/*
+ * In order for this to work in the editor, we need to take into account
+ * the imgui window position, to get the world position.
+ * There is new bindings inside the editor that handles this.
+ */
+#ifndef IN_VORTEK_EDITOR
 	auto& mouse = inputManager.GetMouse();
 
 	lua.new_usertype<Mouse>(
 		"Mouse",
 		sol::no_constructor,
-		"just_pressed",
+		"justPressed",
 		[ & ]( int btn ) { return mouse.IsBtnJustPressed( btn ); },
-		"just_released",
+		"justReleased",
 		[ & ]( int btn ) { return mouse.IsBtnJustReleased( btn ); },
 		"pressed",
 		[ & ]( int btn ) { return mouse.IsBtnPressed( btn ); },
-		"screen_position",
+		"screenPosition",
 		[ & ]() {
 			auto [ x, y ] = mouse.GetMouseScreenPosition();
 			return glm::vec2{ x, y };
 		},
-		"world_position",
+		"worldPosition",
 		[ & ]() {
 			auto [ x, y ] = mouse.GetMouseScreenPosition();
 			return camera->ScreenCoordsToWorld( glm::vec2{ x, y } );
 		},
-		"wheel_x",
+		"wheelX",
 		[ & ]() { return mouse.GetMouseWheelX(); },
-		"wheel_y",
+		"wheelY",
 		[ & ]() { return mouse.GetMouseWheelY(); } );
-	#endif // IN_VORTEK_EDITOR
+#endif // IN_VORTEK_EDITOR
 
 	lua.new_usertype<Gamepad>(
 		"Gamepad",
 		sol::no_constructor,
-		"just_pressed",
+		"justPressed",
 		[ & ]( int index, int btn ) {
 			auto gamepad = inputManager.GetController( index );
 			if ( !gamepad )
@@ -266,7 +272,7 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 			}
 			return gamepad->IsBtnJustPressed( btn );
 		},
-		"just_released",
+		"justReleased",
 		[ & ]( int index, int btn ) {
 			auto gamepad = inputManager.GetController( index );
 			if ( !gamepad )
@@ -286,7 +292,7 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 			}
 			return gamepad->IsBtnPressed( btn );
 		},
-		"get_axis_position",
+		"getAxisPosition",
 		[ & ]( int index, int axis ) {
 			auto gamepad = inputManager.GetController( index );
 			if ( !gamepad )
@@ -296,7 +302,7 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 			}
 			return gamepad->GetAxisPosition( axis );
 		},
-		"get_hat_value",
+		"getHatValue",
 		[ & ]( int index ) {
 			auto gamepad = inputManager.GetController( index );
 			if ( !gamepad )
@@ -307,6 +313,14 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 			return gamepad->GetJoystickHatValue();
 		} );
 }
+
+void InputManager::UpdateInputs()
+{
+	m_pKeyboard->Update();
+	m_pMouse->Update();
+	UpdateGamepads();
+}
+
 std::shared_ptr<Gamepad> InputManager::GetController( int index )
 {
 	auto gamepadItr = m_mapGameControllers.find( index );
@@ -330,8 +344,8 @@ bool InputManager::AddGamepad( Sint32 gamepadIndex )
 	std::shared_ptr<Gamepad> gamepad{ nullptr };
 	try
 	{
-		gamepad =
-			std::make_shared<Gamepad>( std::move( make_shared_controller( SDL_GameControllerOpen( gamepadIndex ) ) ) );
+		gamepad = std::make_shared<Gamepad>(
+			std::move( MakeSharedFromSDLType<Controller>( SDL_GameControllerOpen( gamepadIndex ) ) ) );
 	}
 	catch ( ... )
 	{

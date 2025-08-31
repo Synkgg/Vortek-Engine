@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 
 namespace VORTEK_CORE::ECS
 {

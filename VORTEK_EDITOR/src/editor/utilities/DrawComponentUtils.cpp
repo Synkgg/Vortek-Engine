@@ -14,8 +14,6 @@
 #include "../scene/SceneManager.h"
 #include "../scene/SceneObject.h"
 
-#include <map>
-
 using namespace VORTEK_UTIL;
 using namespace VORTEK_PHYSICS;
 using namespace VORTEK_CORE::ECS;
@@ -544,42 +542,97 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::RigidBodyComponen
 
 void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TextComponent& textComponent )
 {
-	ImGui::SeparatorText( "Text Component" );
+	// ImGui::SeparatorText( "Text Component" );
+	// ImGui::PushID( entt::type_hash<TextComponent>::value() );
+	// if ( ImGui::TreeNodeEx( "", ImGuiTreeNodeFlags_DefaultOpen ) )
+	//{
+	//	std::string sTextBuffer{ textComponent.sTextStr };
+	//	ImGui::InlineLabel( "text" );
+	//	if ( ImGui::InputText(
+	//			 "##_textStr", sTextBuffer.data(), sizeof( char ) * 1024, 0 /*ImGuiInputTextFlags_EnterReturnsTrue*/ ) )
+	//	{
+	//		textComponent.sTextStr = std::string{ sTextBuffer.data() };
+	//		textComponent.bDirty = true;
+	//	}
+
+	//	ImVec4 col = { textComponent.color.r / 255.f,
+	//				   textComponent.color.g / 255.f,
+	//				   textComponent.color.b / 255.f,
+	//				   textComponent.color.a / 255.f };
+	//	ImGui::InlineLabel( "Text Color" );
+	//	ImGui::ItemToolTip( "Text Color Override." );
+	//	if ( ImGui::ColorEdit4( "##textcolor", &col.x, IMGUI_COLOR_PICKER_FLAGS ) )
+	//	{
+	//		textComponent.color.r = static_cast<GLubyte>( col.x * 255.f );
+	//		textComponent.color.g = static_cast<GLubyte>( col.y * 255.f );
+	//		textComponent.color.b = static_cast<GLubyte>( col.z * 255.f );
+	//		textComponent.color.a = static_cast<GLubyte>( col.w * 255.f );
+	//	}
+
+	//	ImGui::InlineLabel( "Invisible" );
+	//	if (ImGui::Checkbox("##invis", &textComponent.bHidden))
+	//	{
+	//		textComponent.bDirty = true;
+	//	}
+
+	//	std::string sFontName{ textComponent.sFontName };
+	//	ImGui::PushItemWidth( 164.f );
+	//	ImGui::InlineLabel( "font" );
+	//	if ( ImGui::BeginCombo( "##fontName", sFontName.c_str() ) )
+	//	{
+	//		auto& assetManager = MAIN_REGISTRY().GetAssetManager();
+	//		for ( const auto& sFont : assetManager.GetAssetKeyNames( VORTEK_UTIL::AssetType::FONT ) )
+	//		{
+	//			if ( ImGui::Selectable( sFont.c_str(), sFont == sFontName ) )
+	//			{
+	//				sFontName = sFont;
+	//				textComponent.sFontName = sFontName;
+	//				textComponent.bDirty = true;
+	//			}
+	//		}
+
+	//		ImGui::EndCombo();
+	//	}
+
+	//	ImGui::PushItemWidth( 120.f );
+	//	ImGui::InlineLabel( "padding" );
+	//	if ( ImGui::InputInt( "##padding", &textComponent.padding, 0, 0 ) )
+	//	{
+	//		textComponent.bDirty = true;
+	//	}
+
+	//	ImGui::InlineLabel( "wrap" );
+	//	if ( ImGui::InputFloat( "##textWrap", &textComponent.wrap, 0.f, 0.f ) )
+	//	{
+	//		textComponent.bDirty = true;
+	//	}
+
+	//	ImGui::PopItemWidth();
+	//	ImGui::PopItemWidth();
+	//	ImGui::TreePop();
+	//}
+	// ImGui::PopID();
+
+	ImGui::SeparatorText( "Text (Script)" );
 	ImGui::PushID( entt::type_hash<TextComponent>::value() );
+
 	if ( ImGui::TreeNodeEx( "", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
+		// --- TEXT FIELD ---
 		std::string sTextBuffer{ textComponent.sTextStr };
-		ImGui::InlineLabel( "text" );
-		if ( ImGui::InputText(
-				 "##_textStr", sTextBuffer.data(), sizeof( char ) * 1024, 0 /*ImGuiInputTextFlags_EnterReturnsTrue*/ ) )
+		ImGui::InlineLabel( "Text" );
+		if ( ImGui::InputText( "##_textStr", sTextBuffer.data(), 1024 ) )
 		{
 			textComponent.sTextStr = std::string{ sTextBuffer.data() };
 			textComponent.bDirty = true;
 		}
 
-		ImVec4 col = { textComponent.color.r / 255.f,
-					   textComponent.color.g / 255.f,
-					   textComponent.color.b / 255.f,
-					   textComponent.color.a / 255.f };
-		ImGui::InlineLabel( "Text Color" );
-		ImGui::ItemToolTip( "Text color override." );
-		if ( ImGui::ColorEdit4( "##textcolor", &col.x, IMGUI_COLOR_PICKER_FLAGS ) )
-		{
-			textComponent.color.r = static_cast<GLubyte>( col.x * 255.f );
-			textComponent.color.g = static_cast<GLubyte>( col.y * 255.f );
-			textComponent.color.b = static_cast<GLubyte>( col.z * 255.f );
-			textComponent.color.a = static_cast<GLubyte>( col.w * 255.f );
-		}
+		// --- CHARACTER SECTION ---
+		ImGui::SeparatorText( "Character" );
 
-		ImGui::InlineLabel( "Invisible" );
-		if (ImGui::Checkbox("##invis", &textComponent.bHidden))
-		{
-			textComponent.bDirty = true;
-		}
-
+		// Font
 		std::string sFontName{ textComponent.sFontName };
-		ImGui::PushItemWidth( 164.f );
-		ImGui::InlineLabel( "font" );
+		ImGui::InlineLabel( "Font" );
 		if ( ImGui::BeginCombo( "##fontName", sFontName.c_str() ) )
 		{
 			auto& assetManager = MAIN_REGISTRY().GetAssetManager();
@@ -592,13 +645,21 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TextComponent& te
 					textComponent.bDirty = true;
 				}
 			}
-
 			ImGui::EndCombo();
 		}
 
-		ImGui::PushItemWidth( 120.f );
-		ImGui::InlineLabel( "padding" );
-		if ( ImGui::InputInt( "##padding", &textComponent.padding, 0, 0 ) )
+		// Line Spacing
+		ImGui::InlineLabel( "Line Spacing" );
+		if ( ImGui::InputInt( "##lineSpacing", &textComponent.padding, 0, 0 ) )
+		{
+			textComponent.bDirty = true;
+		}
+
+		// --- PARAGRAPH SECTION ---
+		ImGui::SeparatorText( "Paragraph" );
+
+		ImGui::InlineLabel( "Invisible" );
+		if ( ImGui::Checkbox( "##invis", &textComponent.bHidden ) )
 		{
 			textComponent.bDirty = true;
 		}
@@ -609,10 +670,24 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TextComponent& te
 			textComponent.bDirty = true;
 		}
 
-		ImGui::PopItemWidth();
-		ImGui::PopItemWidth();
+		// Color
+		ImVec4 col = { textComponent.color.r / 255.f,
+					   textComponent.color.g / 255.f,
+					   textComponent.color.b / 255.f,
+					   textComponent.color.a / 255.f };
+		ImGui::InlineLabel( "Color" );
+		if ( ImGui::ColorEdit4( "##textcolor", &col.x, IMGUI_COLOR_PICKER_FLAGS ) )
+		{
+			textComponent.color.r = static_cast<GLubyte>( col.x * 255.f );
+			textComponent.color.g = static_cast<GLubyte>( col.y * 255.f );
+			textComponent.color.b = static_cast<GLubyte>( col.z * 255.f );
+			textComponent.color.a = static_cast<GLubyte>( col.w * 255.f );
+			textComponent.bDirty = true;
+		}
+
 		ImGui::TreePop();
 	}
+
 	ImGui::PopID();
 }
 

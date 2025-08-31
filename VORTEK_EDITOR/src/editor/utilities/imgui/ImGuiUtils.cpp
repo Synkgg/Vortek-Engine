@@ -1,6 +1,8 @@
 #include "ImGuiUtils.h"
 #include "Logger/Logger.h"
 #include <imgui_stdlib.h>
+#include <unordered_map>
+#include "imgui_internal.h"
 
 namespace ImGui
 {
@@ -29,6 +31,7 @@ void InitDefaultStyles()
 	style.ButtonTextAlign.x = 0.5f;
 	style.ButtonTextAlign.y = 0.5f;
 	style.ItemInnerSpacing.x = 2.f;
+	style.WindowMenuButtonPosition = ImGuiDir_None;
 
 	auto& colors = ImGui::GetStyle().Colors;
 	colors[ ImGuiCol_WindowBg ] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
@@ -131,6 +134,37 @@ void DisabledButton( const char* label, ImVec2 size, const std::string& disabled
 	ImGui::EndDisabled();
 }
 
+void LoadingSpinner( const char* label, float radius, float thickness, const ImU32& color )
+{
+	ImGuiWindow* window = ImGui::GetCurrentWindow();
+	if ( window->SkipItems )
+		return;
+
+	ImGuiContext& g = *ImGui::GetCurrentContext();
+	const ImGuiID id = window->GetID( label );
+	const ImVec2 pos = ImGui::GetCursorScreenPos();
+	const float size = ( radius + thickness ) * 2.f;
+	const ImRect bb( pos, ImVec2{ pos.x + size, pos.y + size } );
+	ImGui::ItemSize( bb );
+	if ( !ImGui::ItemAdd( bb, id ) )
+		return;
+
+	const float time = static_cast<float>( ImGui::GetTime() );
+	const int numSegments = 30;
+	const float startAngle = time * 4.f;
+	const float angleOffset = 2.0f * IM_PI / numSegments;
+
+	ImDrawList* drawList = ImGui::GetWindowDrawList();
+	drawList->PathClear();
+	for ( int i = 0; i < numSegments; ++i )
+	{
+		const float a = startAngle + i * angleOffset;
+		drawList->PathLineTo(
+			ImVec2{ pos.x + radius + std::cos( a ) * radius, pos.y + radius + std::sin( a ) * radius } );
+	}
+	drawList->PathStroke( color, false, thickness );
+}
+
 void ActiveImageButton( const char* buttonId, ImTextureID textureID, ImVec2 size )
 {
 	ImGui::PushStyleColor( ImGuiCol_Button, BUTTON_HELD );
@@ -162,6 +196,80 @@ void InputTextReadOnly( const std::string& sLabel, std::string* sInputText )
 	ImGui::InputText( sLabel.c_str(), sInputText, ImGuiInputTextFlags_ReadOnly );
 
 	ImGui::PopStyleColor( 2 );
+}
+
+static std::unordered_map<std::string, ImFont*> g_mapImGuiFonts;
+
+ImFont* GetFont( const std::string& sFontName )
+{
+	auto fontItr = g_mapImGuiFonts.find( sFontName );
+	if ( fontItr == g_mapImGuiFonts.end() )
+	{
+		VORTEK_ERROR( "Failed to get font [{}] - Does not exist.", sFontName );
+		ImFont* pFont = ImGui::GetIO().Fonts->Fonts[ 0 ];
+		return pFont;
+	}
+
+	return fontItr->second;
+}
+
+bool AddFont( const std::string& sFontName, ImFont* pFont, float fontSize )
+{
+	if ( g_mapImGuiFonts.contains( sFontName ) )
+	{
+		VORTEK_ERROR( "Failed to add font [{}] to imgui fonts. Already exists.", sFontName );
+		return false;
+	}
+
+	if ( !pFont )
+	{
+		VORTEK_ERROR( "Failed to add font [{}] to imgui fonts.", sFontName );
+		return false;
+	}
+
+	return g_mapImGuiFonts.emplace( sFontName, pFont ).second;
+}
+
+bool AddFontFromFile( const std::string sFontName, const std::string& sFontFile, float fontSize )
+{
+	if ( g_mapImGuiFonts.contains( sFontName ) )
+	{
+		VORTEK_ERROR( "Failed to add font [{}] to imgui fonts. Already exists.", sFontName );
+		return false;
+	}
+
+	ImGuiIO& io = ImGui::GetIO();
+	ImFont* pFont =
+		io.Fonts->AddFontFromFileTTF( sFontFile.c_str(), fontSize, nullptr, io.Fonts->GetGlyphRangesDefault() );
+
+	if ( !pFont )
+	{
+		VORTEK_ERROR( "Failed to add font [{}] to imgui fonts.", sFontName );
+		return false;
+	}
+
+	return g_mapImGuiFonts.emplace( sFontName, pFont ).second;
+}
+
+bool AddFontFromMemory( const std::string& sFontName, void* fontData, float dataSize, float fontSize )
+{
+	if ( g_mapImGuiFonts.contains( sFontName ) )
+	{
+		VORTEK_ERROR( "Failed to add font [{}] to imgui fonts. Already exists.", sFontName );
+		return false;
+	}
+
+	ImGuiIO& io = ImGui::GetIO();
+	ImFont* pFont =
+		io.Fonts->AddFontFromMemoryTTF( fontData, dataSize, fontSize, nullptr, io.Fonts->GetGlyphRangesDefault() );
+
+	if ( !pFont )
+	{
+		VORTEK_ERROR( "Failed to add font [{}] to imgui fonts.", sFontName );
+		return false;
+	}
+
+	return g_mapImGuiFonts.emplace( sFontName, pFont ).second;
 }
 
 } // namespace ImGui

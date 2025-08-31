@@ -1,7 +1,5 @@
 #pragma once
 #include "IDisplay.h"
-#include <string>
-#include <filesystem>
 
 namespace VORTEK_EDITOR::Events
 {
@@ -41,6 +39,7 @@ namespace VORTEK_EDITOR
 		void OpenCreateFolderPopup();
 
 		void OpenCreateLuaClassPopup();
+		void OpenCreateLuaStateClassPopup();
 		void OpenCreateLuaTablePopup();
 		void OpenCreateEmptyLuaFilePopup();
 

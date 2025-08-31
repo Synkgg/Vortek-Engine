@@ -1,10 +1,9 @@
 #pragma once
-#include "State.h"
-
-#include <map>
+#include <sol/sol.hpp>
 
 namespace VORTEK_CORE
 {
+struct State;
 class StateMachine
 {
   public:

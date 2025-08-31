@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/ECS/Components/AllComponents.h"
 #include "Physics/UserData.h"
-#include <filesystem>
 
 namespace VORTEK_RENDERING
 {

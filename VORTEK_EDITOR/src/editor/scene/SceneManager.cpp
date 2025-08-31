@@ -15,10 +15,6 @@
 
 #include "Logger/Logger.h"
 
-#include <filesystem>
-
-namespace fs = std::filesystem;
-
 using namespace VORTEK_CORE::ECS;
 
 namespace VORTEK_EDITOR

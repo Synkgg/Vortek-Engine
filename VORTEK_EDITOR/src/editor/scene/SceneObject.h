@@ -65,6 +65,11 @@ class SceneObject : public VORTEK_CORE::Scene
 	 */
 	void AddNewLayer();
 
+	/*
+	 * @brief Deletes the desired layer and removes all entities from the registry.
+	 */
+	bool DeleteLayer( int layer );
+
 	/**
 	 * @brief Adds a new game object to the scene with a unique name and a default TransformComponent.
 	 *
@@ -125,6 +130,9 @@ class SceneObject : public VORTEK_CORE::Scene
 
 	virtual bool LoadScene() override;
 	virtual bool UnloadScene( bool bSaveScene = true ) override;
+
+	std::pair<std::string, std::string> ExportSceneToLua( const std::string& sSceneName, const std::string& sExportPath,
+														  VORTEK_CORE::ECS::Registry& registry );
 
 	/**
 	 * @brief Checks whether a tag name already exists in the scene.

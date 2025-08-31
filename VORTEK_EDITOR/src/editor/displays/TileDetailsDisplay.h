@@ -1,34 +1,35 @@
 #pragma once
 #include "IDisplay.h"
-#include <string>
 
 namespace VORTEK_CORE
 {
-	class Scene;
+class Scene;
 
-	namespace ECS
-	{
-		struct SpriteComponent;
-	}
-} // namespace VORTEK_CORE::ECS
+namespace ECS
+{
+struct SpriteComponent;
+}
+} // namespace VORTEK_CORE
 
 namespace VORTEK_EDITOR
 {
 
-	class TileDetailsDisplay : public IDisplay
-	{
-	private:
-		int m_SelectedLayer;
-		std::string m_sRenameLayerBuf;
-		bool m_bRename;
+class TileDetailsDisplay : public IDisplay
+{
+  public:
+	TileDetailsDisplay();
+	virtual ~TileDetailsDisplay();
 
-	private:
-		void DrawSpriteComponent(VORTEK_CORE::ECS::SpriteComponent& sprite, VORTEK_CORE::Scene* pScene);
+	virtual void Draw() override;
 
-	public:
-		TileDetailsDisplay();
-		virtual ~TileDetailsDisplay();
+  private:
+	void DrawSpriteComponent( VORTEK_CORE::ECS::SpriteComponent& sprite, VORTEK_CORE::Scene* pScene );
 
-		virtual void Draw() override;
-	};
+  private:
+	int m_SelectedLayer;
+	int m_DeleteLayer;
+	std::string m_sRenameLayerBuf;
+	bool m_bRename;
+	bool m_bDeleteLayer;
+};
 } // namespace VORTEK_EDITOR

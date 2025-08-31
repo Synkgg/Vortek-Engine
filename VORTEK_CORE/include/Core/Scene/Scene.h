@@ -52,6 +52,8 @@ class Scene
 	 */
 	int AddLayer( const std::string& sLayerName, bool bVisible );
 
+	int AddLayer( const VORTEK_UTIL::SpriteLayerParams& layerParam );
+
 	/*
 	 * @brief Checks to see if the layer already exists in the scene.
 	 * To be used when trying to adjust the name of the layer to prevent layers with duplicate names.
@@ -65,7 +67,7 @@ class Scene
 	 * because it does not set the loaded flag or clear the registry.
 	 * @return Returns true if successful, false otherwise.
 	 */
-	bool SaveScene() { return SaveSceneData(); }
+	bool SaveScene( bool bOverride = false ) { return SaveSceneData( bOverride ); }
 
 	inline const std::string& GetDefaultMusicName() const { return m_sDefaultMusic; }
 	inline void SetDefaultMusic( const std::string& sDefaultMusic ) { m_sDefaultMusic = sDefaultMusic; }

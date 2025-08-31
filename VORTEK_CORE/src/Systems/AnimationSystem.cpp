@@ -3,7 +3,6 @@
 #include "Core/ECS/Components/SpriteComponent.h"
 #include "Core/ECS/Components/TransformComponent.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
-#include "Core/CoreUtilities/CoreEngineData.h"
 #include "Core/ECS/Registry.h"
 
 #include "Logger/Logger.h"
@@ -18,9 +17,6 @@ namespace VORTEK_CORE::Systems
 
 void AnimationSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera )
 {
-
-	if ( !CORE_GLOBALS().AnimationRenderEnabled() )
-		return;
 
 	auto view = registry.GetRegistry().view<AnimationComponent, SpriteComponent, TransformComponent>();
 	if ( view.size_hint() < 1 )

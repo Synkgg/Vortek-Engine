@@ -1,9 +1,10 @@
 #include "LogDisplay.h"
 #include "Logger/Logger.h"
-#include <ranges>
 #include <imgui_cpp/imgui_stdlib.h>
+#include "Core/ECS/MainRegistry.h"
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
 #include "editor/utilities/EditorSettings.h"
+#include "editor/utilities/EditorState.h"
 
 bool LogIncremented = false;
 bool WarnIncremented = false;
@@ -59,6 +60,14 @@ namespace VORTEK_EDITOR
 
 	void LogDisplay::Draw()
 	{
+		if ( auto& pEditorState = MAIN_REGISTRY().GetContext<EditorStatePtr>() )
+		{
+			if ( !pEditorState->IsDisplayOpen( EDisplay::Console ) )
+			{
+				return;
+			}
+
+		}
 		if (!ImGui::Begin(ICON_FA_TERMINAL " Console"))
 		{
 			ImGui::End();
@@ -131,9 +140,33 @@ namespace VORTEK_EDITOR
 			ImGui::SetTooltip("Clear");
 		ImGui::SameLine(0.f, 5.f);
 
-		if (ImGui::Button(ICON_FA_COPY "##Copy"))
+		if ( ImGui::Button( ICON_FA_COPY "##Copy" ) )
 		{
-			ImGui::LogToClipboard();
+			std::string logsToCopy;
+			for ( int i = 0; i < m_TextOffsets.Size; ++i )
+			{
+				const char* line_start = m_TextBuffer.begin() + m_TextOffsets[ i ];
+				const char* line_end = ( i + 1 < m_TextOffsets.Size )
+										   ? ( m_TextBuffer.begin() + m_TextOffsets[ i + 1 ] - 1 )
+										   : m_TextBuffer.end();
+
+				std::string_view text{ line_start, line_end };
+
+				// Apply same filtering as in Draw()
+				bool bIsInfo = text.find( "INFO" ) != std::string_view::npos;
+				bool bIsWarn = text.find( "WARN" ) != std::string_view::npos;
+				bool bIsError = text.find( "ERROR" ) != std::string_view::npos;
+
+				if ( ( bIsInfo && !m_bShowInfo ) || ( bIsWarn && !m_bShowWarn ) || ( bIsError && !m_bShowError ) )
+					continue;
+
+				if ( !m_sSearchQuery.empty() && text.find( m_sSearchQuery ) == std::string_view::npos )
+					continue;
+
+				logsToCopy.append( text ).append( "\n" );
+			}
+
+			ImGui::SetClipboardText( logsToCopy.c_str() );
 		}
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
 			ImGui::SetTooltip("Copy");

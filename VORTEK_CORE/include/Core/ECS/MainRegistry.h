@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 #include "Core/ECS/Registry.h"
 
 #define MAIN_REGISTRY() VORTEK_CORE::ECS::MainRegistry::GetInstance()
@@ -20,6 +19,11 @@ class SoundFxPlayer;
 namespace VORTEK_CORE::Events
 {
 class EventDispatcher;
+}
+
+namespace VORTEK_RENDERING
+{
+class Renderer;
 }
 
 namespace VORTEK_CORE::Systems
@@ -43,6 +47,7 @@ class MainRegistry
 	VORTEK_RESOURCES::AssetManager& GetAssetManager();
 	VORTEK_SOUNDS::MusicPlayer& GetMusicPlayer();
 	VORTEK_SOUNDS::SoundFxPlayer& GetSoundPlayer();
+	VORTEK_RENDERING::Renderer& GetRenderer();
 
 	template <typename TContext>
 	TContext AddToContext( TContext context )
@@ -61,6 +66,7 @@ class MainRegistry
 	VORTEK_CORE::Systems::RenderShapeSystem& GetRenderShapeSystem();
 	VORTEK_CORE::Systems::AnimationSystem& GetAnimationSystem();
 	VORTEK_CORE::Systems::PhysicsSystem& GetPhysicsSystem();
+	Registry* GetRegistry();
 
   private:
 	MainRegistry() = default;

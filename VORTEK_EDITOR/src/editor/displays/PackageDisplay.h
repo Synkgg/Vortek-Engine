@@ -1,7 +1,5 @@
 #pragma once
 #include "IDisplay.h"
-#include <memory>
-#include <string>
 
 namespace VORTEK_CORE
 {
@@ -20,16 +18,21 @@ class PackageGameDisplay : public IDisplay
 	virtual void Draw() override;
 
   private:
+	bool CanPackageGame() const;
+
+  private:
 	std::unique_ptr<VORTEK_CORE::GameConfig> m_pGameConfig;
+	std::unique_ptr<class Packager> m_pPackager;
 	std::string m_sDestinationPath;
 	std::string m_sScriptListPath;
 	std::string m_sFileIconPath;
 
 	bool m_bResizable;
 	bool m_bBorderless;
-	bool m_bFullscreen;
+	bool m_bFullScreen;
 	bool m_bTitlebar;
 
 	bool m_bScriptListExists;
+	bool m_bPackageHasErrors;
 };
 } // namespace VORTEK_EDITOR

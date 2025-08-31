@@ -1,16 +1,8 @@
 #pragma once
-#include <map>
-#include <unordered_map>
-#include <filesystem>
-#include <memory>
-#include <string>
-#include <mutex>
-#include <shared_mutex>
-#include <atomic>
-#include <thread>
-
 #include <sol/sol.hpp>
 #include <SDL_mixer.h>
+
+using Cursor = std::shared_ptr<struct SDL_Cursor>;
 
 namespace VORTEK_UTIL
 {
@@ -163,7 +155,6 @@ class AssetManager
 	 */
 	std::shared_ptr<VORTEK_SOUNDS::Music> GetMusic( const std::string& musicName );
 
-
 	/*
 	 * @brief Detects the audio format of an in-memory data buffer.
 	 * @param audioData pointer to the beginning of the audio data in memory.
@@ -202,6 +193,13 @@ class AssetManager
 
 	std::shared_ptr<VORTEK_CORE::Prefab> GetPrefab( const std::string& sPrefabName );
 
+#ifdef IN_VORTEK_EDITOR
+	bool AddCursor( const std::string& sCursorName, const std::string& sCursorPath );
+	bool AddCursorFromMemory( const std::string& sCursorName, unsigned char* cursorData, size_t dataSize );
+
+	SDL_Cursor* GetCursor( const std::string& sCursorName );
+#endif
+
 	inline const std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Texture>>& GetAllTextures() const
 	{
 		return m_mapTextures;
@@ -222,10 +220,7 @@ class AssetManager
 		return m_mapFonts;
 	}
 
-	inline const std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::Music>>& GetAllMusic() const
-	{
-		return m_mapMusic;
-	}
+	inline const std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::Music>>& GetAllMusic() const { return m_mapMusic; }
 
 	inline const std::map<std::string, std::shared_ptr<VORTEK_CORE::Prefab>>& GetAllPrefabs() const
 	{
@@ -314,6 +309,10 @@ class AssetManager
 	std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::Music>> m_mapMusic{};
 	std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::SoundFX>> m_mapSoundFx{};
 	std::map<std::string, std::shared_ptr<VORTEK_CORE::Prefab>> m_mapPrefabs{};
+
+#ifdef IN_VORTEK_EDITOR
+	std::map<std::string, Cursor> m_mapCursors;
+#endif
 
 	std::vector<AssetWatchParams> m_FilewatchParams;
 

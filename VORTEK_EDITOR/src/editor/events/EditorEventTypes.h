@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 
 namespace VORTEK_CORE::ECS
 {
@@ -37,9 +36,15 @@ struct SwitchEntityEvent
 
 enum class EContentCreateAction
 {
+	/* Create a new folder. */
 	Folder,
+	/* Create a new lua file with Class */
 	LuaClass,
+	/* Create a new lua file with an empty lua table. TableName = {} */
 	LuaTable,
+	/* Create a new lua file with Class that has a Vortek State class implementation. */
+	LuaStateClass,
+	/* Create an empty lua file.*/
 	EmptyLuaFile,
 
 	NoAction

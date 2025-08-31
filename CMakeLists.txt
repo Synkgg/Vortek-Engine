@@ -6,7 +6,7 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
         CACHE STRING "")
 endif()
 
-project(Vortek_Engine)
+project(VortekEngine)
 
 if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
     message(
@@ -35,12 +35,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib") # .lib, .a
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib") # .dll, .so
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin") # .exe
 
+# Precompiled header location
+set(PCH_DIR ${CMAKE_SOURCE_DIR}/shared_pch/pch)
+
 if(WIN32)
     add_definitions(-DNOMINMAX)
 	set(APP_ICON_RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/resources/vortek.rc")
 endif()
-
-add_compile_definitions(IN_VORTEK_EDITOR)
 
 add_compile_definitions(SOL_ALL_SAFETIES_ON=1)
 add_compile_definitions(SOL_EXCEPTIONS_ALWAYS_UNSAFE=1)
@@ -62,6 +63,11 @@ find_package(Lua REQUIRED)
 find_package(sol2 CONFIG REQUIRED)
 find_package(tinyfiledialogs CONFIG REQUIRED)
 find_package(RapidJSON CONFIG REQUIRED)
+find_package(libzippp CONFIG REQUIRED)
+
+add_subdirectory(shared_pch)
+# Register pch.hpp as a precompiled header
+target_precompile_headers(PCH PUBLIC ${PCH_DIR}/pch.hpp)
 
 add_subdirectory(VORTEK_LOGGER)
 add_subdirectory(VORTEK_UTILITIES)
@@ -75,7 +81,7 @@ set_target_properties(
     VORTEK_LOGGER
 	VORTEK_UTILITIES
 	VORTEK_PHYSICS
-	VORTEK_RENDERING
+    VORTEK_RENDERING
 	VORTEK_FILESYSTEM
 	VORTEK_SOUNDS
 	VORTEK_WINDOW
@@ -84,3 +90,5 @@ set_target_properties(
 
 include(cmake/AddResources.cmake)
 add_subdirectory(VORTEK_EDITOR)
+add_subdirectory(crash_reporter)
+add_subdirectory(VORTEK_ENGINE)

@@ -26,6 +26,29 @@ enum class AssetType
 	NO_TYPE
 };
 
+/*
+ * struct VEAsset
+ * Helper struct used for loading zipped or archived assets.
+ * Archived assets are the games assets that have been converted into luac files.
+ */
+struct VEAsset
+{
+	/* The name of the asset. */
+	std::string sName{};
+	/* The size of the asset data. Based on a char array. */
+	size_t assetSize{ 0 };
+	/* The end position of the asset data. */
+	size_t assetEnd{ 0 };
+	/* The type of asset that the data represents. */
+	AssetType eType{ AssetType::NO_TYPE };
+	/* The underlying hex data of the asset. */
+	std::vector<unsigned char> assetData;
+	/* Optional parameter if asset is font. */
+	std::optional<float> optFontSize{ std::nullopt };
+	/* Optional parameter if asset is a texture. */
+	std::optional<bool> optPixelArt{ std::nullopt };
+};
+
 /* Ensure the types that are passed in are associative map types. */
 template <typename T>
 concept MapType = std::same_as<T, std::map<typename T::key_type, typename T::mapped_type, typename T::key_compare,
@@ -153,7 +176,12 @@ bool IsBitSet( const T& x, const T& y )
 	return 0 != ( x & y );
 }
 
+std::string AssetTypeToStr( AssetType eAssetType );
+AssetType StrToAssetType( const std::string& sAssetType );
+
 std::string GetSubstring( std::string_view str, std::string_view find );
+
+std::string ConvertTo12HourFormat( const std::string& time );
 
 std::string ConvertWideToANSI( const std::wstring& wstr );
 std::wstring ConvertAnsiToWide( const std::string& str );

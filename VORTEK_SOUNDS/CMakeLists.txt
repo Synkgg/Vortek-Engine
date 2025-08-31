@@ -20,3 +20,5 @@ target_link_libraries(VORTEK_SOUNDS
 
 target_compile_options(
     VORTEK_SOUNDS PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+
+target_precompile_headers(VORTEK_SOUNDS REUSE_FROM PCH)

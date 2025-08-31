@@ -2,8 +2,6 @@
 #include "GPButtons.h"
 #include "Button.h"
 #include <VORTEKUtilities/SDL_Wrappers.h>
-#include <map>
-#include <string>
 
 namespace VORTEK_WINDOWING::Inputs
 {

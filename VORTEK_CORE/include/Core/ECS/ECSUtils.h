@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 #include <entt/entt.hpp>
 
 namespace VORTEK_CORE::ECS

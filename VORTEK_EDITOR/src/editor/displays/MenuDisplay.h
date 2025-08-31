@@ -3,13 +3,18 @@
 
 namespace VORTEK_EDITOR
 {
-	class MenuDisplay : public IDisplay
-	{
-	private:
-	public:
-		MenuDisplay() = default;
-		virtual ~MenuDisplay() = default;
+enum class EDisplay : uint64_t;
+class EditorState;
 
-		virtual void Draw() override;
-	};
+class MenuDisplay : public IDisplay
+{
+  public:
+	MenuDisplay() = default;
+	virtual ~MenuDisplay() = default;
+
+	virtual void Draw() override;
+
+  private:
+	void DrawDisplayItem( EditorState& editorState, const std::string& sDisplayName, const EDisplay eDisplay );
+};
 } // namespace VORTEK_EDITOR

@@ -1,8 +1,5 @@
 #pragma once
 #include <SDL.h>
-#include <string>
-#include <fstream>
-#include <algorithm>
 
 namespace VORTEK_WINDOWING
 {
@@ -54,7 +51,6 @@ class Hub
 
 	void LoadRecentProjects();
 	void SaveRecentProject( const std::string& path );
-	std::string ConvertTo12HourFormat( const std::string& time );
 
   private:
 	VORTEK_WINDOWING::Window& m_Window;

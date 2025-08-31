@@ -8,6 +8,8 @@
 #include "editor/tools/ToolManager.h"
 #include "editor/tools/TileTool.h"
 
+#include "editor/commands/CommandManager.h"
+
 #include "Core/ECS/MainRegistry.h"
 #include "Core/ECS/Components/AllComponents.h"
 #include "Core/Resources/AssetManager.h"
@@ -17,7 +19,6 @@
 #include "Logger/Logger.h"
 
 #include <imgui.h>
-#include <ranges>
 
 using namespace VORTEK_CORE::ECS;
 
@@ -108,6 +109,7 @@ namespace VORTEK_EDITOR
 		: m_SelectedLayer{ -1 }
 		, m_sRenameLayerBuf{}
 		, m_bRename{ false }
+		, m_bDeleteLayer{ false }
 	{
 	}
 
@@ -124,7 +126,7 @@ namespace VORTEK_EDITOR
 		if (!pActiveTool)
 			return;
 
-		if (!ImGui::Begin("Tile Details") || !pCurrentScene)
+		if ( !ImGui::Begin( ICON_FA_CLIPBOARD_LIST " Tile Details" ) || !pCurrentScene )
 		{
 			ImGui::End();
 			return;
@@ -189,7 +191,7 @@ namespace VORTEK_EDITOR
 
 		ImGui::End();
 
-		if (ImGui::Begin("Tile Layers"))
+		if ( ImGui::Begin( ICON_FA_LAYER_GROUP " Tile Layers" ) )
 		{
 			ImGui::SeparatorText("Tile Layers");
 			auto& spriteLayers = pCurrentScene->GetLayerParams();
@@ -206,7 +208,8 @@ namespace VORTEK_EDITOR
 			ImGui::Separator();
 			ImGui::AddSpaces(2);
 
-			float itemWidth{ ImGui::GetWindowWidth() - 64.f };
+			float itemWidth{ ImGui::GetWindowWidth() - 96.f };
+			VORTEK_ASSERT( itemWidth > 0 && "Item width must not be less than zero." );
 			auto rView = spriteLayers | std::ranges::views::reverse;
 
 			for (auto rit = rView.begin(); rit != rView.end(); rit++)
@@ -225,6 +228,10 @@ namespace VORTEK_EDITOR
 					{
 						// We need to swap the sprite layers here, not the reverse view.
 						// Because the indexes are not reversed anymore.
+						const int nextLayer = spriteLayers[ n ].layer;
+						spriteLayers[ n ].layer = spriteLayers[ n_next ].layer;
+						spriteLayers[ n_next ].layer = nextLayer;
+
 						std::swap(spriteLayers[n], spriteLayers[n_next]);
 
 						auto spriteView = pCurrentScene->GetRegistry().GetRegistry().view<SpriteComponent, TileComponent>();
@@ -244,6 +251,10 @@ namespace VORTEK_EDITOR
 
 						m_SelectedLayer = n_next;
 						tileData.sprite.layer = n_next;
+
+						auto moveTileLayerCmd = UndoableCommands{
+							MoveTileLayerCmd{ .pSceneObject = pCurrentScene, .from = n, .to = n_next } };
+						COMMAND_MANAGER().Execute( moveTileLayerCmd );
 
 						ImGui::ResetMouseDragDelta();
 					}
@@ -275,6 +286,14 @@ namespace VORTEK_EDITOR
 					spriteLayer.bVisible = !spriteLayer.bVisible;
 				}
 
+				ImGui::SameLine();
+
+				if ( ImGui::Button( ICON_FA_TRASH, { 24.f, 24.f } ) )
+				{
+					m_bDeleteLayer = true;
+					m_DeleteLayer = n;
+				}
+
 				ImGui::PopStyleColor(2);
 
 				if (m_bRename && bIsSelected)
@@ -284,9 +303,15 @@ namespace VORTEK_EDITOR
 						"##rename", m_sRenameLayerBuf.data(), 255, ImGuiInputTextFlags_EnterReturnsTrue) &&
 						bCheckPassed)
 					{
+						ChangeTileLayerNameCmd changeNameCmd{
+							.pSceneObject = pCurrentScene, .sOldName = spriteLayer.sLayerName, .sNewName = sCheckName };
+
 						spriteLayer.sLayerName = sCheckName;
 						m_sRenameLayerBuf.clear();
 						m_bRename = false;
+
+						auto changeLayerNameCmd = UndoableCommands{ changeNameCmd };
+						COMMAND_MANAGER().Execute( changeLayerNameCmd );
 					}
 					else if (m_bRename && ImGui::IsKeyPressed(ImGuiKey_Escape))
 					{
@@ -304,6 +329,43 @@ namespace VORTEK_EDITOR
 				}
 
 				ImGui::PopID();
+			}
+
+			if ( m_bDeleteLayer )
+			{
+				ImGui::OpenPopup( "Delete Layer" );
+			}
+
+			if ( ImGui::BeginPopupModal( "Delete Layer" ) )
+			{
+				ImGui::TextColored( ImVec4{ 1.f, 1.f, 0.f, 1.f },
+									"Are you sure?\nThis will delete all tiles at this layer." );
+
+				if ( ImGui::Button( "Ok" ) )
+				{
+					if ( m_DeleteLayer >= 0 )
+					{
+						if ( !pCurrentScene->DeleteLayer( m_DeleteLayer ) )
+						{
+							VORTEK_WARN( "Failed to delete layer: [{}]", m_DeleteLayer );
+						}
+
+						m_bDeleteLayer = false;
+						m_DeleteLayer = -1;
+						ImGui::CloseCurrentPopup();
+					}
+				}
+
+				ImGui::SameLine();
+
+				if ( ImGui::Button( "Cancel" ) )
+				{
+					m_bDeleteLayer = false;
+					m_DeleteLayer = -1;
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
 			}
 
 			ImGui::End();

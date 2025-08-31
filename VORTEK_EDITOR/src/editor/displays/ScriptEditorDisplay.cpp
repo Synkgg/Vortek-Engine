@@ -1,10 +1,9 @@
 #include "ScriptEditorDisplay.h"
 #include "Logger/Logger.h"
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "editor/utilities/EditorState.h"
 #include <VortekFilesystem/Dialogs/FileDialog.h>
-#include <fstream>
-#include <sstream>
-#include <string>
+#include "Core/ECS/MainRegistry.h"
 
 using namespace VORTEK_FILESYSTEM;
 
@@ -67,6 +66,14 @@ namespace VORTEK_EDITOR
 
 	void ScriptEditorDisplay::Draw()
 	{
+		if ( auto& pEditorState = MAIN_REGISTRY().GetContext<EditorStatePtr>() )
+		{
+			if ( !pEditorState->IsDisplayOpen( EDisplay::ScriptEditor ) )
+			{
+				return;
+			}
+		}
+
 		if (!ImGui::Begin(ICON_FA_DESKTOP " Script Editor"))
 		{
 			ImGui::End();

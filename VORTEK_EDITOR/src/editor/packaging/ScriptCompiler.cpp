@@ -5,17 +5,12 @@
 #include "Logger/Logger.h"
 
 #include <sol/sol.hpp>
-#include <filesystem>
-#include <algorithm>
-#include <array>
 
 #ifdef _WIN32
 constexpr const std::string_view FIND_LUAC_COMMAND = "where luac";
 #else
 constexpr const std::string_view FIND_LUAC_COMMAND = "which luac";
 #endif
-
-namespace fs = std::filesystem;
 
 namespace VORTEK_EDITOR
 {
@@ -62,7 +57,8 @@ bool ScriptCompiler::AddScripts( const std::string& sScriptList )
 			return false;
 		}
 
-		const std::string sContentPath = fmt::format( "{}content{}", CORE_GLOBALS().GetProjectPath(), PATH_SEPARATOR );
+		const std::string sContentPath =
+			fmt::format( "{}{}content{}", CORE_GLOBALS().GetProjectPath(), PATH_SEPARATOR, PATH_SEPARATOR );
 
 		for ( const auto& [ _, script ] : *optScriptList )
 		{

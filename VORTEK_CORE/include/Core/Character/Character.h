@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/ECS/Entity.h"
-#include <optional>
 
 namespace VORTEK_CORE::ECS
 {

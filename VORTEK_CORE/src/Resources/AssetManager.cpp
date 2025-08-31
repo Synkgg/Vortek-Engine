@@ -13,8 +13,10 @@
 #include <Sounds/Essentials/Music.h>
 #include <Sounds/Essentials/SoundFX.h>
 
-#include <VORTEKUtilities/VORTEKUtilities.h>
+#include <VortekUtilities/VortekUtilities.h>
+#include <VortekUtilities/SDL_Wrappers.h>
 #include <Logger/Logger.h>
+#include <SDL_image.h>
 
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
@@ -28,6 +30,11 @@ AssetManager::AssetManager( bool bEnableFilewatcher )
 	{
 		m_WatchThread = std::jthread( &AssetManager::FileWatcher, this );
 	}
+
+#ifdef IN_VORTEK_EDITOR
+	IMG_Init( IMG_INIT_PNG );
+	m_mapCursors.emplace( "default", MakeSharedFromSDLType<Cursor>( SDL_GetDefaultCursor() ) );
+#endif
 }
 
 AssetManager::~AssetManager()
@@ -41,15 +48,15 @@ AssetManager::~AssetManager()
 
 bool AssetManager::CreateDefaultFonts()
 {
-	if ( !AddFontFromMemory( "SourceSans", SourceSans ) )
-	{
-		VORTEK_ERROR( "Failed to create sourcesans font." );
-		return false;
-	}
-
 	if ( !AddFontFromMemory( "OpenSans", OpenSans ) )
 	{
 		VORTEK_ERROR( "Failed to create opensans font." );
+		return false;
+	}
+
+	if ( !AddFontFromMemory( "SourceSans", SourceSans ) )
+	{
+		VORTEK_ERROR( "Failed to create sourcesans font." );
 		return false;
 	}
 
@@ -69,9 +76,9 @@ bool AssetManager::AddTexture( const std::string& textureName, const std::string
 	}
 
 	auto pTexture = VORTEK_RENDERING::TextureLoader::Create( pixelArt ? VORTEK_RENDERING::Texture::TextureType::PIXEL
-																	  : VORTEK_RENDERING::Texture::TextureType::BLENDED,
-															 texturePath,
-															 bTileset );
+																	 : VORTEK_RENDERING::Texture::TextureType::BLENDED,
+															texturePath,
+															bTileset );
 
 	if ( !pTexture )
 	{
@@ -87,8 +94,8 @@ bool AssetManager::AddTexture( const std::string& textureName, const std::string
 
 		fs::path path{ texturePath };
 		auto lastWrite = fs::last_write_time( path );
-		if ( VORTEK_UTIL::CheckContainsValue(
-				 m_FilewatchParams, [ & ]( const auto& params ) { return params.sFilepath == texturePath; } ) )
+		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
+											 [ & ]( const auto& params ) { return params.sFilepath == texturePath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = textureName,
 															  .sFilepath = texturePath,
@@ -110,7 +117,7 @@ bool AssetManager::AddTextureFromMemory( const std::string& textureName, const u
 		return false;
 	}
 
-	auto pTexture = VORTEK_RENDERING::TextureLoader::CreateFromMemory( imageData, length, pixelArt, bTileset );
+	auto pTexture = VORTEK_RENDERING::TextureLoader::CreateFromMemory( imageData, length, !pixelArt, bTileset );
 
 	// Load the texture
 	if ( !pTexture )
@@ -167,7 +174,7 @@ bool AssetManager::AddFont( const std::string& fontName, const std::string& font
 		fs::path path{ fontPath };
 		auto lastWrite = fs::last_write_time( path );
 		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											  [ & ]( const auto& params ) { return params.sFilepath == fontPath; } ) )
+											 [ & ]( const auto& params ) { return params.sFilepath == fontPath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = fontName,
 															  .sFilepath = fontPath,
@@ -229,9 +236,9 @@ bool AssetManager::AddShader( const std::string& shaderName, const std::string& 
 	if ( !pShader )
 	{
 		VORTEK_ERROR( "Failed to load Shader [{0}] at vert path [{1}] and frag path [{2}]",
-					  shaderName,
-					  vertexPath,
-					  fragmentPath );
+					 shaderName,
+					 vertexPath,
+					 fragmentPath );
 		return false;
 	}
 
@@ -244,7 +251,7 @@ bool AssetManager::AddShader( const std::string& shaderName, const std::string& 
 		fs::path pathVert{ vertexPath };
 		auto lastWriteVert = fs::last_write_time( pathVert );
 		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											  [ & ]( const auto& params ) { return params.sFilepath == vertexPath; } ) )
+											 [ & ]( const auto& params ) { return params.sFilepath == vertexPath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = shaderName + "_vert",
 															  .sFilepath = vertexPath,
@@ -331,7 +338,7 @@ bool AssetManager::AddMusic( const std::string& musicName, const std::string& fi
 		fs::path path{ filepath };
 		auto lastWrite = fs::last_write_time( path );
 		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											  [ & ]( const auto& params ) { return params.sFilepath == filepath; } ) )
+											 [ & ]( const auto& params ) { return params.sFilepath == filepath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = musicName,
 															  .sFilepath = filepath,
@@ -466,7 +473,7 @@ bool AssetManager::AddSoundFx( const std::string& soundFxName, const std::string
 		fs::path path{ filepath };
 		auto lastWrite = fs::last_write_time( path );
 		if ( VORTEK_UTIL::CheckContainsValue( m_FilewatchParams,
-											  [ & ]( const auto& params ) { return params.sFilepath == filepath; } ) )
+											 [ & ]( const auto& params ) { return params.sFilepath == filepath; } ) )
 		{
 			m_FilewatchParams.emplace_back( AssetWatchParams{ .sAssetName = soundFxName,
 															  .sFilepath = filepath,
@@ -539,13 +546,68 @@ std::shared_ptr<VORTEK_CORE::Prefab> AssetManager::GetPrefab( const std::string&
 	return prefabItr->second;
 }
 
+#ifdef IN_VORTEK_EDITOR
+
+bool AssetManager::AddCursor( const std::string& sCursorName, const std::string& sCursorPath )
+{
+	return false;
+}
+
+bool AssetManager::AddCursorFromMemory( const std::string& sCursorName, unsigned char* cursorData, size_t dataSize )
+{
+	if ( m_mapCursors.contains( sCursorName ) )
+	{
+		VORTEK_ERROR( "Failed to add Cursor [{}] - Already exists.", sCursorName );
+		return false;
+	}
+
+	SDL_RWops* rw = SDL_RWFromConstMem( cursorData, static_cast<int>( dataSize ) );
+	if ( !rw )
+	{
+		VORTEK_ERROR( "Failed to add cursor. [{}]", SDL_GetError() );
+		return false;
+	}
+
+	SDL_Surface* pSurface = IMG_Load_RW( rw, 1 ); // 1 = Automatically closes RWops
+	if ( !pSurface )
+	{
+		VORTEK_ERROR( "Failed to add cursor. [{}]", IMG_GetError() );
+		return false;
+	}
+
+	SDL_Cursor* pCursor = SDL_CreateColorCursor( pSurface, pSurface->w / 2, pSurface->h / 2 );
+
+	if ( !pCursor )
+	{
+		VORTEK_ERROR( "Failed to add cursor. [{}]", SDL_GetError() );
+		return false;
+	}
+
+	SDL_FreeSurface( pSurface );
+
+	return m_mapCursors.emplace( sCursorName, MakeSharedFromSDLType<Cursor>( pCursor ) ).second;
+}
+
+SDL_Cursor* AssetManager::GetCursor( const std::string& sCursorName )
+{
+	auto cursorItr = m_mapCursors.find( sCursorName );
+	if ( cursorItr == m_mapCursors.end() )
+	{
+		VORTEK_ERROR( "Failed to get Cursor [{}] -- Does Not exist!", sCursorName );
+		return nullptr;
+	}
+
+	return cursorItr->second.get();
+}
+
+#endif
+
 std::vector<std::string> AssetManager::GetAssetKeyNames( VORTEK_UTIL::AssetType eAssetType ) const
 {
 	switch ( eAssetType )
 	{
 	case VORTEK_UTIL::AssetType::TEXTURE:
-		return VORTEK_UTIL::GetKeys( m_mapTextures,
-									 []( const auto& pair ) { return !pair.second->IsEditorTexture(); } );
+		return VORTEK_UTIL::GetKeys( m_mapTextures, []( const auto& pair ) { return !pair.second->IsEditorTexture(); } );
 	case VORTEK_UTIL::AssetType::FONT: return VORTEK_UTIL::GetKeys( m_mapFonts );
 	case VORTEK_UTIL::AssetType::SOUNDFX: return VORTEK_UTIL::GetKeys( m_mapSoundFx );
 	case VORTEK_UTIL::AssetType::MUSIC: return VORTEK_UTIL::GetKeys( m_mapMusic );
@@ -701,7 +763,7 @@ void AssetManager::CreateLuaAssetManager( sol::state& lua )
 	lua.new_usertype<AssetManager>(
 		"AssetManager",
 		sol::no_constructor,
-		"add_texture",
+		"addTexture",
 		sol::overload(
 			[ & ]( const std::string& assetName, const std::string& filepath, bool pixel_art ) {
 				return asset_manager.AddTexture( assetName, filepath, pixel_art, false );
@@ -709,15 +771,15 @@ void AssetManager::CreateLuaAssetManager( sol::state& lua )
 			[ & ]( const std::string& assetName, const std::string& filepath, bool pixel_art, bool bTileset ) {
 				return asset_manager.AddTexture( assetName, filepath, pixel_art, bTileset );
 			} ),
-		"add_music",
+		"addMusic",
 		[ & ]( const std::string& musicName, const std::string& filepath ) {
 			return asset_manager.AddMusic( musicName, filepath );
 		},
-		"add_soundfx",
+		"addSoundfx",
 		[ & ]( const std::string& soundFxName, const std::string& filepath ) {
 			return asset_manager.AddSoundFx( soundFxName, filepath );
 		},
-		"add_font",
+		"addFont",
 		[ & ]( const std::string& fontName, const std::string& fontPath, float fontSize ) {
 			return asset_manager.AddFont( fontName, fontPath, fontSize );
 		} );

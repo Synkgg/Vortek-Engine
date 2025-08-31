@@ -1,7 +1,11 @@
 #pragma once
 #include <sol/sol.hpp>
-#include <Physics/ContactListener.h>
 #include <entt/entt.hpp>
+
+namespace VORTEK_PHYSICS
+{
+class ContactListener;
+}
 
 namespace VORTEK_CORE::Scripting
 {

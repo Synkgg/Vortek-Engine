@@ -46,11 +46,13 @@ bool MainRegistry::Initialize( bool bEnableFilewatcher )
 
 	// Enable Alpha Blending
 	renderer->SetCapability( VORTEK_RENDERING::Renderer::GLCapability::BLEND, true );
-	renderer->SetCapability( VORTEK_RENDERING::Renderer::GLCapability::DEPTH_TEST, true );
 	renderer->SetBlendCapability( VORTEK_RENDERING::Renderer::BlendingFactors::SRC_ALPHA,
 								  VORTEK_RENDERING::Renderer::BlendingFactors::ONE_MINUS_SRC_ALPHA );
 
-	renderer->SetLineWidth( 4.f );
+	// Currently we only need the depth test in the editor.
+#ifdef IN_VORTEK_EDITOR
+	renderer->SetCapability( VORTEK_RENDERING::Renderer::GLCapability::DEPTH_TEST, true );
+#endif
 
 	if ( !AddToContext<std::shared_ptr<VORTEK_RENDERING::Renderer>>( renderer ) )
 	{
@@ -113,11 +115,11 @@ bool MainRegistry::RegisterMainSystems()
 	AddToContext<std::shared_ptr<VORTEK_CORE::Events::EventDispatcher>>(
 		std::make_shared<VORTEK_CORE::Events::EventDispatcher>() );
 
-	// #ifdef IN_VORTEK_EDITOR
+#ifdef IN_VORTEK_EDITOR
 	AddToContext<std::shared_ptr<VORTEK_CORE::Systems::RenderPickingSystem>>(
 		std::make_shared<VORTEK_CORE::Systems::RenderPickingSystem>() );
 	VORTEK_LOG( "Added Render Picking System to Main Registry." );
-	// #endif
+#endif
 
 	return true;
 }
@@ -144,6 +146,12 @@ VORTEK_SOUNDS::SoundFxPlayer& MainRegistry::GetSoundPlayer()
 {
 	VORTEK_ASSERT( m_bInitialized && "Main Registry must be initialized before use." );
 	return *m_pMainRegistry->GetContext<std::shared_ptr<VORTEK_SOUNDS::SoundFxPlayer>>();
+}
+
+VORTEK_RENDERING::Renderer& MainRegistry::GetRenderer()
+{
+	VORTEK_ASSERT( m_bInitialized && "Main Registry must be initialized before use." );
+	return *m_pMainRegistry->GetContext<std::shared_ptr<VORTEK_RENDERING::Renderer>>();
 }
 
 VORTEK_CORE::Systems::RenderSystem& MainRegistry::GetRenderSystem()
@@ -174,6 +182,14 @@ VORTEK_CORE::Systems::PhysicsSystem& MainRegistry::GetPhysicsSystem()
 {
 	VORTEK_ASSERT( m_bInitialized && "Main Registry must be initialized before use." );
 	return *m_pMainRegistry->GetContext<std::shared_ptr<VORTEK_CORE::Systems::PhysicsSystem>>();
+}
+
+Registry* MainRegistry::GetRegistry()
+{
+	if ( !m_pMainRegistry )
+		m_pMainRegistry = std::make_unique<Registry>();
+
+	return m_pMainRegistry.get();
 }
 
 } // namespace VORTEK_CORE::ECS

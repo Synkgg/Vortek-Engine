@@ -1,5 +1,6 @@
 #include "Application.h"
 #include <glad/glad.h>
+
 #include <Rendering/Utils/OpenGLDebugger.h>
 #include <Rendering/Core/Renderer.h>
 #include <Rendering/Essentials/PickingTexture.h>
@@ -37,15 +38,20 @@
 #include "editor/scene/SceneManager.h"
 
 #include "editor/utilities/editor_textures.h"
+#include "editor/utilities/EditorState.h"
 #include "editor/utilities/EditorFramebuffers.h"
 #include "editor/utilities/DrawComponentUtils.h"
 #include "editor/utilities/EditorSettings.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "editor/systems/GridSystem.h"
+#include "editor/systems/EditorRenderSystem.h"
 
 #include "editor/events/EditorEventTypes.h"
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Events/EngineEventTypes.h"
+
+#include "VortekUtilities/ThreadPool.h"
+#include "VortekUtilities/HelperUtilities.h"
 
 #include "editor/hub/Hub.h"
 
@@ -146,9 +152,7 @@ bool Application::Initialize()
 	// Initialize Glad
 	if ( gladLoadGLLoader( SDL_GL_GetProcAddress ) == 0 )
 	{
-		std::cout << "Failed to Initialize Glad" << std::endl;
-
-		VORTEK_ERROR( "Failed to LoadGL --> GLAD" );
+		VORTEK_ERROR( "Failed to Initialize Glad" );
 		return false;
 	}
 
@@ -197,6 +201,7 @@ bool Application::Initialize()
 	}
 
 	mainRegistry.AddToContext<VORTEK_CORE::ProjectInfoPtr>( std::make_shared<VORTEK_CORE::ProjectInfo>() );
+	mainRegistry.AddToContext<EditorStatePtr>( std::make_shared<EditorState>() );
 	m_pHub = std::make_unique<Hub>( *m_pWindow );
 
 	return true;
@@ -248,6 +253,12 @@ bool Application::InitApp()
 		return false;
 	}
 
+	if ( !MAIN_REGISTRY().AddToContext<EditorRenderSystemPtr>( std::make_shared<EditorRenderSystem>() ) )
+	{
+		VORTEK_ERROR( "Failed add the editor render system registry context!" );
+		return false;
+	}
+
 	auto pPickingTexture = std::make_shared<VORTEK_RENDERING::PickingTexture>( 640, 480 );
 	if ( !pPickingTexture )
 	{
@@ -272,6 +283,8 @@ bool Application::InitApp()
 	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
 	VORTEK_CRASH_LOGGER().SetProjectPath( pProjectInfo->GetProjectPath().string() );
 
+	MAIN_REGISTRY().AddToContext<SharedThreadPool>( std::make_shared<VORTEK_UTIL::ThreadPool>( 6 ) );
+ 
 	return true;
 }
 
@@ -464,6 +477,12 @@ bool Application::LoadEditorTextures()
 
 	assetManager.GetTexture( "ZZ_default_player" )->SetIsEditorTexture( true );
 
+	if ( !assetManager.AddCursorFromMemory(
+			 "ZZ_PanningCursor", EditorTextures::g_PanningCursor, EditorTextures::g_PanningCursorSize ) )
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -570,6 +589,14 @@ void Application::Render()
 
 void Application::CleanUp()
 {
+	// Save the editor state.
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pEditorState = MAIN_REGISTRY().GetContext<EditorStatePtr>();
+	pEditorState->Save( *pProjectInfo );
+
+	SDL_GL_DeleteContext( m_pWindow->GetGLContext() );
+	SDL_DestroyWindow( m_pWindow->GetWindow().get() );
+
 	SDL_Quit();
 }
 
@@ -708,19 +735,19 @@ void Application::InitDisplays()
 
 		auto TileLayerId = ImGui::DockBuilderSplitNode( RightNodeId, ImGuiDir_Down, 0.4f, nullptr, &RightNodeId );
 
-		ImGui::DockBuilderDockWindow( "Object Details", RightNodeId );
-		ImGui::DockBuilderDockWindow( "Tileset", RightNodeId );
-		ImGui::DockBuilderDockWindow( "Tile Details", RightNodeId );
-		ImGui::DockBuilderDockWindow( "Tile Layers", TileLayerId );
-		ImGui::DockBuilderDockWindow( ICON_FA_TREE " Scene Hierarchy", leftNodeId );
-		ImGui::DockBuilderDockWindow( ICON_FA_EYE "Scene", centerNodeId );
-		ImGui::DockBuilderDockWindow( ICON_FA_LIST " Script List", centerNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_LIST " Object Details", RightNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_TH " Tileset", RightNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_CLIPBOARD_LIST " Tile Details", RightNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_LAYER_GROUP " Tile Layers", TileLayerId );
+		ImGui::DockBuilderDockWindow( ICON_FA_SITEMAP " Scene Hierarchy", leftNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_IMAGE "Scene", centerNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_CODE " Script List", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_DESKTOP " Script Editor", centerNodeId );
-		ImGui::DockBuilderDockWindow( ICON_FA_GAMEPAD " Game Packager", centerNodeId );
-		ImGui::DockBuilderDockWindow( "Project Settings", centerNodeId );
-		ImGui::DockBuilderDockWindow( ICON_FA_PAINT_BRUSH " Tilemap Editor", centerNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_ARCHIVE " Game Packager", centerNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_COG " Project Settings", centerNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_MAP " Tilemap Editor", centerNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_FILE_ALT " Assets", LogNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_TERMINAL " Console", LogNodeId );
-		ImGui::DockBuilderDockWindow( ICON_FA_TOOLBOX " Assets", LogNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_FOLDER " Content Browser", LogNodeId );
 
 		ImGui::DockBuilderFinish( dockSpaceId );

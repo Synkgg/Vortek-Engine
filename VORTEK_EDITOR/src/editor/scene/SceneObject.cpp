@@ -8,19 +8,20 @@
 
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "editor/events/EditorEventTypes.h"
+#include "editor/commands/CommandManager.h"
 
 #include "VortekUtilities/VortekUtilities.h"
 #include "VortekFilesystem/Serializers/JSONSerializer.h"
 
+#include "editor/scene/SceneManager.h"
+
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
-#include <fmt/format.h>
-#include <filesystem>
-#include <fstream>
 
 namespace fs = std::filesystem;
 
 using namespace VORTEK_FILESYSTEM;
+using namespace VORTEK_CORE;
 using namespace VORTEK_CORE::ECS;
 using namespace VORTEK_CORE::Loaders;
 using namespace entt::literals;
@@ -172,8 +173,85 @@ void SceneObject::AddNewLayer()
 		}
 	}
 
-	m_LayerParams.emplace_back(
-		VORTEK_UTIL::SpriteLayerParams{ .sLayerName = fmt::format( "NewLayer_{}", currentLayer ) } );
+	const VORTEK_UTIL::SpriteLayerParams spriteLayerParams{ .sLayerName = fmt::format( "NewLayer_{}", currentLayer ),
+														   .layer = static_cast<int>( currentLayer ) };
+
+	m_LayerParams.emplace_back( spriteLayerParams );
+
+	auto addTileLayerCmd =
+		UndoableCommands{ AddTileLayerCmd{ .pSceneObject = this, .spriteLayerParams = spriteLayerParams } };
+
+	COMMAND_MANAGER().Execute( addTileLayerCmd );
+}
+
+bool SceneObject::DeleteLayer( int layer )
+{
+	VORTEK_ASSERT( !m_LayerParams.empty() && "Layer params should not be empty." );
+	VORTEK_ASSERT( m_LayerParams.size() > layer && "Layer is outside of the range." );
+
+	auto copySpriteLayer = m_LayerParams[ layer ];
+
+	m_LayerParams.erase( m_LayerParams.begin() + layer );
+
+	// Drop all layers above removed layer down by 1
+	for ( auto& spriteLayer : m_LayerParams )
+	{
+		if ( spriteLayer.layer > layer )
+		{
+			spriteLayer.layer -= 1;
+		}
+	}
+	std::vector<Tile> removedTiles{};
+	auto view = m_Registry.GetRegistry().view<TileComponent, SpriteComponent>();
+	for ( auto entity : view )
+	{
+		Entity ent{ m_Registry, entity };
+		auto& sprite = ent.GetComponent<SpriteComponent>();
+		if ( sprite.layer == layer )
+		{
+			Tile removedTile{};
+			removedTile.transform = ent.GetComponent<TransformComponent>();
+			removedTile.sprite = ent.GetComponent<SpriteComponent>();
+
+			if ( auto* boxCollider = ent.TryGetComponent<BoxColliderComponent>() )
+			{
+				removedTile.bCollider = true;
+				removedTile.boxCollider = *boxCollider;
+			}
+
+			if ( auto* circleCollider = ent.TryGetComponent<CircleColliderComponent>() )
+			{
+				removedTile.bCircle = true;
+				removedTile.circleCollider = *circleCollider;
+			}
+
+			if ( auto* animation = ent.TryGetComponent<AnimationComponent>() )
+			{
+				removedTile.bAnimation = true;
+				removedTile.animation = *animation;
+			}
+
+			if ( auto* physics = ent.TryGetComponent<PhysicsComponent>() )
+			{
+				removedTile.bPhysics = true;
+				removedTile.physics = *physics;
+			}
+
+			ent.Kill();
+			removedTiles.push_back( removedTile );
+		}
+		else if ( sprite.layer > layer ) // Drop the layer down if greater.
+		{
+			sprite.layer -= 1;
+		}
+	}
+
+	auto removeTileLayerCmd = UndoableCommands{ RemoveTileLayerCmd{
+		.pSceneObject = this, .tilesRemoved = removedTiles, .spriteLayerParams = copySpriteLayer } };
+
+	COMMAND_MANAGER().Execute( removeTileLayerCmd );
+
+	return true;
 }
 
 bool SceneObject::AddGameObject()
@@ -334,6 +412,132 @@ bool SceneObject::UnloadScene( bool bSaveScene )
 	bool bSuccess = Scene::UnloadScene( bSaveScene );
 	m_mapTagToEntity.clear();
 	return bSuccess;
+}
+
+std::pair<std::string, std::string> SceneObject::ExportSceneToLua( const std::string& sSceneName,
+																   const std::string& sExportPath,
+																   VORTEK_CORE::ECS::Registry& registry )
+{
+	// Get the scene data and load the scene into a separate registry
+	if ( !fs::exists( m_sSceneDataPath ) )
+	{
+		VORTEK_ERROR( "Failed to export scene. Scene data does not exist." );
+		return {};
+	}
+
+	std::ifstream sceneDataFile;
+	sceneDataFile.open( m_sSceneDataPath );
+
+	if ( !sceneDataFile.is_open() )
+	{
+		VORTEK_ERROR( "Failed to open scene data file. [{}]", m_sSceneDataPath );
+		return {};
+	}
+
+	if ( sceneDataFile.peek() == std::ifstream::traits_type::eof() )
+	{
+		return {};
+	}
+
+	std::stringstream ss;
+	ss << sceneDataFile.rdbuf();
+	std::string contents = ss.str();
+
+	rapidjson::StringStream jsonStr{ contents.c_str() };
+
+	rapidjson::Document doc;
+	doc.ParseStream( jsonStr );
+
+	if ( doc.HasParseError() || !doc.IsObject() )
+	{
+		VORTEK_ERROR( "Failed to export scene data. File: [{}] is not valid json. - {} - {}",
+					 m_sSceneDataPath,
+					 rapidjson::GetParseError_En( doc.GetParseError() ),
+					 doc.GetErrorOffset() );
+
+		return {};
+	}
+
+	VORTEK_ASSERT( doc.HasMember( "scene_data" ) && "scene_data member is necessary." );
+
+	const rapidjson::Value& sceneData = doc[ "scene_data" ];
+
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<ProjectInfoPtr>();
+	auto optScenesPath = pProjectInfo->TryGetFolderPath( EProjectFolderType::Scenes );
+
+	VORTEK_ASSERT( optScenesPath && "Scenes folder must exist." );
+
+	if ( m_sTilemapPath.empty() )
+	{
+		m_sTilemapPath = fs::path{ *optScenesPath / sceneData[ "tilemapPath" ].GetString() }.string();
+	}
+
+	if ( m_sObjectPath.empty() )
+	{
+		m_sObjectPath = fs::path{ *optScenesPath / sceneData[ "objectmapPath" ].GetString() }.string();
+	}
+
+	if ( sceneData.HasMember( "canvas" ) )
+	{
+		const rapidjson::Value& canvas = sceneData[ "canvas" ];
+		m_Canvas.width = canvas[ "width" ].GetInt();
+		m_Canvas.height = canvas[ "height" ].GetInt();
+		m_Canvas.tileWidth = canvas[ "tileWidth" ].GetInt();
+		m_Canvas.tileHeight = canvas[ "tileHeight" ].GetInt();
+	}
+
+	if ( sceneData.HasMember( "mapType" ) )
+	{
+		std::string sMapType = sceneData[ "mapType" ].GetString();
+		if ( sMapType == "grid" )
+		{
+			m_eMapType = VORTEK_CORE::EMapType::Grid;
+		}
+		else if ( sMapType == "iso" )
+		{
+			m_eMapType = VORTEK_CORE::EMapType::IsoGrid;
+		}
+	}
+
+	auto pTilemapLoader = std::make_unique<TilemapLoader>();
+	if ( !pTilemapLoader->LoadTilemap( registry, m_sTilemapPath, true ) )
+	{
+		VORTEK_ERROR( "Failed to load tilemap [{}]", m_sTilemapPath );
+		return {};
+	}
+
+	if ( !pTilemapLoader->LoadGameObjects( registry, m_sObjectPath, true ) )
+	{
+		VORTEK_ERROR( "Failed to load game object map [{}]", m_sObjectPath );
+		return {};
+	}
+
+	fs::path exportPath{ sExportPath };
+	if ( !fs::exists( exportPath ) )
+	{
+		VORTEK_ERROR( "Failed to export scene [{}] to lua. Export path [{}] does not exist.", sSceneName, sExportPath );
+		return {};
+	}
+
+	fs::path tilemapLua{ exportPath };
+	tilemapLua /= sSceneName + "_tilemap.lua";
+
+	if ( !pTilemapLoader->SaveTilemap( registry, tilemapLua.string(), false ) )
+	{
+		VORTEK_ERROR( "Failed to export scene [{}] to lua.", sSceneName );
+		return {};
+	}
+
+	fs::path objectLua{ exportPath };
+	objectLua /= sSceneName + "_objects.lua";
+
+	if ( !pTilemapLoader->SaveGameObjects( registry, objectLua.string(), false ) )
+	{
+		VORTEK_ERROR( "Failed to export scene [{}] to lua.", sSceneName );
+		return {};
+	}
+
+	return std::make_pair( tilemapLua.string(), objectLua.string() );
 }
 
 bool SceneObject::CheckTagName( const std::string& sTagName )

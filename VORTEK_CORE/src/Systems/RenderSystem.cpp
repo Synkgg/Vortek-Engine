@@ -25,8 +25,9 @@ RenderSystem::RenderSystem()
 {
 }
 
-void RenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera,
-						   const std::vector<VORTEK_UTIL::SpriteLayerParams>& layerFilters )
+RenderSystem::~RenderSystem() = default;
+
+void RenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera )
 {
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& assetManager = mainRegistry.GetAssetManager();
@@ -47,31 +48,8 @@ void RenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERIN
 	m_pBatchRenderer->Begin();
 
 	auto spriteView = registry.GetRegistry().view<SpriteComponent, TransformComponent>( entt::exclude<UIComponent> );
-	std::function<bool( entt::entity )> filterFunc;
 
-	// Check to see if the layers are visible, if not, filter them out.
-	if ( layerFilters.empty() )
-	{
-		filterFunc = []( entt::entity ) { return true; };
-	}
-	else
-	{
-		filterFunc = [ & ]( entt::entity entity ) {
-			// We only want to filter tiles
-			if ( !registry.GetRegistry().all_of<TileComponent>( entity ) )
-				return true;
-
-			const auto& sprite = spriteView.get<SpriteComponent>( entity );
-			if ( sprite.layer >= 0 && sprite.layer < layerFilters.size() )
-			{
-				return layerFilters[ sprite.layer ].bVisible;
-			}
-
-			return false;
-		};
-	}
-
-	for ( const auto& entity : std::views::filter( spriteView, filterFunc ) )
+	for ( const auto entity : spriteView )
 	{
 		const auto& transform = spriteView.get<TransformComponent>( entity );
 		const auto& sprite = spriteView.get<SpriteComponent>( entity );

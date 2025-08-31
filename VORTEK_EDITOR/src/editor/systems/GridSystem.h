@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 namespace VORTEK_RENDERING
 {
 class RectBatchRenderer;

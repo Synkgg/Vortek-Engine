@@ -80,29 +80,41 @@ bool ScriptingSystem::LoadMainScript( const std::string& sMainLuaFile, VORTEK_CO
 	}
 
 	sol::table main_lua = lua[ "main" ];
-	sol::optional<sol::table> bUpdateExists = main_lua[ 1 ];
+
+	sol::optional<sol::table> bInitExists = main_lua[ 1 ];
+	if ( bInitExists == sol::nullopt )
+	{
+		VORTEK_ERROR( "There is no init function in main.lua" );
+		return false;
+	}
+
+	sol::table init_script = main_lua[ 1 ];
+	sol::function init = init_script[ "init" ];
+
+	sol::optional<sol::table> bUpdateExists = main_lua[ 2 ];
 	if ( bUpdateExists == sol::nullopt )
 	{
 		VORTEK_ERROR( "There is no update function in main.lua" );
 		return false;
 	}
 
-	sol::table update_script = main_lua[ 1 ];
+	sol::table update_script = main_lua[ 2 ];
 	sol::function update = update_script[ "update" ];
 
-	sol::optional<sol::table> bRenderExists = main_lua[ 2 ];
+	sol::optional<sol::table> bRenderExists = main_lua[ 3 ];
 	if ( bRenderExists == sol::nullopt )
 	{
 		VORTEK_ERROR( "There is no render function in main.lua" );
 		return false;
 	}
 
-	sol::table render_script = main_lua[ 2 ];
+	sol::table render_script = main_lua[ 3 ];
 	sol::function render = render_script[ "render" ];
 
-	VORTEK_CORE::ECS::Entity mainLuaScript{ registry, "main_script", "" };
-	mainLuaScript.AddComponent<VORTEK_CORE::ECS::ScriptComponent>(
-		VORTEK_CORE::ECS::ScriptComponent{ .update = update, .render = render } );
+	auto& pMainScript = registry.GetContext<MainScriptPtr>();
+	pMainScript->init = init;
+	pMainScript->update = update;
+	pMainScript->render = render;
 
 	m_bMainLoaded = true;
 	return true;
@@ -176,23 +188,12 @@ void ScriptingSystem::Update( VORTEK_CORE::ECS::Registry& registry )
 		return;
 	}
 
-	auto mainScript = FindEntityByTag( registry, "main_script" );
-	if ( mainScript == entt::null )
+	auto& pMainScript = registry.GetContext<MainScriptPtr>();
+	auto error = pMainScript->update();
+	if ( !error.valid() )
 	{
-		VORTEK_ERROR( "Failed to run main Update script. Entity does not exist." );
-		return;
-	}
-
-	Entity scriptEnt{ registry, mainScript };
-
-	if ( auto* pScript = scriptEnt.TryGetComponent<ScriptComponent>() )
-	{
-		auto error = pScript->update();
-		if ( !error.valid() )
-		{
-			sol::error err = error;
-			VORTEK_ERROR( "Error running the Update script: {0}", err.what() );
-		}
+		sol::error err = error;
+		VORTEK_ERROR( "Error running the Update script: {0}", err.what() );
 	}
 
 	if ( auto* pLua = registry.TryGetContext<std::shared_ptr<sol::state>>() )
@@ -209,23 +210,12 @@ void ScriptingSystem::Render( VORTEK_CORE::ECS::Registry& registry )
 		return;
 	}
 
-	auto mainScript = FindEntityByTag( registry, "main_script" );
-	if ( mainScript == entt::null )
+	auto& pMainScript = registry.GetContext<MainScriptPtr>();
+	auto error = pMainScript->render();
+	if ( !error.valid() )
 	{
-		VORTEK_ERROR( "Failed to run main render script. Entity does not exist." );
-		return;
-	}
-
-	Entity scriptEnt{ registry, mainScript };
-
-	if ( auto* pScript = scriptEnt.TryGetComponent<ScriptComponent>() )
-	{
-		auto error = pScript->render();
-		if ( !error.valid() )
-		{
-			sol::error err = error;
-			VORTEK_ERROR( "Error running the Render script: {0}", err.what() );
-		}
+		sol::error err = error;
+		VORTEK_ERROR( "Error running the Render script: {0}", err.what() );
 	}
 
 	if ( auto* pLua = registry.TryGetContext<std::shared_ptr<sol::state>>() )
@@ -402,12 +392,12 @@ auto create_lua_logger = []( sol::state& lua ) {
 	} );
 
 	auto assertResult = lua.safe_script( R"(
-				S2D_assert = assert
+				Vortek_assert = assert
 				assert = function(arg1, message, ...)
 					if not arg1 then 
 						Logger.error(string.format(message, ...))
 					end 
-					S2D_assert(arg1)
+					Vortek_assert(arg1)
 				end
 			)" );
 };
@@ -420,7 +410,6 @@ void ScriptingSystem::RegisterLuaBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 	VORTEK_CORE::Scripting::SoundBinder::CreateSoundBind( lua );
 	VORTEK_CORE::Scripting::RendererBinder::CreateRenderingBind( lua, registry );
 	VORTEK_CORE::Scripting::UserDataBinder::CreateLuaUserData( lua );
-	VORTEK_CORE::Scripting::ContactListenerBinder::CreateLuaContactListener( lua, registry.GetRegistry() );
 	VORTEK_CORE::Scripting::LuaFilesystem::CreateLuaFileSystemBind( lua );
 	VORTEK_CORE::Scripting::ScriptingHelpers::CreateLuaHelpers( lua );
 
@@ -446,6 +435,12 @@ void ScriptingSystem::RegisterLuaBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 	TextComponent::CreateLuaTextBindings( lua );
 	RigidBodyComponent::CreateRigidBodyBind( lua );
 	UIComponent::CreateLuaBind( lua );
+
+	if ( CORE_GLOBALS().IsPhysicsEnabled() )
+	{
+		VORTEK_CORE::Scripting::ContactListenerBinder::CreateLuaContactListener( lua, registry.GetRegistry() );
+		PhysicsComponent::CreatePhysicsLuaBind( lua, registry.GetRegistry() );
+	}
 }
 
 void ScriptingSystem::RegisterLuaFunctions( sol::state& lua, VORTEK_CORE::ECS::Registry& registry )

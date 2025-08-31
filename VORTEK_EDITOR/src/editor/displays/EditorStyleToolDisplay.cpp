@@ -1,5 +1,4 @@
 #include "EditorStyleToolDisplay.h"
-#include <algorithm>
 #include <imgui.h>
 
 namespace VORTEK_EDITOR

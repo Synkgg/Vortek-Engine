@@ -1,7 +1,6 @@
 #pragma once
 #include "Button.h"
 #include "MouseButtons.h"
-#include <map>
 
 namespace VORTEK_WINDOWING::Inputs
 {

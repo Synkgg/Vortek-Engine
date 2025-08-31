@@ -1,53 +1,52 @@
 #pragma once
 #include "IDisplay.h"
-#include <string>
 #include <glm/glm.hpp>
 
 namespace VORTEK_RENDERING
 {
-	class Camera2D;
+class Camera2D;
 }
 
 namespace VORTEK_CORE
 {
 
-	struct PrefabbedEntity;
+struct PrefabbedEntity;
 
-	namespace ECS
-	{
-		class Entity;
-	}
-	namespace Events
-	{
-		struct KeyEvent;
-	}
+namespace ECS
+{
+class Entity;
+}
+namespace Events
+{
+struct KeyEvent;
+}
 } // namespace VORTEK_CORE
 
 namespace VORTEK_EDITOR
 {
-	class TilemapDisplay : public IDisplay
-	{
-	private:
-		std::unique_ptr<VORTEK_RENDERING::Camera2D> m_pTilemapCam;
-		bool m_bWindowActive;
+class TilemapDisplay : public IDisplay
+{
+  public:
+	TilemapDisplay();
+	virtual ~TilemapDisplay();
 
-	private:
-		void RenderTilemap();
-		void LoadNewScene();
-		void PanZoomCamera(const glm::vec2& mousePos);
+	virtual void Draw() override;
+	virtual void Update() override;
 
-		void HandleKeyPressedEvent(const VORTEK_CORE::Events::KeyEvent& keyEvent);
+  protected:
+	virtual void DrawToolbar() override;
 
-		void AddPrefabbedEntityToScene(const VORTEK_CORE::PrefabbedEntity& prefabbed);
+  private:
+	void RenderTilemap();
+	void LoadNewScene();
+	void PanZoomCamera( const glm::vec2& mousePos );
 
-	protected:
-		virtual void DrawToolbar() override;
+	void HandleKeyPressedEvent( const VORTEK_CORE::Events::KeyEvent& keyEvent );
 
-	public:
-		TilemapDisplay();
-		virtual ~TilemapDisplay();
+	void AddPrefabbedEntityToScene( const VORTEK_CORE::PrefabbedEntity& prefabbed );
 
-		virtual void Draw() override;
-		virtual void Update() override;
-	};
+  private:
+	std::unique_ptr<VORTEK_RENDERING::Camera2D> m_pTilemapCam;
+	bool m_bWindowActive;
+};
 } // namespace VORTEK_EDITOR

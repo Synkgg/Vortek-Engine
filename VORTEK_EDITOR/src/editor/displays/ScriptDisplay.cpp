@@ -10,11 +10,10 @@
 
 #include "Logger/Logger.h"
 
-#include <filesystem>
-#include <fstream>
 #include <imgui.h>
 
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "editor/utilities/EditorState.h"
 
 namespace fs = std::filesystem;
 
@@ -67,7 +66,15 @@ ScriptDisplay::~ScriptDisplay() = default;
 
 void ScriptDisplay::Draw()
 {
-	if ( !ImGui::Begin( ICON_FA_LIST " Script List" ) )
+	if ( auto& pEditorState = MAIN_REGISTRY().GetContext<EditorStatePtr>() )
+	{
+		if ( !pEditorState->IsDisplayOpen( EDisplay::ScriptListView ) )
+		{
+			return;
+		}
+	}
+
+	if ( !ImGui::Begin( ICON_FA_CODE " Script List" ) )
 	{
 		ImGui::End();
 		return;

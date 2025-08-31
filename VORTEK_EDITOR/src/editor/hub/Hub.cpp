@@ -14,20 +14,19 @@
 #include <editor/utilities/fonts/IconsFontAwesome5.h>
 #include <Rendering/Essentials/Texture.h>
 
+#include <VortekUtilities/VortekUtilities.h>
+
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_opengl3.h>
 #include <SDL_opengl.h>
 
-#include <filesystem>
 #include <fstream>
-#include <chrono>
 #include <iomanip>
 #include <sstream>
-#include <algorithm>
 
-namespace fs = std::filesystem;
+using namespace VORTEK_UTIL;
 
 constexpr ImVec2 BUTTON_SIZE{ 100.f, 25.f };
 constexpr ImVec2 PROJECT_BUTTON_SIZE{ 400.f, 135.f };
@@ -403,7 +402,7 @@ void Hub::DrawNewOpenProject()
 	constexpr float headerHeight = 60.f;
 	constexpr float searchWidth = 200.f;
 	constexpr float buttonWidth = 100.f;
-	constexpr float buttonHeight = 30.f;
+	constexpr float buttonHeight = 25.f;
 
 	std::string searchQuery = g_searchBuffer;
 
@@ -656,29 +655,6 @@ void Hub::SaveRecentProject( const std::string& path )
 	std::ofstream file( RECENT_PROJECTS_FILE, std::ios::trunc );
 	for ( const auto& entry : m_RecentProjects )
 		file << entry.path << "|" << entry.lastOpened << "\n";
-}
-
-std::string Hub::ConvertTo12HourFormat( const std::string& time )
-{
-	// Expecting format: "YYYY-MM-DD HH:MM:SS"
-	if ( time.size() < 16 )
-		return time; // Invalid format; return original
-
-	int hour = std::stoi( time.substr( 11, 2 ) );
-	int minute = std::stoi( time.substr( 14, 2 ) );
-
-	const char* ampm = ( hour >= 12 ) ? "PM" : "AM";
-	hour = hour % 12;
-	if ( hour == 0 )
-		hour = 12;
-
-	std::ostringstream oss;
-	oss << time.substr( 0, 11 ); // date part "YYYY-MM-DD "
-	oss << std::setw( 2 ) << std::setfill( '0' ) << hour << ":";
-	oss << std::setw( 2 ) << std::setfill( '0' ) << minute << " ";
-	oss << ampm;
-
-	return oss.str();
 }
 
 } // namespace VORTEK_EDITOR

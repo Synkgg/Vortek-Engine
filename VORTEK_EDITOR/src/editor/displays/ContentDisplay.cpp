@@ -5,6 +5,7 @@
 #include "VortekUtilities/HelperUtilities.h"
 #include "VortekFilesystem/Dialogs/FileDialog.h"
 #include "editor/utilities/EditorUtilities.h"
+#include "editor/utilities/EditorState.h"
 #include "editor/utilities/imgui/ImGuiUtils.h"
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
 #include "Logger/Logger.h"
@@ -18,6 +19,7 @@
 
 #include <Rendering/Essentials/Texture.h>
 #include <imgui.h>
+#include <imgui_cpp/imgui_stdlib.h>
 
 using namespace VORTEK_EDITOR::Events;
 using namespace VORTEK_FILESYSTEM;
@@ -50,6 +52,14 @@ void ContentDisplay::Update()
 
 void ContentDisplay::Draw()
 {
+	if ( auto& pEditorState = MAIN_REGISTRY().GetContext<EditorStatePtr>() )
+	{
+		if ( !pEditorState->IsDisplayOpen( EDisplay::ContentBrowser ) )
+		{
+			return;
+		}
+	}
+
 	if ( !ImGui::Begin( ICON_FA_FOLDER " Content Browser" ) )
 	{
 		ImGui::End();
@@ -147,6 +157,7 @@ void ContentDisplay::Draw()
 				if ( ImGui::BeginPopupContextItem() )
 				{
 					popID = ImGui::GetItemID();
+					ImGui::SeparatorText( "Common" );
 					if ( m_bItemCut )
 					{
 						ImGui::BeginDisabled();
@@ -168,6 +179,22 @@ void ContentDisplay::Draw()
 								m_sFilepathToAction = path.string();
 								m_eFileAction = Events::EFileAction::Delete;
 							}
+						}
+					}
+
+					if ( ImGui::Selectable( "Rename" ) )
+					{
+						// TODO: Rename file
+					}
+
+					ImGui::SeparatorText( "File Exporer" );
+
+					if ( ImGui::Selectable( ICON_FA_FILE_ALT " Open File Location" ) )
+					{
+						VORTEK_FILESYSTEM::FileProcessor fp{};
+						if ( !fp.OpenFileLocation( path.string() ) )
+						{
+							VORTEK_ERROR( "Failed to open file location [{}]", path.string() );
 						}
 					}
 
@@ -213,31 +240,35 @@ void ContentDisplay::Draw()
 					m_eCreateAction = Events::EContentCreateAction::Folder;
 				}
 
-				if ( ImGui::TreeNode( "Lua Objects" ) )
+				ImGui::SeparatorText( "Scripting" );
+
+				if ( ImGui::Selectable( ICON_FA_FILE " Create Lua Class" ) )
 				{
-					if ( ImGui::Selectable( ICON_FA_FILE " Create Lua Class" ) )
-					{
-						m_sFilepathToAction = m_CurrentDir.string();
-						m_eCreateAction = Events::EContentCreateAction::LuaClass;
-					}
-					ImGui::ItemToolTip( "Generates an empty lua class." );
-
-					if ( ImGui::Selectable( ICON_FA_FILE " Create Lua Table" ) )
-					{
-						m_sFilepathToAction = m_CurrentDir.string();
-						m_eCreateAction = Events::EContentCreateAction::LuaTable;
-					}
-					ImGui::ItemToolTip( "Generates an empty lua table." );
-
-					if ( ImGui::Selectable( ICON_FA_FILE " Create Lua File" ) )
-					{
-						m_sFilepathToAction = m_CurrentDir.string();
-						m_eCreateAction = Events::EContentCreateAction::EmptyLuaFile;
-					}
-					ImGui::ItemToolTip( "Generates an empty lua File." );
-
-					ImGui::TreePop();
+					m_sFilepathToAction = m_CurrentDir.string();
+					m_eCreateAction = Events::EContentCreateAction::LuaClass;
 				}
+				ImGui::ItemToolTip( "Generates an empty lua class." );
+
+				if ( ImGui::Selectable( ICON_FA_FILE " Create Lua State Class" ) )
+				{
+					m_sFilepathToAction = m_CurrentDir.string();
+					m_eCreateAction = Events::EContentCreateAction::LuaStateClass;
+				}
+				ImGui::ItemToolTip( "Generates an empty lua class with a Vortek state implementation." );
+
+				if ( ImGui::Selectable( ICON_FA_FILE " Create Lua Table" ) )
+				{
+					m_sFilepathToAction = m_CurrentDir.string();
+					m_eCreateAction = Events::EContentCreateAction::LuaTable;
+				}
+				ImGui::ItemToolTip( "Generates an empty lua table." );
+
+				if ( ImGui::Selectable( ICON_FA_FILE " Create Lua File" ) )
+				{
+					m_sFilepathToAction = m_CurrentDir.string();
+					m_eCreateAction = Events::EContentCreateAction::EmptyLuaFile;
+				}
+				ImGui::ItemToolTip( "Generates an empty lua File." );
 
 				ImGui::EndPopup();
 			}
@@ -493,6 +524,7 @@ void ContentDisplay::HandlePopups()
 		{
 		case EContentCreateAction::Folder: OpenCreateFolderPopup(); break;
 		case EContentCreateAction::LuaClass: OpenCreateLuaClassPopup(); break;
+		case EContentCreateAction::LuaStateClass: OpenCreateLuaStateClassPopup(); break;
 		case EContentCreateAction::LuaTable: OpenCreateLuaTablePopup(); break;
 		case EContentCreateAction::EmptyLuaFile: OpenCreateEmptyLuaFilePopup(); break;
 		}
@@ -645,18 +677,140 @@ void ContentDisplay::OpenCreateLuaClassPopup()
 			}
 			else
 			{
+				auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+				std::string sCopyrightNotice{};
+				if ( pProjectInfo )
+				{
+					sCopyrightNotice = pProjectInfo->GetCopyRightNotice();
+				}
+
 				LuaSerializer lw{ filename };
 
-				lw.AddWords( className + " = {}" )
-					.AddWords( className + ".__index = " + className, true )
-					.AddWords( "function " + className + ":Create(params)", true )
-					.AddWords( "local this = {}", true, true )
-					.AddWords( "setmetatable(this, self)", true, true )
-					.AddWords( "return this", true, true )
+				lw.AddBlockComment( !sCopyrightNotice.empty() ? sCopyrightNotice : "Add Copyright notice here." );
+				lw.AddWords( className + std::format( " = Class(\"{}\")", className ) )
+					.AddWords( "function " + className + ":Init(params)", true )
+					.AddWords( "params = params or {}", true, true )
+					.AddWords( "-- TODO: Add necessary params.", true, true )
+					.AddWords( "-- EX: self.health = params.health or 10", true, true )
 					.AddWords( "end", true );
 
 				errorText.clear();
 				className.clear();
+				m_eCreateAction = EContentCreateAction::NoAction;
+				m_sFilepathToAction.clear();
+				ImGui::CloseCurrentPopup();
+			}
+		}
+
+		if ( ImGui::Button( "Cancel" ) || bExit )
+		{
+			ImGui::CloseCurrentPopup();
+			m_eCreateAction = EContentCreateAction::NoAction;
+			className.clear();
+			errorText.clear();
+			m_sFilepathToAction.clear();
+		}
+
+		if ( !errorText.empty() )
+		{
+			ImGui::TextColored( ImVec4{ 1.f, 0.f, 0.f, 1.f }, errorText.c_str() );
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+void ContentDisplay::OpenCreateLuaStateClassPopup()
+{
+	if ( m_eCreateAction != EContentCreateAction::LuaStateClass )
+		return;
+
+	ImGui::OpenPopup( "Create Lua State Class" );
+
+	if ( ImGui::BeginPopupModal( "Create Lua State Class" ) )
+	{
+		static std::string className{};
+		static std::string stateName{};
+
+		bool bExit{ false };
+		static bool bClassNameEntered{ false };
+		static bool bStateNameEntered{ false };
+		ImGui::InlineLabel( "Class Name" );
+
+		if ( !ImGui::IsAnyItemActive() )
+			ImGui::SetKeyboardFocusHere();
+
+		if ( ImGui::InputText( "##ClassName", &className, ImGuiInputTextFlags_EnterReturnsTrue ) )
+		{
+			bClassNameEntered = true;
+		}
+
+		ImGui::InlineLabel( "State Name" );
+		if ( ImGui::InputText( "##StateName", &stateName, ImGuiInputTextFlags_EnterReturnsTrue ) )
+		{
+			bStateNameEntered = true;
+		}
+
+		if ( ImGui::IsKeyPressed( ImGuiKey_Escape ) )
+		{
+			bExit = true;
+		}
+
+		static std::string errorText{};
+
+		if ( bClassNameEntered && bStateNameEntered && !className.empty() && !stateName.empty() )
+		{
+			std::string filename = m_sFilepathToAction + PATH_SEPARATOR + className + ".lua";
+
+			if ( fs::exists( fs::path{ filename } ) )
+			{
+				VORTEK_ERROR( "Class file: [{}] already exists at [{}]", className, filename );
+				errorText = "Class file: [" + className + "] already exists at [" + filename + "]";
+			}
+			else
+			{
+				auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+				std::string sCopyrightNotice{};
+				if ( pProjectInfo )
+				{
+					sCopyrightNotice = pProjectInfo->GetCopyRightNotice();
+				}
+
+				LuaSerializer lw{ filename };
+
+				lw.AddBlockComment( !sCopyrightNotice.empty() ? sCopyrightNotice : "Add Copyright notice here." );
+				lw.AddWords( className + std::format( " = Class(\"{}\")", className ) )
+					.AddWords( "function " + className + ":Init(params)", true )
+					.AddWords( "params = params or {}", true, true )
+					.AddWords( "-- The state stack must be sent in during state:Create({stack = gStack})", true, true )
+					.AddWords( "self.stack = params.stack", true, true )
+					.AddWords( std::format( "self.state = State(\"{}\")", stateName ), true, true )
+					.AddWords( "self.state:setVariableTable(self)", true, true )
+					.AddWords( "self.state:setOnEnter( function() self:OnEnter() end )", true, true )
+					.AddWords( "self.state:setOnExit( function() self:OnExit() end )", true, true )
+					.AddWords( "self.state:setOnUpdate( function(dt) self:OnUpdate(dt) end )", true, true )
+					.AddWords( "self.state:setOnRender( function(dt) self:OnRender(dt) end )", true, true )
+					.AddWords( "self.state:setHandleInputs( function() self:HandleInputs() end )", true, true )
+					.AddWords( "end\n", true, false )
+					.AddWords( std::format( "function {}:GetState()", className ), true, false )
+					.AddWords( "return self.state", true, true )
+					.AddWords( "end\n", true, false )
+					.AddWords( std::format( "function {}:OnEnter()", className ), true, false )
+					.AddWords( "end\n", true, false )
+					.AddWords( std::format( "function {}:OnExit()", className ), true, false )
+					.AddWords( "end\n", true, false )
+					.AddWords( std::format( "function {}:OnUpdate(dt)", className ), true, false )
+					.AddWords( "end\n", true, false )
+					.AddWords( std::format( "function {}:OnRender()", className ), true, false )
+					.AddWords( "end\n", true, false )
+					.AddWords( std::format( "function {}:HandleInputs()", className ), true, false )
+					.AddWords( "end\n", true, false );
+
+				errorText.clear();
+				className.clear();
+				stateName.clear();
+				bClassNameEntered = false;
+				bStateNameEntered = false;
 				m_eCreateAction = EContentCreateAction::NoAction;
 				m_sFilepathToAction.clear();
 				ImGui::CloseCurrentPopup();

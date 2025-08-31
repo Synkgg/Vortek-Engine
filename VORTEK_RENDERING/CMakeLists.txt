@@ -51,3 +51,5 @@ target_link_libraries(VORTEK_RENDERING
 
 target_compile_options(
     VORTEK_RENDERING PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+
+target_precompile_headers(VORTEK_RENDERING REUSE_FROM PCH)

@@ -158,8 +158,31 @@ int Scene::AddLayer( const std::string& sLayerName, bool bVisible )
 		return static_cast<int>( m_LayerParams.size() );
 	}
 
-	m_LayerParams.emplace_back( VORTEK_UTIL::SpriteLayerParams{ .sLayerName = sLayerName, .bVisible = bVisible } );
+	auto& spriteLayer =
+		m_LayerParams.emplace_back( VORTEK_UTIL::SpriteLayerParams{ .sLayerName = sLayerName, .bVisible = bVisible } );
+	spriteLayer.layer = m_LayerParams.size() - 1;
+
 	return static_cast<int>( m_LayerParams.size() );
+}
+
+int Scene::AddLayer( const VORTEK_UTIL::SpriteLayerParams& layerParam )
+{
+	auto layerItr =
+		std::ranges::find_if( m_LayerParams, [ &layerParam ]( const auto& lp ) { return lp == layerParam; } );
+
+	VORTEK_ASSERT( layerItr == m_LayerParams.end() && "Layer already exists!" );
+
+	if ( layerItr != m_LayerParams.end() )
+	{
+		VORTEK_ERROR( "The layer [{]] already exists", layerParam.sLayerName );
+		return -1;
+	}
+
+	m_LayerParams.push_back( layerParam );
+
+	std::ranges::sort( m_LayerParams, []( const auto& a, const auto& b ) { return a.layer < b.layer; } );
+
+	return 1;
 }
 
 bool Scene::CheckLayerName( const std::string& sLayerName )

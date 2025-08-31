@@ -8,7 +8,9 @@
 #include "Logger/Logger.h"
 
 #include "editor/utilities/imgui/ImGuiUtils.h"
+#include "editor/utilities/EditorState.h"
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "editor/scene/SceneManager.h"
 
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -32,7 +34,15 @@ void ProjectSettingsDisplay::Update()
 }
 void ProjectSettingsDisplay::Draw()
 {
-	ImGui::Begin( "Project Settings" );
+	if ( auto& pEditorState = MAIN_REGISTRY().GetContext<EditorStatePtr>() )
+	{
+		if ( !pEditorState->IsDisplayOpen( EDisplay::GameSettingsView ) )
+		{
+			return;
+		}
+	}
+
+	ImGui::Begin( ICON_FA_COG " Project Settings" );
 	const float leftWidth = 250.0f;
 
 	ImGui::Columns( 2, nullptr, true );
@@ -246,6 +256,26 @@ ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreateGeneralSet
 							{
 								sGameType = sTypeStr;
 								coreGlobals.SetGameType( eType );
+							}
+						}
+
+						ImGui::EndCombo();
+					}
+				}
+			},
+			{ "Default Scene",
+				[ & ]() {
+					std::string sDefaultScene{ projectInfo.GetDefaultScene() };
+					ImGui::InlineLabel( ICON_FA_IMAGE " Default Scene" );
+					ImGui::ItemToolTip( "The default scene to be loaded when the project is loaded." );
+					if ( ImGui::BeginCombo( "##default_scene", sDefaultScene.c_str() ) )
+					{
+						for ( const auto& sSceneName : SCENE_MANAGER().GetSceneNames())
+						{
+							if ( ImGui::Selectable( sSceneName.c_str(), sSceneName == sDefaultScene ) )
+							{
+								sDefaultScene = sSceneName;
+								projectInfo.SetDefaultScene(sDefaultScene);
 							}
 						}
 

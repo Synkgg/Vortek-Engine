@@ -1,3 +1,5 @@
+find_package(tinyxml2 CONFIG REQUIRED)
+
 add_executable(VORTEK_EDITOR
     "src/Application.cpp"
     "src/Application.h"
@@ -7,6 +9,7 @@ add_executable(VORTEK_EDITOR
 	"src/editor/utilities/fonts/editor_fonts.h"
 	"src/editor/utilities/fonts/fonts_editor.h"
     "src/editor/utilities/editor_textures.h"
+	"src/editor/utilities/editor_textures.cpp"
     "src/editor/utilities/EditorUtilities.h"
     "src/editor/utilities/EditorUtilities.cpp"
 	"src/editor/utilities/imgui/ImGuiUtils.h"
@@ -17,6 +20,10 @@ add_executable(VORTEK_EDITOR
 	"src/editor/utilities/fonts/IconsFontAwesome5.h"
 	"src/editor/utilities/imgui/Gui.h"
 	"src/editor/utilities/imgui/Gui.cpp"
+	"src/editor/utilities/EditorSettings.h"
+	"src/editor/utilities/EditorSettings.cpp"
+	"src/editor/utilities/EditorState.h"
+	"src/editor/utilities/EditorState.cpp"
 
     # Editor Displays
     "src/editor/displays/IDisplay.h"
@@ -48,10 +55,14 @@ add_executable(VORTEK_EDITOR
 	"src/editor/displays/ScriptEditorDisplay.cpp"
 	"src/editor/displays/PackageDisplay.h"
 	"src/editor/displays/PackageDisplay.cpp"
+	"src/editor/displays/ProjectSettingsDisplay.h"
+	"src/editor/displays/ProjectSettingsDisplay.cpp"
 
     # Editor Systems
     "src/editor/systems/GridSystem.h" 
-    "src/editor/systems/GridSystem.cpp" 
+    "src/editor/systems/GridSystem.cpp"
+	"src/editor/systems/EditorRenderSystem.h"
+	"src/editor/systems/EditorRenderSystem.cpp"
     
     # Scenes
     "src/editor/scene/SceneObject.h" 
@@ -90,6 +101,8 @@ add_executable(VORTEK_EDITOR
 	"src/editor/commands/cmds/CreateTileToolCmds.cpp"
 	"src/editor/commands/cmds/RectToolCmds.h"
 	"src/editor/commands/cmds/RectToolCmds.cpp"
+	"src/editor/commands/cmds/TileCmds.h"
+	"src/editor/commands/cmds/TileCmds.cpp"
 	
 	# Events
 	"src/editor/events/EditorEventTypes.h"	
@@ -105,7 +118,19 @@ add_executable(VORTEK_EDITOR
 	${APP_ICON_RESOURCE}
 	"src/editor/scripting/EditorCoreLuaWrappers.h"
 	"src/editor/scripting/EditorCoreLuaWrappers.cpp"
- "src/editor/utilities/EditorSettings.h" "src/editor/utilities/EditorSettings.cpp" "src/editor/packaging/ScriptCompiler.h" "src/editor/packaging/ScriptCompiler.cpp" "src/editor/packaging/IconReplacer.h" "src/editor/packaging/IconReplacer.cpp" "src/editor/displays/ProjectSettingsDisplay.h" "src/editor/displays/ProjectSettingsDisplay.cpp" "src/editor/utilities/editor_textures.cpp")
+
+	# Packaging
+	"src/editor/packaging/ScriptCompiler.h"
+	"src/editor/packaging/ScriptCompiler.cpp"
+	"src/editor/packaging/IconReplacer.h"
+	"src/editor/packaging/IconReplacer.cpp"
+	"src/editor/packaging/AssetPackager.h"
+	"src/editor/packaging/AssetPackager.cpp"
+	"src/editor/packaging/Packager.h"
+	"src/editor/packaging/Packager.cpp"
+ "src/editor/loaders/TiledMapImporter.h" "src/editor/loaders/TiledMapImporter.cpp")
+
+ target_compile_definitions(VORTEK_EDITOR PUBLIC IN_SCION_EDITOR)
 
 target_sources(
 	VORTEK_EDITOR PRIVATE
@@ -133,14 +158,15 @@ target_include_directories(
 
 target_link_libraries(
 	VORTEK_EDITOR
-	PRIVATE VORTEK_CORE
+	PRIVATE VORTEK_CORE_EDITOR
+	libzippp::libzippp
+	tinyxml2::tinyxml2
 )
-
-add_resources(TARGET Assets IN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets OUT_DIR assets)
-add_dependencies(VORTEK_EDITOR Copy-Assets)
 
 set_target_properties(VORTEK_EDITOR PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
 
 target_compile_options(
     VORTEK_EDITOR PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+
+target_precompile_headers(VORTEK_EDITOR REUSE_FROM PCH)

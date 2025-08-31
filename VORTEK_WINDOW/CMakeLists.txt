@@ -21,3 +21,5 @@ target_link_libraries(VORTEK_WINDOW PUBLIC VORTEK_UTILITIES)
 
 target_compile_options(
     VORTEK_WINDOW PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+
+target_precompile_headers(VORTEK_WINDOW REUSE_FROM PCH)

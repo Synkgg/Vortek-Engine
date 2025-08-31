@@ -37,3 +37,5 @@ target_link_libraries(
 target_compile_options(
 	VORTEK_FILESYSTEM PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>
 )
+
+target_precompile_headers(VORTEK_FILESYSTEM REUSE_FROM PCH)

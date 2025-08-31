@@ -1,4 +1,6 @@
-add_library(VORTEK_CORE
+find_package(SDL2_image REQUIRED)
+
+set(COMMON_CORE_SRC
 	# Core Utilities
     "include/Core/CoreUtilities/CoreEngineData.h"
     "src/CoreUtilities/CoreEngineData.cpp"
@@ -126,19 +128,48 @@ add_library(VORTEK_CORE
 	"src/Scene/Scene.cpp"
 	"include/Core/Scene/SceneManager.h"
 	"src/Scene/SceneManager.cpp"	
- "include/Core/CoreUtilities/ProjectInfo.h" "src/CoreUtilities/ProjectInfo.cpp")
+	"include/Core/CoreUtilities/ProjectInfo.h"
+	"src/CoreUtilities/ProjectInfo.cpp"
+)
+
+add_library( VORTEK_CORE ${COMMON_CORE_SRC} )
 
 target_include_directories(
     VORTEK_CORE PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 	PRIVATE ${SOL2_INCLUDE_DIRS}
 )
 
+target_precompile_headers(VORTEK_CORE REUSE_FROM PCH)
+
 target_link_libraries(VORTEK_CORE PUBLIC
     glm::glm EnTT::EnTT sol2::sol2 ${LUA_LIBRARIES}
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
-        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     VORTEK_LOGGER VORTEK_UTILITIES VORTEK_PHYSICS
 	VORTEK_RENDERING VORTEK_FILESYSTEM VORTEK_SOUNDS VORTEK_WINDOW)
 
 target_compile_options(
     VORTEK_CORE PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+
+## VORTEK_CORE_EDITOR - Editor Compile Flag is set
+add_library( VORTEK_CORE_EDITOR ${COMMON_CORE_SRC} )
+
+target_compile_definitions(VORTEK_CORE_EDITOR PUBLIC IN_VORTEK_EDITOR)
+
+target_include_directories(
+    VORTEK_CORE_EDITOR PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+	PRIVATE ${SOL2_INCLUDE_DIRS}
+)
+
+target_precompile_headers(VORTEK_CORE_EDITOR REUSE_FROM PCH)
+
+target_link_libraries(VORTEK_CORE_EDITOR PUBLIC
+    glm::glm EnTT::EnTT sol2::sol2 ${LUA_LIBRARIES}
+    $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+    $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+	$<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
+    VORTEK_LOGGER VORTEK_UTILITIES VORTEK_PHYSICS
+	VORTEK_RENDERING VORTEK_FILESYSTEM VORTEK_SOUNDS VORTEK_WINDOW)
+
+target_compile_options(
+    VORTEK_CORE_EDITOR PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)

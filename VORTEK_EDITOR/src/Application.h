@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 #include <SDL.h>
 
 namespace VORTEK_WINDOWING
@@ -16,12 +15,10 @@ namespace VORTEK_EDITOR
 {
 class Application
 {
-  private:
-	std::unique_ptr<VORTEK_WINDOWING::Window> m_pWindow;
-	std::unique_ptr<class Hub> m_pHub;
+  public:
+	static Application& GetInstance();
 
-	SDL_Event m_Event;
-	bool m_bIsRunning;
+	void Run();
 
   private:
 	bool Initialize();
@@ -49,9 +46,11 @@ class Application
 	Application( const Application& ) = delete;
 	Application& operator=( const Application& ) = delete;
 
-  public:
-	static Application& GetInstance();
+  private:
+	std::unique_ptr<VORTEK_WINDOWING::Window> m_pWindow;
+	std::unique_ptr<class Hub> m_pHub;
 
-	void Run();
+	SDL_Event m_Event;
+	bool m_bIsRunning;
 };
 } // namespace VORTEK_EDITOR

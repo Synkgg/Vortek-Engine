@@ -1,6 +1,5 @@
 #pragma once
 #include <sol/sol.hpp>
-#include <string>
 
 namespace VORTEK_CORE
 {
