@@ -2,7 +2,7 @@
 #include <Logger/Logger.h>
 #include "Rendering/Essentials/TextureLoader.h"
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 bool Framebuffer::Initialize()
@@ -107,4 +107,4 @@ void Framebuffer::CheckResize()
 	Initialize();
 	m_bShouldResize = false;
 }
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

@@ -2,7 +2,7 @@
 #include "Batcher.h"
 #include "Rendering/Essentials/BatchTypes.h"
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 class RectBatchRenderer : public Batcher<RectBatch, RectGlyph>
@@ -22,4 +22,4 @@ class RectBatchRenderer : public Batcher<RectBatch, RectGlyph>
 	virtual void GenerateBatches() override;
 	void Initialize();
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

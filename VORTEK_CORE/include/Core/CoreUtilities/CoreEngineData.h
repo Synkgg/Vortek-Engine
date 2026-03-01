@@ -1,8 +1,8 @@
 #pragma once
 
-#define CORE_GLOBALS() VORTEK_CORE::CoreEngineData::GetInstance()
+#define CORE_GLOBALS() Vortek::Core::CoreEngineData::GetInstance()
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 enum class EGameType
@@ -102,4 +102,4 @@ class CoreEngineData
 
 	EGameType m_eGameType{ EGameType::NoType };
 };
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

@@ -1,7 +1,7 @@
 #include "Core/ECS/Components/TextComponent.h"
 #include <entt/entt.hpp>
 
-std::string VORTEK_CORE::ECS::TextComponent::to_string()
+std::string Vortek::Core::ECS::TextComponent::to_string()
 {
 	std::stringstream ss;
 	ss << "==== Text Component ==== \n"
@@ -19,7 +19,7 @@ std::string VORTEK_CORE::ECS::TextComponent::to_string()
 	return ss.str();
 }
 
-void VORTEK_CORE::ECS::TextComponent::CreateLuaTextBindings( sol::state& lua )
+void Vortek::Core::ECS::TextComponent::CreateLuaTextBindings( sol::state& lua )
 {
 	lua.new_usertype<TextComponent>(
 		"TextComponent",
@@ -29,7 +29,7 @@ void VORTEK_CORE::ECS::TextComponent::CreateLuaTextBindings( sol::state& lua )
 		sol::factories(
 			[]( const std::string& sFontName,
 				const std::string& sTextStr,
-				VORTEK_RENDERING::Color color,
+				Vortek::Rendering::Color color,
 				int padding,
 				float wrap ) {
 				return TextComponent{

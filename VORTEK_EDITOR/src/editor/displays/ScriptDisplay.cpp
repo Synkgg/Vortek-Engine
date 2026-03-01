@@ -1,26 +1,25 @@
-#include "ScriptDisplay.h"
+#include "editor/displays/ScriptDisplay.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
 
 #include "VortekUtilities/HelperUtilities.h"
 #include "VortekUtilities/VortekUtilities.h"
 
-#include "VortekFileSystem/Serializers/LuaSerializer.h"
-#include "VortekFileSystem/Utilities/DirectoryWatcher.h"
+#include "VortekFilesystem/Serializers/LuaSerializer.h"
+#include "VortekFilesystem/Utilities/DirectoryWatcher.h"
 
+#include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "editor/utilities/EditorState.h"
 #include "Logger/Logger.h"
 
 #include <imgui.h>
 
-#include "editor/utilities/fonts/IconsFontAwesome5.h"
-#include "editor/utilities/EditorState.h"
-
 namespace fs = std::filesystem;
 
-using namespace VORTEK_CORE;
-using namespace VORTEK_FILESYSTEM;
+using namespace Vortek::Core;
+using namespace Vortek::Filesystem;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 ScriptDisplay::ScriptDisplay()
@@ -49,6 +48,7 @@ ScriptDisplay::ScriptDisplay()
 		if ( !fs::exists( *optScriptListPath ) )
 		{
 			VORTEK_ASSERT( false && "Failed to create script list file." );
+
 			VORTEK_ERROR( "Failed to create script list file at path: [{}].",
 						 optScriptListPath->parent_path().string() );
 			return;
@@ -57,7 +57,7 @@ ScriptDisplay::ScriptDisplay()
 
 	GenerateScriptList();
 
-	m_pDirWatcher = std::make_unique<VORTEK_FILESYSTEM::DirectoryWatcher>(
+	m_pDirWatcher = std::make_unique<Vortek::Filesystem::DirectoryWatcher>(
 		fs::path{ m_sScriptsDirectory },
 		[ this ]( const fs::path& file, bool bModified ) { OnFileChanged( file, bModified ); } );
 }
@@ -167,7 +167,6 @@ void ScriptDisplay::Update()
 	if ( m_bFilesChanged.exchange( false, std::memory_order_acquire ) )
 	{
 		m_bListScripts = true;
-		VORTEK_LOG( "File was changed or added to scripts directory." );
 	}
 
 	if ( m_bListScripts )
@@ -220,7 +219,7 @@ void ScriptDisplay::GenerateScriptList()
 		auto optScriptListPath = MAIN_REGISTRY().GetContext<ProjectInfoPtr>()->GetScriptListPath();
 		VORTEK_ASSERT( optScriptListPath && "ScriptList Path not set correctly in project info." );
 
-		if ( !optScriptListPath )
+		if (!optScriptListPath)
 		{
 			VORTEK_ERROR( "Failed to load script list. Not set correctly in project info." );
 			return;
@@ -258,7 +257,7 @@ void ScriptDisplay::GenerateScriptList()
 
 void ScriptDisplay::WriteScriptListToFile()
 {
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 	VORTEK_ASSERT( pProjectInfo && "Project info must exist." );
 	auto optScriptListPath = pProjectInfo->GetScriptListPath();
 	VORTEK_ASSERT( optScriptListPath && "Script list path not setup correctly in project info." );
@@ -300,4 +299,4 @@ void ScriptDisplay::OnFileChanged( const std::filesystem::path& path, bool bModi
 	m_bFilesChanged.store( true, std::memory_order_relaxed );
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

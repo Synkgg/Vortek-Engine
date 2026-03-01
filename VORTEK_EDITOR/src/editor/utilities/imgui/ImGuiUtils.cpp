@@ -1,4 +1,4 @@
-#include "ImGuiUtils.h"
+#include "editor/utilities/imgui/ImGuiUtils.h"
 #include "Logger/Logger.h"
 #include <imgui_stdlib.h>
 #include <unordered_map>
@@ -67,7 +67,7 @@ void InitDefaultStyles()
 void ColoredLabel( const std::string& label, const ImVec2& size, const ImVec4& color, const bool bold )
 {
 	ImGuiIO& io = ImGui::GetIO();
-	auto boldFont = io.Fonts->Fonts[ 0 ];
+	auto boldFont = io.Fonts->Fonts[ 1 ];
 
 	if ( !bold )
 	{
@@ -79,6 +79,7 @@ void ColoredLabel( const std::string& label, const ImVec2& size, const ImVec4& c
 		ImGui::PopStyleColor();
 		ImGui::PopStyleColor();
 		ImGui::PopStyleColor();
+		ImGui::PopFont();
 	}
 	else
 	{

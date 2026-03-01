@@ -8,14 +8,14 @@
 #include <rapidjson/error/en.h>
 #include <filesystem>
 
-using namespace VORTEK_FILESYSTEM;
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Filesystem;
+using namespace Vortek::Core::ECS;
 
 namespace fs = std::filesystem;
 
-namespace VORTEK_CORE::Loaders
+namespace Vortek::Core::Loaders
 {
-bool TilemapLoader::SaveTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile )
+bool TilemapLoader::SaveTilemapJSON( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile )
 {
 	std::unique_ptr<JSONSerializer> pSerializer{ nullptr };
 
@@ -45,7 +45,7 @@ bool TilemapLoader::SaveTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const
 	{
 		pSerializer->StartNewObject();
 		pSerializer->StartNewObject( "components" );
-		auto tileEnt{ Entity{ registry, tile } };
+		auto tileEnt{ Entity{ &registry, tile } };
 
 		const auto& transform = tileEnt.GetComponent<TransformComponent>();
 		SERIALIZE_COMPONENT( *pSerializer, transform );
@@ -85,7 +85,7 @@ bool TilemapLoader::SaveTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const
 	return pSerializer->EndDocument();
 }
 
-bool TilemapLoader::LoadTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile )
+bool TilemapLoader::LoadTilemapJSON( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile )
 {
 	std::ifstream mapFile;
 	mapFile.open( sTilemapFile );
@@ -115,9 +115,9 @@ bool TilemapLoader::LoadTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const
 	if ( doc.HasParseError() || !doc.IsObject() )
 	{
 		VORTEK_ERROR( "Failed to load tilemap: File: [{}] is not valid JSON. - {} - {}",
-					  sTilemapFile,
-					  rapidjson::GetParseError_En( doc.GetParseError() ),
-					  doc.GetErrorOffset() );
+					 sTilemapFile,
+					 rapidjson::GetParseError_En( doc.GetParseError() ),
+					 doc.GetErrorOffset() );
 		return false;
 	}
 
@@ -130,7 +130,7 @@ bool TilemapLoader::LoadTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const
 
 	for ( const auto& tile : tilemap.GetArray() )
 	{
-		Entity newTile{ registry, "", "" };
+		Entity newTile{ &registry, "", "" };
 		const auto& components = tile[ "components" ];
 
 		// Transform
@@ -178,7 +178,7 @@ bool TilemapLoader::LoadTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const
 	return true;
 }
 
-bool TilemapLoader::SaveObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile )
+bool TilemapLoader::SaveObjectMapJSON( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile )
 {
 	std::unique_ptr<JSONSerializer> pSerializer{ nullptr };
 
@@ -208,7 +208,7 @@ bool TilemapLoader::SaveObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 	{
 		pSerializer->StartNewObject();
 		pSerializer->StartNewObject( "components" );
-		auto objectEnt{ Entity{ registry, object } };
+		auto objectEnt{ Entity{ &registry, object } };
 
 		if ( const auto* id = objectEnt.TryGetComponent<Identification>() )
 		{
@@ -266,7 +266,7 @@ bool TilemapLoader::SaveObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 			pSerializer->StartNewObject( "relationship" );
 			if ( relations->parent != entt::null )
 			{
-				Entity parent{ registry, relations->parent };
+				Entity parent{ &registry, relations->parent };
 				pSerializer->AddKeyValuePair( "parent", parent.GetName() );
 			}
 			else
@@ -276,7 +276,7 @@ bool TilemapLoader::SaveObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 
 			if ( relations->nextSibling != entt::null )
 			{
-				Entity nextSibling{ registry, relations->nextSibling };
+				Entity nextSibling{ &registry, relations->nextSibling };
 				pSerializer->AddKeyValuePair( "nextSibling", nextSibling.GetName() );
 			}
 			else
@@ -286,7 +286,7 @@ bool TilemapLoader::SaveObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 
 			if ( relations->prevSibling != entt::null )
 			{
-				Entity prevSibling{ registry, relations->prevSibling };
+				Entity prevSibling{ &registry, relations->prevSibling };
 				pSerializer->AddKeyValuePair( "prevSibling", prevSibling.GetName() );
 			}
 			else
@@ -296,7 +296,7 @@ bool TilemapLoader::SaveObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 
 			if ( relations->firstChild != entt::null )
 			{
-				Entity firstChild{ registry, relations->firstChild };
+				Entity firstChild{ &registry, relations->firstChild };
 				pSerializer->AddKeyValuePair( "firstChild", firstChild.GetName() );
 			}
 			else
@@ -314,7 +314,7 @@ bool TilemapLoader::SaveObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 	return pSerializer->EndDocument();
 }
 
-bool TilemapLoader::LoadObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile )
+bool TilemapLoader::LoadObjectMapJSON( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile )
 {
 	std::ifstream mapFile;
 	mapFile.open( sObjectMapFile );
@@ -344,9 +344,9 @@ bool TilemapLoader::LoadObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 	if ( doc.HasParseError() || !doc.IsObject() )
 	{
 		VORTEK_ERROR( "Failed to load tilemap: File: [{}] is not valid JSON. - {} - {}",
-					  sObjectMapFile,
-					  rapidjson::GetParseError_En( doc.GetParseError() ),
-					  doc.GetErrorOffset() );
+					 sObjectMapFile,
+					 rapidjson::GetParseError_En( doc.GetParseError() ),
+					 doc.GetErrorOffset() );
 		return false;
 	}
 
@@ -362,7 +362,7 @@ bool TilemapLoader::LoadObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 
 	for ( const auto& object : gameObjects.GetArray() )
 	{
-		Entity gameObject{ registry, "", "" };
+		Entity gameObject{ &registry, "", "" };
 		const auto& components = object[ "components" ];
 
 		// Transform
@@ -444,7 +444,7 @@ bool TilemapLoader::LoadObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 
 	auto findTag = [ & ]( const std::string& sTag ) {
 		auto parItr = std::ranges::find_if( ids, [ & ]( const auto& e ) {
-			Entity en{ registry, e };
+			Entity en{ &registry, e };
 			return en.GetName() == sTag;
 		} );
 
@@ -458,7 +458,7 @@ bool TilemapLoader::LoadObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 
 	for ( auto& [ entity, saveRelations ] : mapEntityToRelationship )
 	{
-		Entity ent{ registry, entity };
+		Entity ent{ &registry, entity };
 		auto& relations = ent.GetComponent<Relationship>();
 
 		// Find the parent
@@ -490,7 +490,7 @@ bool TilemapLoader::LoadObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, con
 	return true;
 }
 
-bool TilemapLoader::SaveTilemapLua( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile )
+bool TilemapLoader::SaveTilemapLua( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile )
 {
 	std::unique_ptr<LuaSerializer> pSerializer{ nullptr };
 
@@ -520,7 +520,7 @@ bool TilemapLoader::SaveTilemapLua( VORTEK_CORE::ECS::Registry& registry, const 
 	{
 		pSerializer->StartNewTable();
 		pSerializer->StartNewTable( "components" );
-		auto tileEnt{ Entity{ registry, tile } };
+		auto tileEnt{ Entity{ &registry, tile } };
 
 		const auto& transform = tileEnt.GetComponent<TransformComponent>();
 		SERIALIZE_COMPONENT( *pSerializer, transform );
@@ -562,7 +562,7 @@ bool TilemapLoader::SaveTilemapLua( VORTEK_CORE::ECS::Registry& registry, const 
 	return pSerializer->FinishStream();
 }
 
-bool TilemapLoader::LoadTilemapLua( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile )
+bool TilemapLoader::LoadTilemapLua( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile )
 {
 	sol::state lua;
 	try
@@ -584,7 +584,7 @@ bool TilemapLoader::LoadTilemapLua( VORTEK_CORE::ECS::Registry& registry, const 
 
 	for ( const auto& [ key, value ] : *maybeTiles )
 	{
-		Entity newTile{ registry, "", "" };
+		Entity newTile{ &registry, "", "" };
 		const sol::optional<sol::table> components = value.as<sol::table>()[ "components" ];
 
 		if ( !components )
@@ -637,7 +637,7 @@ bool TilemapLoader::LoadTilemapLua( VORTEK_CORE::ECS::Registry& registry, const 
 	return true;
 }
 
-bool TilemapLoader::SaveObjectMapLua( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile )
+bool TilemapLoader::SaveObjectMapLua( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile )
 {
 	std::unique_ptr<LuaSerializer> pSerializer{ nullptr };
 
@@ -667,7 +667,7 @@ bool TilemapLoader::SaveObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 	{
 		pSerializer->StartNewTable();
 		pSerializer->StartNewTable( "components" );
-		auto objectEnt{ Entity{ registry, object } };
+		auto objectEnt{ Entity{ &registry, object } };
 
 		if ( const auto* id = objectEnt.TryGetComponent<Identification>() )
 		{
@@ -723,7 +723,7 @@ bool TilemapLoader::SaveObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 			pSerializer->StartNewTable( "relationship" );
 			if ( relations->parent != entt::null )
 			{
-				Entity parent{ registry, relations->parent };
+				Entity parent{ &registry, relations->parent };
 				pSerializer->AddKeyValuePair( "parent", parent.GetName(), false, false, false, true );
 			}
 			else
@@ -733,7 +733,7 @@ bool TilemapLoader::SaveObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 
 			if ( relations->nextSibling != entt::null )
 			{
-				Entity nextSibling{ registry, relations->nextSibling };
+				Entity nextSibling{ &registry, relations->nextSibling };
 				pSerializer->AddKeyValuePair( "nextSibling", nextSibling.GetName(), false, false, false, true );
 			}
 			else
@@ -743,7 +743,7 @@ bool TilemapLoader::SaveObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 
 			if ( relations->prevSibling != entt::null )
 			{
-				Entity prevSibling{ registry, relations->prevSibling };
+				Entity prevSibling{ &registry, relations->prevSibling };
 				pSerializer->AddKeyValuePair( "prevSibling", prevSibling.GetName(), false, false, false, true );
 			}
 			else
@@ -753,7 +753,7 @@ bool TilemapLoader::SaveObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 
 			if ( relations->firstChild != entt::null )
 			{
-				Entity firstChild{ registry, relations->firstChild };
+				Entity firstChild{ &registry, relations->firstChild };
 				pSerializer->AddKeyValuePair( "firstChild", firstChild.GetName(), false, false, false, true );
 			}
 			else
@@ -773,7 +773,7 @@ bool TilemapLoader::SaveObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 	return pSerializer->FinishStream();
 }
 
-bool TilemapLoader::LoadObjectMapLua( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile )
+bool TilemapLoader::LoadObjectMapLua( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile )
 {
 	sol::state lua;
 	try
@@ -798,7 +798,7 @@ bool TilemapLoader::LoadObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 
 	for ( const auto& [ key, value ] : *maybeObjects )
 	{
-		Entity gameObject{ registry, "", "" };
+		Entity gameObject{ &registry, "", "" };
 		const sol::optional<sol::table> components = value.as<sol::table>()[ "components" ];
 
 		if ( !components )
@@ -879,7 +879,7 @@ bool TilemapLoader::LoadObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 
 	auto findTag = [ & ]( const std::string& sTag ) {
 		auto parItr = std::ranges::find_if( ids, [ & ]( const auto& e ) {
-			Entity en{ registry, e };
+			Entity en{ &registry, e };
 			return en.GetName() == sTag;
 		} );
 
@@ -893,7 +893,7 @@ bool TilemapLoader::LoadObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 
 	for ( auto& [ entity, saveRelations ] : mapEntityToRelationship )
 	{
-		Entity ent{ registry, entity };
+		Entity ent{ &registry, entity };
 		auto& relations = ent.GetComponent<Relationship>();
 
 		// Find the parent
@@ -924,29 +924,29 @@ bool TilemapLoader::LoadObjectMapLua( VORTEK_CORE::ECS::Registry& registry, cons
 	return true;
 }
 
-bool TilemapLoader::SaveTilemap( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON )
+bool TilemapLoader::SaveTilemap( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON )
 {
 	return bUseJSON ? SaveTilemapJSON( registry, sTilemapFile ) : SaveTilemapLua( registry, sTilemapFile );
 }
 
-bool TilemapLoader::LoadTilemap( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON )
+bool TilemapLoader::LoadTilemap( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON )
 {
 	return bUseJSON ? LoadTilemapJSON( registry, sTilemapFile ) : LoadTilemapLua( registry, sTilemapFile );
 }
 
-bool TilemapLoader::LoadGameObjects( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile,
+bool TilemapLoader::LoadGameObjects( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile,
 									 bool bUseJSON )
 {
 	return bUseJSON ? LoadObjectMapJSON( registry, sObjectMapFile ) : LoadObjectMapLua( registry, sObjectMapFile );
 }
 
-bool TilemapLoader::SaveGameObjects( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile,
+bool TilemapLoader::SaveGameObjects( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile,
 									 bool bUseJSON )
 {
 	return bUseJSON ? SaveObjectMapJSON( registry, sObjectMapFile ) : SaveObjectMapLua( registry, sObjectMapFile );
 }
 
-bool TilemapLoader::LoadTilemapFromLuaTable( VORTEK_CORE::ECS::Registry& registry, const sol::table& sTilemapTable )
+bool TilemapLoader::LoadTilemapFromLuaTable( Vortek::Core::ECS::Registry& registry, const sol::table& sTilemapTable )
 {
 	if ( !sTilemapTable.valid() || sTilemapTable.get_type() != sol::type::table )
 	{
@@ -963,7 +963,7 @@ bool TilemapLoader::LoadTilemapFromLuaTable( VORTEK_CORE::ECS::Registry& registr
 
 	for ( const auto& [ key, value ] : *maybeTiles )
 	{
-		Entity newTile{ registry, "", "" };
+		Entity newTile{ &registry, "", "" };
 		const sol::optional<sol::table> components = value.as<sol::table>()[ "components" ];
 
 		if ( !components )
@@ -1016,7 +1016,7 @@ bool TilemapLoader::LoadTilemapFromLuaTable( VORTEK_CORE::ECS::Registry& registr
 	return true;
 }
 
-bool TilemapLoader::LoadGameObjectsFromLuaTable( VORTEK_CORE::ECS::Registry& registry, const sol::table& sObjectTable )
+bool TilemapLoader::LoadGameObjectsFromLuaTable( Vortek::Core::ECS::Registry& registry, const sol::table& sObjectTable )
 {
 	if ( !sObjectTable.valid() || sObjectTable.get_type() != sol::type::table )
 	{
@@ -1033,7 +1033,7 @@ bool TilemapLoader::LoadGameObjectsFromLuaTable( VORTEK_CORE::ECS::Registry& reg
 
 	for ( const auto& [ key, value ] : *maybeObjects )
 	{
-		Entity newTile{ registry, "", "" };
+		Entity newTile{ &registry, "", "" };
 		const sol::optional<sol::table> components = value.as<sol::table>()[ "components" ];
 
 		if ( !components )
@@ -1109,4 +1109,5 @@ bool TilemapLoader::LoadGameObjectsFromLuaTable( VORTEK_CORE::ECS::Registry& reg
 	return true;
 }
 
-} // namespace VORTEK_CORE::Loaders
+
+} // namespace Vortek::Core::Loaders

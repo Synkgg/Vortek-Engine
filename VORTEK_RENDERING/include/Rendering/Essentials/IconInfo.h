@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 #pragma pack( push, 1 )
 
@@ -40,4 +40,4 @@ struct BITMAPINFOHEADER
 };
 
 #pragma pack( pop )
-} // namespace VORTEK_RENDERING
+}

@@ -2,20 +2,20 @@
 #include <sol/sol.hpp>
 #include <entt/entt.hpp>
 
-namespace VORTEK_PHYSICS
+namespace Vortek::Physics 
 {
 class ContactListener;
 }
 
-namespace VORTEK_CORE::Scripting
+namespace Vortek::Core::Scripting
 {
 class ContactListenerBinder
 {
   private:
-	static std::tuple<sol::object, sol::object> GetUserData( VORTEK_PHYSICS::ContactListener& contactListener,
+	static std::tuple<sol::object, sol::object> GetUserData( Vortek::Physics::ContactListener& contactListener,
 															 sol::this_state s );
 
   public:
 	static void CreateLuaContactListener( sol::state& lua, entt::registry& registry );
 };
-} // namespace VORTEK_CORE::Scripting
+} // namespace Vortek::Core::Scripting

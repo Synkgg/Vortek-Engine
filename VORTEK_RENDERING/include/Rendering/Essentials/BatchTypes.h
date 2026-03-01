@@ -3,7 +3,7 @@
 #include "Font.h"
 #include <string>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 struct Batch
 {
@@ -86,4 +86,4 @@ struct PickingGlyph
 	GLuint textureID{ 0 };
 };
 
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

@@ -6,12 +6,12 @@
 #include <glm/glm.hpp>
 #include <entt/entt.hpp>
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 
 struct PhysicsAttributes
 {
-	VORTEK_PHYSICS::RigidBodyType eType{ VORTEK_PHYSICS::RigidBodyType::STATIC };
+	Vortek::Physics::RigidBodyType eType{ Vortek::Physics::RigidBodyType::STATIC };
 	/* The density of the body, usually in kg/m^2. */
 	float density{ 1.f };
 	/* The Coulomb (dry) friction coefficient, usually in the range [0,1]. */
@@ -41,8 +41,8 @@ struct PhysicsAttributes
 	bool bFixedRotation{ true };
 	/* A sensor shape generates overlap events but never generates a collision response. */
 	bool bIsSensor{ false };
-	/* Treat this body as high speed object that performs continuous collision detection against dynamic and kinematic
-	bodies, but not other bullet bodies.*/
+	/* Treat this body as high speed object that performs continuous collision detection against dynamic and kinematic bodies,
+	but not other bullet bodies.*/
 	bool bIsBullet{ false };
 	/* Do we want to actually use filters with this body? */
 	bool bUseFilters{ false };
@@ -58,14 +58,14 @@ struct PhysicsAttributes
 	A group index of zero has no effect. Non-zero group filtering always wins against the mask bits. */
 	int16_t groupIndex{ 0 };
 	/* This is the user specified data for each body. */
-	VORTEK_PHYSICS::ObjectData objectData{};
+	Vortek::Physics::ObjectData objectData{};
 };
 
 class PhysicsComponent
 {
   private:
 	std::shared_ptr<b2Body> m_pRigidBody;
-	std::shared_ptr<VORTEK_PHYSICS::UserData> m_pUserData;
+	std::shared_ptr<Vortek::Physics::UserData> m_pUserData;
 	PhysicsAttributes m_InitialAttribs;
 
   public:
@@ -73,11 +73,11 @@ class PhysicsComponent
 	PhysicsComponent( const PhysicsAttributes& physicsAttr );
 	~PhysicsComponent() = default;
 
-	void Init( VORTEK_PHYSICS::PhysicsWorld pPhysicsWorld, int windowWidth, int windowHeight );
+	void Init( Vortek::Physics::PhysicsWorld pPhysicsWorld, int windowWidth, int windowHeight );
 	const bool IsSensor() const;
-	VORTEK_PHYSICS::ObjectData CastRay( const b2Vec2& point1, const b2Vec2& point2 ) const;
-	std::vector<VORTEK_PHYSICS::ObjectData> BoxTrace( const b2Vec2& lowerBounds, const b2Vec2& upperBounds ) const;
-	VORTEK_PHYSICS::ObjectData GetCurrentObjectData();
+	Vortek::Physics::ObjectData CastRay( const b2Vec2& point1, const b2Vec2& point2 ) const;
+	std::vector<Vortek::Physics::ObjectData> BoxTrace( const b2Vec2& lowerBounds, const b2Vec2& upperBounds ) const;
+	Vortek::Physics::ObjectData GetCurrentObjectData();
 
 	void SetFilterCategory( uint16_t category );
 	void SetFilterCategory();
@@ -86,15 +86,15 @@ class PhysicsComponent
 	void SetGroupIndex( int index );
 	void SetGroupIndex();
 
-	bool UseFilters() const { return m_InitialAttribs.bUseFilters; }
+	bool UseFilters() const { return m_InitialAttribs.bUseFilters;  }
 
 	inline b2Body* GetBody() { return m_pRigidBody.get(); }
-	inline VORTEK_PHYSICS::UserData* GetUserData() { return m_pUserData.get(); }
-
+	inline Vortek::Physics::UserData* GetUserData() { return m_pUserData.get(); }
+	
 	/* The attributes may have changed. we need to make a function that will refill the attributes */
 	inline const PhysicsAttributes& GetAttributes() const { return m_InitialAttribs; }
 	inline PhysicsAttributes& GetChangableAttributes() { return m_InitialAttribs; }
-
+	
 	static void CreatePhysicsLuaBind( sol::state& lua, entt::registry& registry );
 };
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

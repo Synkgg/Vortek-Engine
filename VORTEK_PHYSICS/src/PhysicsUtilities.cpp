@@ -1,10 +1,10 @@
 #include "Physics/PhysicsUtilities.h"
-#include "VortekUtilities/VORTEKUtilities.h"
-#include <format>
+#include "VortekUtilities/VortekUtilities.h"
+#include <fmt/format.h>
 #include <map>
 #include <algorithm>
 
-namespace VORTEK_PHYSICS
+namespace Vortek::Physics
 {
 
 static const std::map<std::string, RigidBodyType> StringToRigidBodyType{ { "STATIC", RigidBodyType::STATIC },
@@ -73,7 +73,7 @@ bool AddCustomFilterCategoryType( const std::string& sNewFilterCatType, std::str
 {
 	if ( StringToFilterCategory.contains( sNewFilterCatType ) )
 	{
-		sErrorStr = std::format( "Filter Category [{}] already exists.", sNewFilterCatType );
+		sErrorStr = fmt::format( "Filter Category [{}] already exists.", sNewFilterCatType );
 		return false;
 	}
 
@@ -91,7 +91,7 @@ bool AddCustomFilterCategoryType( const std::string& sNewFilterCatType, std::str
 	FilterCategory eFilterCat = catItr->second;
 
 	// Now we want to get the key and change the node name.
-	if ( !VORTEK_UTIL::KeyChange( StringToFilterCategory, sFilterCatToChange, sNewFilterCatType ) )
+	if ( !Vortek::Utilities::KeyChange( StringToFilterCategory, sFilterCatToChange, sNewFilterCatType ) )
 	{
 		sErrorStr = "Failed to add new filter category. Unable to change the key.";
 		return false;
@@ -151,4 +151,4 @@ const std::map<RigidBodyType, std::string>& GetRigidBodyStringMap()
 	return RigidBodyTypeToString;
 }
 
-} // namespace VORTEK_PHYSICS
+} // namespace Vortek::Physics

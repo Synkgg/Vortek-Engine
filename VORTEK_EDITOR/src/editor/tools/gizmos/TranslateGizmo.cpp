@@ -1,4 +1,4 @@
-#include "TranslateGizmo.h"
+#include "editor/tools/gizmos/TranslateGizmo.h"
 #include "editor/utilities/EditorUtilities.h"
 #include "Rendering/Core/BatchRenderer.h"
 #include "Rendering/Core/Camera2D.h"
@@ -6,16 +6,16 @@
 #include "Core/Resources/AssetManager.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
 
-#include "Core/ECS/Entity.h"
-
 #include <Rendering/Essentials/Shader.h>
 #include <Rendering/Essentials/Texture.h>
 
+#include "Core/ECS/Entity.h"
+
 #include "Logger/Logger.h"
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 TranslateGizmo::TranslateGizmo()
@@ -24,7 +24,7 @@ TranslateGizmo::TranslateGizmo()
 	Init( "x_axis_translate", "y_axis_translate" );
 }
 
-void TranslateGizmo::Update( VORTEK_CORE::Canvas& canvas )
+void TranslateGizmo::Update( Vortek::Core::Canvas& canvas )
 {
 	Gizmo::Update( canvas );
 
@@ -36,7 +36,7 @@ void TranslateGizmo::Update( VORTEK_CORE::Canvas& canvas )
 
 	Show();
 
-	Entity selectedEntity{ *m_pRegistry, m_SelectedEntity };
+	Entity selectedEntity{ m_pRegistry, m_SelectedEntity };
 	auto& selectedTransform = selectedEntity.GetComponent<TransformComponent>();
 	float deltaX{ GetDeltaX() };
 	float deltaY{ GetDeltaY() };
@@ -60,11 +60,11 @@ void TranslateGizmo::Update( VORTEK_CORE::Canvas& canvas )
 		selectedEntity.UpdateTransform();
 
 		// Update sprite cells
-		if ( auto* pSprite = selectedEntity.TryGetComponent<SpriteComponent>() )
+		if ( auto* pSprite = selectedEntity.TryGetComponent<SpriteComponent>())
 		{
 			if ( pSprite->bIsoMetric )
 			{
-				auto [ cellX, cellY ] = VORTEK_CORE::ConvertWorldPosToIsoCoords(
+				auto [ cellX, cellY ] = Vortek::Core::ConvertWorldPosToIsoCoords(
 					selectedTransform.position + glm::vec2{ pSprite->width / 2.f, pSprite->height }, canvas );
 				pSprite->isoCellX = cellX;
 				pSprite->isoCellX = cellY;
@@ -77,7 +77,7 @@ void TranslateGizmo::Update( VORTEK_CORE::Canvas& canvas )
 	ExamineMousePosition();
 }
 
-void TranslateGizmo::Draw( VORTEK_RENDERING::Camera2D* pCamera )
+void TranslateGizmo::Draw( Vortek::Rendering::Camera2D* pCamera )
 {
 	if ( m_bHidden )
 		return;
@@ -147,4 +147,4 @@ void TranslateGizmo::Draw( VORTEK_RENDERING::Camera2D* pCamera )
 	pShader->Disable();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

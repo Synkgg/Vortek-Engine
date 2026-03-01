@@ -4,7 +4,7 @@
 #include <glad/glad.h>
 #include <map>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 struct FontGlyph
 {
@@ -54,4 +54,4 @@ class Font
 	/* Filename of font if loaded from a file. */
 	std::string m_sFilename;
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

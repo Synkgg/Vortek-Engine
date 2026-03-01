@@ -1,7 +1,7 @@
-#include "ToolManager.h"
-#include "CreateTileTool.h"
-#include "RectFillTool.h"
-#include "ToolAccessories.h"
+#include "editor/tools/ToolManager.h"
+#include "editor/tools/CreateTileTool.h"
+#include "editor/tools/RectFillTool.h"
+#include "editor/tools/ToolAccessories.h"
 #include "editor/tools/gizmos/TranslateGizmo.h"
 #include "editor/tools/gizmos/ScaleGizmo.h"
 #include "editor/tools/gizmos/RotateGizmo.h"
@@ -10,7 +10,7 @@
 
 #include "Core/Events/EventDispatcher.h"
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 ToolManager::ToolManager()
 {
@@ -26,7 +26,7 @@ ToolManager::ToolManager()
 	SetToolActive( EToolType::RECT_FILL_TILE );
 }
 
-void ToolManager::Update( VORTEK_CORE::Canvas& canvas )
+void ToolManager::Update( Vortek::Core::Canvas& canvas )
 {
 	auto activeTool = std::ranges::find_if( m_mapTools, []( const auto& tool ) { return tool.second->IsActivated(); } );
 	if ( activeTool != m_mapTools.end() )
@@ -117,7 +117,7 @@ AbstractTool* ToolManager::GetActiveToolFromAbstract()
 	return nullptr;
 }
 
-bool ToolManager::SetupTools( SceneObject* pSceneObject, VORTEK_RENDERING::Camera2D* pCamera )
+bool ToolManager::SetupTools( SceneObject* pSceneObject, Vortek::Rendering::Camera2D* pCamera )
 {
 	for ( auto& [ eType, pTool ] : m_mapTools )
 	{
@@ -125,7 +125,7 @@ bool ToolManager::SetupTools( SceneObject* pSceneObject, VORTEK_RENDERING::Camer
 			return false;
 	}
 
-	for ( auto& [ eType, pGizmo ] : m_mapGizmos )
+	for ( auto& [ eType, pGizmo] : m_mapGizmos )
 	{
 		if ( !pGizmo->SetupTool( pSceneObject, pCamera ) )
 			return false;
@@ -156,10 +156,9 @@ const bool ToolManager::IsGridSnapEnabled()
 	return tool ? tool->IsGridSnapEnabled() : false;
 }
 
-
 void ToolManager::SetSelectedEntity( entt::entity entity )
 {
-	for ( auto& [ eGizmo, pGizmo ] : m_mapGizmos )
+	for (auto& [eGizmo, pGizmo] : m_mapGizmos)
 	{
 		pGizmo->SetSelectedEntity( entity );
 	}
@@ -176,10 +175,10 @@ void ToolManager::EnableGridSnap( bool bEnable )
 	}
 }
 
-std::vector<VORTEK_CORE::Events::EventDispatcher*> ToolManager::GetDispatchers()
+std::vector<Vortek::Core::Events::EventDispatcher*> ToolManager::GetDispatchers()
 {
-	std::vector<VORTEK_CORE::Events::EventDispatcher*> dispatchers{};
-	for ( auto& [ eType, pGizmo ] : m_mapGizmos )
+	std::vector<Vortek::Core::Events::EventDispatcher*> dispatchers{};
+	for (auto& [eType, pGizmo] : m_mapGizmos)
 	{
 		dispatchers.push_back( &pGizmo->GetDispatcher() );
 	}
@@ -187,4 +186,4 @@ std::vector<VORTEK_CORE::Events::EventDispatcher*> ToolManager::GetDispatchers()
 	return dispatchers;
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

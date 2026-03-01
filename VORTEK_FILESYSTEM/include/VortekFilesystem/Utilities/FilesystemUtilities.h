@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 /**
  * @brief Executes a system command and captures both stdout and stderr output.
@@ -14,4 +14,15 @@ namespace VORTEK_FILESYSTEM
  * @throws std::runtime_error if the command execution fails.
  */
 std::string ExecCmdWithErrorOutput( const std::string& sCmd );
-} // namespace VORTEK_FILESYSTEM
+
+/**
+* @brief Takes an input path string that may contain mixed direcory separators
+* and returns a new string using the preffered directory separator for the
+* current operating system.
+*
+* @param sPath A path string that my contain mixed or non-preferred separators.
+* @return std::string The normalized path string with OS-preferred separators.
+*/
+std::string NormalizePath( const std::string& sPath );
+
+} // namespace Vortek::Filesystem

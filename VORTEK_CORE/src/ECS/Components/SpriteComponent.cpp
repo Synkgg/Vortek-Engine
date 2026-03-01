@@ -7,7 +7,7 @@
 
 using namespace VORTEK_RESOURCES;
 
-std::string VORTEK_CORE::ECS::SpriteComponent::to_string() const
+std::string Vortek::Core::ECS::SpriteComponent::to_string() const
 {
 	std::stringstream ss;
 	ss << "==== Sprite Component ==== \n"
@@ -32,24 +32,24 @@ std::string VORTEK_CORE::ECS::SpriteComponent::to_string() const
 	return ss.str();
 }
 
-void VORTEK_CORE::ECS::SpriteComponent::CreateSpriteLuaBind( sol::state& lua )
+void Vortek::Core::ECS::SpriteComponent::CreateSpriteLuaBind( sol::state& lua )
 {
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& assetManager = mainRegistry.GetAssetManager();
 
-	lua.new_usertype<VORTEK_RENDERING::Color>( "Color",
-											   sol::call_constructor,
-											   sol::factories( []( GLubyte r, GLubyte g, GLubyte b, GLubyte a ) {
-												   return VORTEK_RENDERING::Color{ .r = r, .g = g, .b = b, .a = a };
-											   } ),
-											   "r",
-											   &VORTEK_RENDERING::Color::r,
-											   "g",
-											   &VORTEK_RENDERING::Color::g,
-											   "b",
-											   &VORTEK_RENDERING::Color::b,
-											   "a",
-											   &VORTEK_RENDERING::Color::a );
+	lua.new_usertype<Vortek::Rendering::Color>( "Color",
+											  sol::call_constructor,
+											  sol::factories( []( GLubyte r, GLubyte g, GLubyte b, GLubyte a ) {
+												  return Vortek::Rendering::Color{ .r = r, .g = g, .b = b, .a = a };
+											  } ),
+											  "r",
+											  &Vortek::Rendering::Color::r,
+											  "g",
+											  &Vortek::Rendering::Color::g,
+											  "b",
+											  &Vortek::Rendering::Color::b,
+											  "a",
+											  &Vortek::Rendering::Color::a );
 
 	lua.new_usertype<UVs>( "UVs",
 						   sol::call_constructor,
@@ -74,7 +74,7 @@ void VORTEK_CORE::ECS::SpriteComponent::CreateSpriteLuaBind( sol::state& lua )
 										.width = width,
 										.height = height,
 										.uvs = UVs{},
-										.color = VORTEK_RENDERING::Color{ 255, 255, 255, 255 },
+										.color = Vortek::Rendering::Color{ 255, 255, 255, 255 },
 										.start_x = start_x,
 										.start_y = start_y,
 										.layer = layer };
@@ -104,11 +104,11 @@ void VORTEK_CORE::ECS::SpriteComponent::CreateSpriteLuaBind( sol::state& lua )
 			if ( !pTexture )
 			{
 				VORTEK_ERROR( "Failed to generate uvs -- Texture [{}] -- Does not exists or invalid",
-							  sprite.sTextureName );
+							 sprite.sTextureName );
 				return;
 			}
 
-			VORTEK_CORE::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
+			Vortek::Core::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
 		},
 		"inspectUVs",
 		[]( SpriteComponent& sprite ) {

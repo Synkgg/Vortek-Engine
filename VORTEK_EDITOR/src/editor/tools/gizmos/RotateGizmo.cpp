@@ -1,4 +1,4 @@
-#include "RotateGizmo.h"
+#include "editor/tools/gizmos/RotateGizmo.h"
 #include "editor/utilities/EditorUtilities.h"
 #include "Rendering/Core/BatchRenderer.h"
 #include "Rendering/Core/Camera2D.h"
@@ -6,7 +6,6 @@
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
-
 #include "Core/ECS/Entity.h"
 
 #include <Rendering/Essentials/Shader.h>
@@ -14,9 +13,9 @@
 
 #include "Logger/Logger.h"
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-VORTEK_EDITOR::RotateGizmo::RotateGizmo()
+Vortek::Editor::RotateGizmo::RotateGizmo()
 	: Gizmo( GizmoAxisParams{ .axisColor = XAXIS_GIZMO_COLOR,
 							  .axisHoveredColor = XAXIS_HOVERED_GIZMO_COLOR,
 							  .axisDisabledColor = GRAYED_OUT_GIZMO_COLOR },
@@ -25,7 +24,7 @@ VORTEK_EDITOR::RotateGizmo::RotateGizmo()
 	Init( "rotate_tool", "" );
 }
 
-void VORTEK_EDITOR::RotateGizmo::Update( VORTEK_CORE::Canvas& canvas )
+void Vortek::Editor::RotateGizmo::Update( Vortek::Core::Canvas& canvas )
 {
 	Gizmo::Update( canvas );
 
@@ -37,7 +36,7 @@ void VORTEK_EDITOR::RotateGizmo::Update( VORTEK_CORE::Canvas& canvas )
 
 	Show();
 
-	Entity selectedEntity{ *m_pRegistry, m_SelectedEntity };
+	Entity selectedEntity{ m_pRegistry, m_SelectedEntity };
 	auto& selectedTransform = selectedEntity.GetComponent<TransformComponent>();
 
 	float deltaX{ GetDeltaX() };
@@ -63,7 +62,7 @@ void VORTEK_EDITOR::RotateGizmo::Update( VORTEK_CORE::Canvas& canvas )
 	ExamineMousePosition();
 }
 
-void VORTEK_EDITOR::RotateGizmo::Draw( VORTEK_RENDERING::Camera2D* pCamera )
+void Vortek::Editor::RotateGizmo::Draw( Vortek::Rendering::Camera2D* pCamera )
 {
 	if ( m_bHidden )
 		return;

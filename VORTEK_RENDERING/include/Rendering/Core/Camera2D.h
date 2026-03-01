@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Camera2D
 {
@@ -91,4 +91,4 @@ class Camera2D
 
 	bool m_bNeedsUpdate;
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

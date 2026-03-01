@@ -284,7 +284,7 @@ function LoadMap(mapDef)
 					)
 					
 					-- If Box2d is enable, create a physics component
-					if S2D_IsPhysicsEnabled() then 
+					if IsPhysicsEnabled() then 
 						local physicsAttribs = PhysicsAttributes()
 
 						-- Adjust properties to desired values, properties that are unchanged use default
@@ -350,25 +350,25 @@ function LoadAssets(assets)
 		end 
 
 		if not AssetManager.add_texture(v.name, v.path, v.pixel_art, bTileset) then
-			S2D_error("Failed to load texture [%s] at path [%s]",v.name, v.path)
+			error("Failed to load texture [%s] at path [%s]",v.name, v.path)
 		else
-			S2D_log("Loaded Texture [%s]", v.name)
+			log("Loaded Texture [%s]", v.name)
 		end
 	end
 
 	for k, v in pairs(assets.music) do 
 		if not AssetManager.add_music(v.name, v.path) then 
-			S2D_error("Failed to load music [%s] at path [%s]",v.name, v.path)
+			error("Failed to load music [%s] at path [%s]",v.name, v.path)
 		else
-			S2D_log("Loaded Music [%s]", v.name)
+			log("Loaded Music [%s]", v.name)
 		end
 	end
 
 	for k, v in pairs(assets.sound_fx) do
 		if not AssetManager.add_soundfx(v.name, v.path) then
-			S2D_error("Failed to load soundfx [%s] at path [%s]",v.name, v.path)
+			error("Failed to load soundfx [%s] at path [%s]",v.name, v.path)
 		else
-			S2D_log("Loaded soundfx [%s]", v.name)
+			log("Loaded soundfx [%s]", v.name)
 		end
 	end
 	-- TODO: Add other loading of assets as needed
@@ -377,10 +377,10 @@ end
 
 function Debug()
 	if Keyboard.just_pressed(KEY_C) then 
-		if S2D_CollisionRenderingEnabled() then 
-			S2D_DisableCollisionRendering()
+		if CollisionRenderingEnabled() then 
+			DisableCollisionRendering()
 		else 
-			S2D_EnableCollisionRendering()
+			EnableCollisionRendering()
 		end 
 	end
 end

@@ -10,14 +10,14 @@
 
 #include <Rendering/Essentials/Texture.h>
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
 constexpr const std::string_view PlayerStartTag = "PlayerStart";
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
-PlayerStart::PlayerStart( VORTEK_CORE::ECS::Registry& registry, Scene& sceneRef )
+PlayerStart::PlayerStart( Vortek::Core::ECS::Registry& registry, Scene& sceneRef )
 	: m_SceneRef{ sceneRef }
 	, m_pVisualEntity{ nullptr }
 	, m_pCharacterPrefab{ nullptr }
@@ -26,9 +26,10 @@ PlayerStart::PlayerStart( VORTEK_CORE::ECS::Registry& registry, Scene& sceneRef 
 	, m_bCharacterLoaded{ false }
 	, m_bVisualEntityCreated{ false }
 {
+	
 }
 
-void PlayerStart::CreatePlayer( VORTEK_CORE::ECS::Registry& registry )
+void PlayerStart::CreatePlayer( Vortek::Core::ECS::Registry& registry )
 {
 	if ( m_sCharacterName != "default" && !m_pCharacterPrefab && m_bCharacterLoaded )
 	{
@@ -43,7 +44,7 @@ void PlayerStart::CreatePlayer( VORTEK_CORE::ECS::Registry& registry )
 		else
 		{
 			VORTEK_ERROR( "Failed to create player start character. [{}] prefabbed character does not exist.",
-						  m_sCharacterName );
+						 m_sCharacterName );
 			return;
 		}
 	}
@@ -56,7 +57,7 @@ void PlayerStart::CreatePlayer( VORTEK_CORE::ECS::Registry& registry )
 	}
 	else
 	{
-		Entity characterEnt{ registry, "Player", "" };
+		Entity characterEnt{ &registry, "Player", "" };
 		auto& transform =
 			characterEnt.AddComponent<TransformComponent>( m_pVisualEntity->GetComponent<TransformComponent>() );
 		transform.scale = glm::vec2{ 1.f }; // Should the scale be changed here?
@@ -85,7 +86,7 @@ void PlayerStart::CreatePlayer( VORTEK_CORE::ECS::Registry& registry )
 			float gravityScale = coreGlobals.GetGameType() == EGameType::Platformer ? 1.f : 0.f;
 
 			characterEnt.AddComponent<PhysicsComponent>(
-				PhysicsComponent{ PhysicsAttributes{ .eType = VORTEK_PHYSICS::RigidBodyType::DYNAMIC,
+				PhysicsComponent{ PhysicsAttributes{ .eType = Vortek::Physics::RigidBodyType::DYNAMIC,
 													 .density = 100.f,
 													 .friction = 0.f,
 													 .restitution = 0.f,
@@ -147,7 +148,7 @@ void PlayerStart::Unload()
 		return;
 
 	// We want to reset the entity to entt::null
-	m_pVisualEntity->Kill();
+	m_pVisualEntity->Destroy();
 	m_pVisualEntity.reset();
 	m_bVisualEntityCreated = false;
 
@@ -165,10 +166,10 @@ void PlayerStart::LoadVisualEntity()
 		return;
 	}
 
-	if ( !m_pVisualEntity )
+	if ( !m_pVisualEntity)
 	{
 		m_pVisualEntity =
-			std::make_shared<Entity>( Entity{ m_SceneRef.GetRegistry(), std::string{ PlayerStartTag }, "" } );
+			std::make_shared<Entity>( Entity{ m_SceneRef.GetRegistryPtr(), std::string{ PlayerStartTag }, "" } );
 	}
 
 	m_pVisualEntity->AddComponent<TransformComponent>( TransformComponent{} );
@@ -184,4 +185,4 @@ void PlayerStart::LoadVisualEntity()
 	m_bVisualEntityCreated = true;
 }
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

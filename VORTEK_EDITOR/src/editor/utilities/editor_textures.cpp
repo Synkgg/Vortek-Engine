@@ -1,6 +1,6 @@
-#include "editor_textures.h"
+#include "editor/utilities/editor_textures.h"
 
-namespace VORTEK_EDITOR::EditorTextures
+namespace Vortek::Editor::EditorTextures
 {
 
 namespace
@@ -1896,4 +1896,4 @@ const size_t g_DefaultPlayerSize = ZZ_default_player_size;
 unsigned char* g_PanningCursor = ZZ_PanningCursor;
 const size_t g_PanningCursorSize = ZZ_PanningCursor_size;
 
-} // namespace VORTEK_EDITOR::EditorTextures
+} // namespace Vortek::Editor::EditorTextures

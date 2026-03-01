@@ -1,6 +1,6 @@
 #include "VortekUtilities/RandomGenerator.h"
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 
 void RandomIntGenerator::Initialize()
@@ -47,4 +47,4 @@ float RandomFloatGenerator::GetValue()
 	return m_RealDistribution( m_RandomEngine );
 }
 
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities

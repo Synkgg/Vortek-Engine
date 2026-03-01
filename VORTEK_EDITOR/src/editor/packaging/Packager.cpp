@@ -1,7 +1,7 @@
-#include "Packager.h"
-#include "ScriptCompiler.h"
-#include "IconReplacer.h"
-#include "AssetPackager.h"
+#include "editor/packaging/Packager.h"
+#include "editor/packaging/ScriptCompiler.h"
+#include "editor/packaging/IconReplacer.h"
+#include "editor/packaging/AssetPackager.h"
 
 #include "editor/scene/SceneObject.h"
 #include "VortekFilesystem/Serializers/LuaSerializer.h"
@@ -14,8 +14,8 @@
 
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
-using namespace VORTEK_FILESYSTEM;
-using namespace VORTEK_CORE;
+using namespace Vortek::Filesystem;
+using namespace Vortek::Core;
 
 // clang-format off
 #ifdef _DEBUG
@@ -60,9 +60,9 @@ constexpr std::array<std::string_view, 16> CopyPackageFiles = {
 
 // clang-format on
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
-Packager::Packager( std::unique_ptr<PackageData> pData, std::shared_ptr<VORTEK_UTIL::ThreadPool> pThreadPool )
+Packager::Packager( std::unique_ptr<PackageData> pData, std::shared_ptr<Vortek::Utilities::ThreadPool> pThreadPool )
 	: m_pPackageData{ std::move( pData ) }
 	, m_bPackaging{ false }
 	, m_bHasError{ false }
@@ -441,6 +441,13 @@ std::string Packager::CreateConfigFile( const std::string& sTempFilepath )
 		.AddKeyValuePair( "velocityIterations", m_pPackageData->pGameConfig->velocityIterations )
 		.AddKeyValuePair( "gravity", m_pPackageData->pGameConfig->gravity )
 		.EndTable() // PhysicsParams
+		.StartNewTable( "AudioParams" )
+		.AddKeyValuePair( "bGlobalEnabled", m_pPackageData->pGameConfig->audioConfig.bGlobalOverrideEnabled )
+		.AddKeyValuePair( "globalVolume", m_pPackageData->pGameConfig->audioConfig.globalVolumeOverride )
+		.AddKeyValuePair( "bMusicOverrideEnabled", m_pPackageData->pGameConfig->audioConfig.bMusicVolumeOverrideEnabled )
+		.AddKeyValuePair( "musicVolume", m_pPackageData->pGameConfig->audioConfig.musicVolumeOverride )
+		.AddKeyValuePair( "allocatedChannels", m_pPackageData->pGameConfig->audioConfig.GetAllocatedChannelCount() )
+		.EndTable() // AudioParams
 		.EndTable() // GameConfig
 		.FinishStream();
 
@@ -651,19 +658,20 @@ std::vector<std::string> Packager::CreateSceneFiles( const std::string& sTempFil
 		std::string sSceneName{ jsonScene[ "name" ].GetString() };
 		std::string sSceneDataPath{ jsonScene[ "sceneData" ].GetString() };
 		fs::path sceneDataPath = *optContentPath / sSceneDataPath;
-		VORTEK_CORE::ECS::Registry registry;
+		Vortek::Core::ECS::Registry registry;
 		auto pSceneObject = std::make_unique<SceneObject>( sSceneName, sceneDataPath.string() );
-		auto [ sTilemap, sObjectMap ] =
+		auto sceneExportFiles =
 			pSceneObject->ExportSceneToLua( sSceneName, m_pPackageData->sTempDataPath, registry );
 
-		if ( !fs::exists( fs::path{ sTilemap } ) || !fs::exists( fs::path{ sObjectMap } ) )
+		if ( !sceneExportFiles.IsValid() )
 		{
 			VORTEK_ERROR( "Failed to create scene files for scene [{}]", sSceneName );
 			return {};
 		}
 
-		sceneFiles.push_back( sTilemap );
-		sceneFiles.push_back( sObjectMap );
+		sceneFiles.push_back( sceneExportFiles.sTilemapFile);
+		sceneFiles.push_back( sceneExportFiles.sObjectFile);
+		sceneFiles.push_back( sceneExportFiles.sDataFile);
 	}
 
 	return sceneFiles;
@@ -741,7 +749,7 @@ void Packager::CopyFilesToDestination()
 			}
 		}
 
-		// Replace the VORTEK_ENGINE.exe name with the game name and change the icon if available.
+		// Replace the Vortek::Engine.exe name with the game name and change the icon if available.
 		for ( const auto& entry : fs::directory_iterator( destination ) )
 		{
 			if ( entry.path().filename().string() == "VORTEK_ENGINE.exe" )
@@ -830,4 +838,4 @@ void Packager::CopyAssetsToDestination()
 	}
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

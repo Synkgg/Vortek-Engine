@@ -1,4 +1,4 @@
-#include "SceneHierarchyDisplay.h"
+#include "editor/displays/SceneHierarchyDisplay.h"
 #include "editor/scene/SceneManager.h"
 #include "editor/scene/SceneObject.h"
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
@@ -23,532 +23,532 @@
 #include "Windowing/Inputs/Mouse.h"
 #include "Windowing/Inputs/Keyboard.h"
 
-using namespace VORTEK_WINDOWING::Inputs;
+using namespace Vortek::Windowing::Inputs;
 
 #include <imgui.h>
 
-using namespace VORTEK_CORE::Events;
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::Events;
+using namespace Vortek::Core::ECS;
 using namespace entt::literals;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
-	bool SceneHierarchyDisplay::OpenTreeNode(VORTEK_CORE::ECS::Entity& entity)
+bool SceneHierarchyDisplay::OpenTreeNode( Vortek::Core::ECS::Entity& entity )
+{
+	const auto& name = entity.GetName();
+
+	ImGui::PushID( static_cast<int32_t>( entity.GetEntity() ) );
+
+	ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding |
+								   ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+
+	// Get a copy of the relationships of the current entity
+	auto relations = entity.GetComponent<Relationship>();
+	auto curr = relations.firstChild;
+
+	// If the selected entity is the current node, highlight the selected node
+	bool bSelected{ m_pSelectedEntity && m_pSelectedEntity->GetEntity() == entity.GetEntity() };
+	if ( bSelected )
+		nodeFlags |= ImGuiTreeNodeFlags_Selected;
+
+	bool bTreeNodeOpen{ false };
+	
+	bTreeNodeOpen = ImGui::TreeNodeEx( fmt::format( "{} {}", ICON_FA_CUBE, name ).c_str(), nodeFlags );
+	auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+
+	if ( ImGui::IsItemClicked() )
 	{
-		const auto& name = entity.GetName();
-
-		ImGui::PushID(static_cast<int32_t>(entity.GetEntity()));
-
-		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding |
-			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-
-		// Get a copy of the relationships of the current entity
-		auto relations = entity.GetComponent<Relationship>();
-		auto curr = relations.firstChild;
-
-		// If the selected entity is the current node, highlight the selected node
-		bool bSelected{ m_pSelectedEntity && m_pSelectedEntity->GetEntity() == entity.GetEntity() };
-		if (bSelected)
-			nodeFlags |= ImGuiTreeNodeFlags_Selected;
-
-		bool bTreeNodeOpen{ false };
-
-		bTreeNodeOpen = ImGui::TreeNodeEx( fmt::format( "{} {}", ICON_FA_CUBE, name ).c_str(), nodeFlags );
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
-
-		if (ImGui::IsItemClicked())
-		{
-			m_pSelectedEntity = std::make_shared<Entity>(pCurrentScene->GetRegistry(), entity.GetEntity());
-			TOOL_MANAGER().SetSelectedEntity(entity.GetEntity());
-		}
-
-		ImGui::PopID();
-
-		if (ImGui::BeginDragDropSource())
-		{
-			ImGui::SetDragDropPayload("SceneHierarchy", &(entity.GetEntity()), sizeof(entity.GetEntity()));
-			ImGui::Text(entity.GetName().c_str());
-			ImGui::EndDragDropSource();
-		}
-
-		if (ImGui::BeginDragDropTarget())
-		{
-			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SceneHierarchy");
-
-			if (payload)
-			{
-				VORTEK_ASSERT(payload->DataSize == sizeof(entity.GetEntity()));
-				entt::entity* ent = (entt::entity*)payload->Data;
-				auto entID = static_cast<int32_t>(*ent);
-				entity.AddChild(*ent);
-			}
-
-			ImGui::EndDragDropTarget();
-		}
-
-		while (curr != entt::null && bTreeNodeOpen)
-		{
-			Entity ent{ pCurrentScene->GetRegistry(), curr };
-			if (OpenTreeNode(ent))
-				ImGui::TreePop();
-
-			curr = ent.GetComponent<Relationship>().nextSibling;
-		}
-
-		return bTreeNodeOpen;
+		m_pSelectedEntity = std::make_shared<Entity>( pCurrentScene->GetRegistryPtr(), entity.GetEntity() );
+		TOOL_MANAGER().SetSelectedEntity( entity.GetEntity() );
 	}
 
-	void SceneHierarchyDisplay::AddComponent(VORTEK_CORE::ECS::Entity& entity, bool* bAddComponent)
+	ImGui::PopID();
+
+	if ( ImGui::BeginDragDropSource() )
 	{
-		if (!bAddComponent)
-			return;
+		ImGui::SetDragDropPayload( "SceneHierarchy", &( entity.GetEntity() ), sizeof( entity.GetEntity() ) );
+		ImGui::Text( entity.GetName().c_str() );
+		ImGui::EndDragDropSource();
+	}
 
-		if (*bAddComponent)
-			ImGui::OpenPopup("Add Component");
+	if ( ImGui::BeginDragDropTarget() )
+	{
+		const ImGuiPayload* payload = ImGui::AcceptDragDropPayload( "SceneHierarchy" );
 
-		if (ImGui::BeginPopupModal("Add Component"))
+		if ( payload )
 		{
-			auto& registry = entity.GetEnttRegistry();
+			VORTEK_ASSERT( payload->DataSize == sizeof( entity.GetEntity() ) );
+			entt::entity* ent = (entt::entity*)payload->Data;
+			auto entID = static_cast<int32_t>( *ent );
+			entity.AddChild( *ent );
+		}
 
-			// Get all of the reflected types from entt::meta
-			std::map<entt::id_type, std::string> componentMap;
+		ImGui::EndDragDropTarget();
+	}
 
-			for (auto&& [id, type] : entt::resolve())
+	while ( curr != entt::null && bTreeNodeOpen )
+	{
+		Entity ent{ pCurrentScene->GetRegistryPtr(), curr };
+		if ( OpenTreeNode( ent ) )
+			ImGui::TreePop();
+
+		curr = ent.GetComponent<Relationship>().nextSibling;
+	}
+
+	return bTreeNodeOpen;
+}
+
+void SceneHierarchyDisplay::AddComponent( Vortek::Core::ECS::Entity& entity, bool* bAddComponent )
+{
+	if ( !bAddComponent )
+		return;
+
+	if ( *bAddComponent )
+		ImGui::OpenPopup( "Add Component" );
+
+	if ( ImGui::BeginPopupModal( "Add Component" ) )
+	{
+		auto& registry = entity.GetEnttRegistry();
+
+		// Get all of the reflected types from entt::meta
+		std::map<entt::id_type, std::string> componentMap;
+
+		for ( auto&& [ id, type ] : entt::resolve() )
+		{
+			const auto& info = type.info();
+			auto pos = info.name().find_last_of( ':' ) + 1;
+			auto name = info.name().substr( pos );
+			componentMap[ id ] = std::string{ name };
+		}
+
+		static std::string componentStr{};
+		static std::string componentStrPrev{};
+		static entt::id_type id_type{ 0 };
+		static bool bError{ false };
+
+		if ( ImGui::BeginCombo( "Choose Component", componentStr.c_str() ) )
+		{
+			for ( const auto& [ id, name ] : componentMap )
 			{
-				const auto& info = type.info();
-				auto pos = info.name().find_last_of(':') + 1;
-				auto name = info.name().substr(pos);
-				componentMap[id] = std::string{ name };
-			}
-
-			static std::string componentStr{};
-			static std::string componentStrPrev{};
-			static entt::id_type id_type{ 0 };
-			static bool bError{ false };
-
-			if (ImGui::BeginCombo("Choose Component", componentStr.c_str()))
-			{
-				for (const auto& [id, name] : componentMap)
+				if ( ImGui::Selectable( name.c_str(), name == componentStr ) )
 				{
-					if (ImGui::Selectable(name.c_str(), name == componentStr))
-					{
-						componentStr = name;
-						id_type = id;
-					}
+					componentStr = name;
+					id_type = id;
 				}
-				ImGui::EndCombo();
 			}
+			ImGui::EndCombo();
+		}
 
-			if (componentStr != componentStrPrev)
-			{
-				componentStrPrev = componentStr;
-				bError = false;
-			}
+		if ( componentStr != componentStrPrev )
+		{
+			componentStrPrev = componentStr;
+			bError = false;
+		}
 
-			if (bError)
-			{
-				ImGui::TextColored(
-					ImVec4{ 1.f, 0.f, 0.f, 1.f },
-					std::format("Game Object already has [{}] - Please make another selection.", componentStr).c_str());
-			}
+		if ( bError )
+		{
+			ImGui::TextColored(
+				ImVec4{ 1.f, 0.f, 0.f, 1.f },
+				fmt::format( "Game Object already has [{}] - Please make another selection.", componentStr ).c_str() );
+		}
 
-			if (ImGui::Button("Ok") && !bError)
+		if ( ImGui::Button( "Ok" ) && !bError )
+		{
+			if ( !componentStr.empty() )
 			{
-				if (!componentStr.empty())
+				for ( auto&& [ id, storage ] : registry.storage() )
 				{
-					for (auto&& [id, storage] : registry.storage())
+					if ( id != id_type )
+						continue;
+
+					if ( storage.contains( entity.GetEntity() ) )
 					{
-						if (id != id_type)
-							continue;
-
-						if (storage.contains(entity.GetEntity()))
-						{
-							bError = true;
-							VORTEK_ERROR("Entity already has component [{}]", componentStr);
-							break;
-						}
-
-						// The entity does not have that component yet, proceed.
+						bError = true;
+						VORTEK_ERROR( "Entity already has component [{}]", componentStr );
 						break;
 					}
+
+					// The entity does not have that component yet, proceed.
+					break;
 				}
+			}
 
-				if (!bError && id_type != 0)
+			if ( !bError && id_type != 0 )
+			{
+				auto&& storage = registry.storage( id_type );
+				if ( !storage )
 				{
-					auto&& storage = registry.storage(id_type);
-					if (!storage)
+					const auto addComponent =
+						Vortek::Core::Utils::InvokeMetaFunction( id_type, "add_component_default"_hs, entity );
+
+					if ( addComponent )
 					{
-						const auto addComponent =
-							VORTEK_CORE::Utils::InvokeMetaFunction(id_type, "add_component_default"_hs, entity);
-
-						if (addComponent)
-						{
-							EVENT_DISPATCHER().EmitEvent(Events::AddComponentEvent{
-								.pEntity = &entity, .eType = Events::GetComponentTypeFromStr(componentStr) });
-
-							*bAddComponent = false;
-							ImGui::CloseCurrentPopup();
-						}
-						else
-						{
-							// This should probably fail/throw
-							VORTEK_ASSERT(addComponent && "Failed to add component.");
-							*bAddComponent = false;
-							bError = true;
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					else
-					{
-						storage->push(entity.GetEntity());
-
-						EVENT_DISPATCHER().EmitEvent(Events::AddComponentEvent{
-							.pEntity = &entity, .eType = Events::GetComponentTypeFromStr(componentStr) });
+						EVENT_DISPATCHER().EmitEvent( Events::AddComponentEvent{
+							.pEntity = &entity, .eType = Events::GetComponentTypeFromStr( componentStr ) } );
 
 						*bAddComponent = false;
 						ImGui::CloseCurrentPopup();
 					}
+					else
+					{
+						// This should probably fail/throw
+						VORTEK_ASSERT( addComponent && "Failed to add component." );
+						*bAddComponent = false;
+						bError = true;
+						ImGui::CloseCurrentPopup();
+					}
 				}
-			}
-
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
-			{
-				bError = false;
-				*bAddComponent = false;
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndPopup();
-		}
-	}
-
-	void SceneHierarchyDisplay::DrawGameObjectDetails()
-	{
-		if ( !ImGui::Begin( ICON_FA_LIST " Object Details" ) )
-		{
-			ImGui::End();
-			return;
-		}
-
-		if (ImGui::BeginPopupContextWindow())
-		{
-			if (ImGui::Selectable("Add Component"))
-				m_bAddComponent = true;
-
-			ImGui::EndPopup();
-		}
-
-		if (m_pSelectedEntity && m_bAddComponent)
-		{
-			AddComponent(*m_pSelectedEntity, &m_bAddComponent);
-		}
-
-		if (m_pSelectedEntity)
-		{
-			if (!m_pSelectedEntity->HasComponent<UneditableComponent>())
-			{
-				DrawEntityComponents();
-			}
-			else
-			{
-				DrawUneditableTypes();
-			}
-		}
-
-		ImGui::End();
-	}
-
-	void SceneHierarchyDisplay::DrawUneditableTypes()
-	{
-		if (!m_pSelectedEntity)
-			return;
-
-		if (auto* pUnedit = m_pSelectedEntity->TryGetComponent<UneditableComponent>())
-		{
-			if (pUnedit->eType == EUneditableType::PlayerStart)
-			{
-				DrawPlayerStart();
-			}
-		}
-	}
-
-	void SceneHierarchyDisplay::DrawPlayerStart()
-	{
-		ImGui::SeparatorText("Player Start");
-		ImGui::InlineLabel(ICON_FA_FLAG ICON_FA_GAMEPAD " Player Start Character: ");
-		if (auto pCurrentScene = SCENE_MANAGER().GetCurrentScene())
-		{
-			std::string sPlayerStartCharacter{ pCurrentScene->GetPlayerStart().GetCharacterName() };
-			ImGui::SetCursorPosX(225.f);
-			ImGui::TextColored(ImVec4{ 0.7f, 0.7f, 0.7f, 1.f }, sPlayerStartCharacter.c_str());
-		}
-	}
-
-	void SceneHierarchyDisplay::DrawEntityComponents()
-	{
-		auto& registry = m_pSelectedEntity->GetEnttRegistry();
-
-		for (const auto&& [id, storage] : registry.storage())
-		{
-			if (!storage.contains(m_pSelectedEntity->GetEntity()))
-				continue;
-
-			// Do not draw tile or relationship components
-			if (id == entt::type_hash<TileComponent>::value() || id == entt::type_hash<Relationship>::value())
-				continue;
-
-			const auto drawInfo =
-				VORTEK_CORE::Utils::InvokeMetaFunction(id, "DrawEntityComponentInfo"_hs, *m_pSelectedEntity);
-
-			if (drawInfo)
-			{
-				ImGui::Spacing();
-				ImGui::PushID(id);
-				if (ImGui::Button("remove"))
+				else
 				{
-					storage.remove(m_pSelectedEntity->GetEntity());
-				}
-				ImGui::PopID();
-			}
+					storage->push( entity.GetEntity() );
 
+					EVENT_DISPATCHER().EmitEvent( Events::AddComponentEvent{
+						.pEntity = &entity, .eType = Events::GetComponentTypeFromStr( componentStr ) } );
+
+					*bAddComponent = false;
+					ImGui::CloseCurrentPopup();
+				}
+			}
+		}
+
+		ImGui::SameLine();
+		if ( ImGui::Button( "Cancel" ) )
+		{
+			bError = false;
+			*bAddComponent = false;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+void SceneHierarchyDisplay::DrawGameObjectDetails()
+{
+	if ( !ImGui::Begin( ICON_FA_LIST " Object Details" ) )
+	{
+		ImGui::End();
+		return;
+	}
+
+	if ( ImGui::BeginPopupContextWindow() )
+	{
+		if ( ImGui::Selectable( "Add Component" ) )
+			m_bAddComponent = true;
+
+		ImGui::EndPopup();
+	}
+
+	if ( m_pSelectedEntity && m_bAddComponent )
+	{
+		AddComponent( *m_pSelectedEntity, &m_bAddComponent );
+	}
+
+	if ( m_pSelectedEntity )
+	{
+		if ( !m_pSelectedEntity->HasComponent<UneditableComponent>() )
+		{
+			DrawEntityComponents();
+		}
+		else
+		{
+			DrawUneditableTypes();
+		}
+	}
+
+	ImGui::End();
+}
+
+void SceneHierarchyDisplay::DrawUneditableTypes()
+{
+	if ( !m_pSelectedEntity )
+		return;
+
+	if ( auto* pUnedit = m_pSelectedEntity->TryGetComponent<UneditableComponent>() )
+	{
+		if ( pUnedit->eType == EUneditableType::PlayerStart )
+		{
+			DrawPlayerStart();
+		}
+	}
+}
+
+void SceneHierarchyDisplay::DrawPlayerStart()
+{
+	ImGui::SeparatorText( "Player Start" );
+	ImGui::InlineLabel( ICON_FA_FLAG ICON_FA_GAMEPAD " Player Start Character: " );
+	if ( auto pCurrentScene = SCENE_MANAGER().GetCurrentScene() )
+	{
+		std::string sPlayerStartCharacter{ pCurrentScene->GetPlayerStart().GetCharacterName() };
+		ImGui::SetCursorPosX( 225.f );
+		ImGui::TextColored( ImVec4{ 0.7f, 0.7f, 0.7f, 1.f }, sPlayerStartCharacter.c_str() );
+	}
+}
+
+void SceneHierarchyDisplay::DrawEntityComponents()
+{
+	auto& registry = m_pSelectedEntity->GetEnttRegistry();
+
+	for ( const auto&& [ id, storage ] : registry.storage() )
+	{
+		if ( !storage.contains( m_pSelectedEntity->GetEntity() ) )
+			continue;
+
+		// Do not draw tile or relationship components
+		if ( id == entt::type_hash<TileComponent>::value() || id == entt::type_hash<Relationship>::value() )
+			continue;
+
+		const auto drawInfo =
+			Vortek::Core::Utils::InvokeMetaFunction( id, "DrawEntityComponentInfo"_hs, *m_pSelectedEntity );
+
+		if ( drawInfo )
+		{
 			ImGui::Spacing();
-			ImGui::Separator();
+			ImGui::PushID( id );
+			if ( ImGui::Button( "remove" ) )
+			{
+				storage.remove( m_pSelectedEntity->GetEntity() );
+			}
+			ImGui::PopID();
 		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
 	}
+}
 
-	bool SceneHierarchyDisplay::DeleteSelectedEntity()
+bool SceneHierarchyDisplay::DeleteSelectedEntity()
+{
+	VORTEK_ASSERT( m_pSelectedEntity && "Selected Entity must be valid if trying to delete!" );
+
+	if ( auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject() )
 	{
-		VORTEK_ASSERT(m_pSelectedEntity && "Selected Entity must be valid if trying to delete!");
-
-		if (auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject())
+		if ( m_pSelectedEntity->HasComponent<UneditableComponent>() )
 		{
-			if (m_pSelectedEntity->HasComponent<UneditableComponent>())
-			{
-				VORTEK_ERROR("Failed to delete selected entity. - Selected entity is uneditable.");
-				return false;
-			}
-
-			if (!pCurrentScene->DeleteGameObjectById(m_pSelectedEntity->GetEntity()))
-			{
-				VORTEK_ERROR("Failed to delete selected entity.");
-				return false;
-			}
-
-			m_pSelectedEntity = nullptr;
-			SCENE_MANAGER().GetToolManager().SetSelectedEntity(entt::null);
-		}
-		else
-		{
-			VORTEK_ERROR("Trying to delete an entity with no active scene.");
+			VORTEK_ERROR( "Failed to delete selected entity. - Selected entity is uneditable." );
 			return false;
 		}
 
-		return true;
-	}
-
-	bool SceneHierarchyDisplay::DuplicateSelectedEntity()
-	{
-		VORTEK_ASSERT(m_pSelectedEntity && "Selected Entity must be valid if trying to duplicate!");
-
-		if (auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject())
+		if ( !pCurrentScene->DeleteGameObjectById( m_pSelectedEntity->GetEntity() ) )
 		{
-			if (!pCurrentScene->DuplicateGameObject(m_pSelectedEntity->GetEntity()))
-			{
-				VORTEK_ERROR("Failed to duplicate selected entity.");
-				return false;
-			}
-		}
-		else
-		{
-			VORTEK_ERROR("Trying to duplicate an entity with no active scene.");
+			VORTEK_ERROR( "Failed to delete selected entity." );
 			return false;
 		}
 
-		return true;
+		m_pSelectedEntity = nullptr;
+		SCENE_MANAGER().GetToolManager().SetSelectedEntity( entt::null );
+	}
+	else
+	{
+		VORTEK_ERROR( "Trying to delete an entity with no active scene." );
+		return false;
 	}
 
-	void SceneHierarchyDisplay::OnEntityChanged(VORTEK_EDITOR::Events::SwitchEntityEvent& swEntEvent)
+	return true;
+}
+
+bool SceneHierarchyDisplay::DuplicateSelectedEntity()
+{
+	VORTEK_ASSERT( m_pSelectedEntity && "Selected Entity must be valid if trying to duplicate!" );
+
+	if ( auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject() )
 	{
-		if (!swEntEvent.pEntity)
+		if ( !pCurrentScene->DuplicateGameObject( m_pSelectedEntity->GetEntity() ) )
 		{
-			VORTEK_ERROR("Failed to change entity. Entity was invalid.");
-			return;
-		}
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
-		if (!pCurrentScene)
-		{
-			VORTEK_ERROR("Failed to change entity. Current scene was invalid.");
-			return;
-		}
-
-		// Ensure that the entity is valid
-		if (!pCurrentScene->GetRegistry().IsValid(swEntEvent.pEntity->GetEntity()))
-		{
-			VORTEK_ERROR("Failed to change entity. Entity was invaild.");
-			return;
-		}
-
-		m_pSelectedEntity =
-			std::make_shared<VORTEK_CORE::ECS::Entity>(pCurrentScene->GetRegistry(), swEntEvent.pEntity->GetEntity());
-
-		VORTEK_ASSERT(m_pSelectedEntity && "Entity must be valid here!");
-	}
-
-	void SceneHierarchyDisplay::OnKeyPressed(VORTEK_CORE::Events::KeyEvent& keyEvent)
-	{
-		if (!m_bWindowActive || keyEvent.eType == EKeyEventType::Released)
-			return;
-
-		if (m_pSelectedEntity)
-		{
-			auto& keyboard = INPUT_MANAGER().GetKeyboard();
-			if (keyboard.IsKeyPressed(VORTEK_KEY_RCTRL) || keyboard.IsKeyPressed(VORTEK_KEY_LCTRL))
-			{
-				if (keyEvent.key == VORTEK_KEY_D)
-				{
-					DuplicateSelectedEntity();
-				}
-			}
-			else
-			{
-				if (keyEvent.key == VORTEK_KEY_DELETE)
-				{
-					DeleteSelectedEntity();
-				}
-			}
+			VORTEK_ERROR( "Failed to duplicate selected entity." );
+			return false;
 		}
 	}
-
-	void SceneHierarchyDisplay::OnAddComponent( VORTEK_EDITOR::Events::AddComponentEvent& addCompEvent )
+	else
 	{
-		if ( addCompEvent.pEntity && addCompEvent.eType == Events::EComponentType::Text )
-		{
-			if ( !addCompEvent.pEntity->HasComponent<UIComponent>() )
-			{
-				addCompEvent.pEntity->AddComponent<UIComponent>();
-			}
-		}
+		VORTEK_ERROR( "Trying to duplicate an entity with no active scene." );
+		return false;
 	}
 
-	void SceneHierarchyDisplay::OpenContext(SceneObject* pCurrentScene)
+	return true;
+}
+
+void SceneHierarchyDisplay::OnEntityChanged( Vortek::Editor::Events::SwitchEntityEvent& swEntEvent )
+{
+	if ( !swEntEvent.pEntity )
 	{
-		if (!pCurrentScene)
-			return;
+		VORTEK_ERROR( "Failed to change entity. Entity was invalid." );
+		return;
+	}
+	auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
+	if ( !pCurrentScene )
+	{
+		VORTEK_ERROR( "Failed to change entity. Current scene was invalid." );
+		return;
+	}
 
-		if (m_pSelectedEntity)
+	// Ensure that the entity is valid
+	if ( !pCurrentScene->GetRegistry().IsValid( swEntEvent.pEntity->GetEntity() ) )
+	{
+		VORTEK_ERROR( "Failed to change entity. Entity was invaild." );
+		return;
+	}
+
+	m_pSelectedEntity =
+		std::make_shared<Vortek::Core::ECS::Entity>( pCurrentScene->GetRegistryPtr(), swEntEvent.pEntity->GetEntity() );
+
+	VORTEK_ASSERT( m_pSelectedEntity && "Entity must be valid here!" );
+}
+
+void SceneHierarchyDisplay::OnKeyPressed( Vortek::Core::Events::KeyEvent& keyEvent )
+{
+	if ( !m_bWindowActive || keyEvent.eType == EKeyEventType::Released )
+		return;
+
+	if ( m_pSelectedEntity )
+	{
+		auto& keyboard = INPUT_MANAGER().GetKeyboard();
+		if ( keyboard.IsKeyPressed( VORTEK_KEY_RCTRL ) || keyboard.IsKeyPressed( VORTEK_KEY_LCTRL ) )
 		{
-			if (ImGui::BeginPopupContextWindow())
+			if ( keyEvent.key == VORTEK_KEY_D )
 			{
-				// Uneditable entities cannot be made into prefabs
-				if (!m_pSelectedEntity->HasComponent<UneditableComponent>())
-				{
-					if (ImGui::Selectable("Create Prefab"))
-					{
-						auto newPrefab = VORTEK_CORE::PrefabCreator::CreatePrefab(VORTEK_CORE::EPrefabType::Character,
-							*m_pSelectedEntity);
-						ASSET_MANAGER().AddPrefab(m_pSelectedEntity->GetName() + "_pfab", std::move(newPrefab));
-					}
-				}
-
-				if (ImGui::Selectable("Duplicate"))
-				{
-					if (!DuplicateSelectedEntity())
-					{
-						VORTEK_ERROR("Failed to duplicated the selected entity.");
-					}
-				}
-
-				if (ImGui::Selectable("Delete"))
-				{
-					if (!DeleteSelectedEntity())
-					{
-						VORTEK_ERROR("Failed to delete the selected entity.");
-					}
-				}
-
-				ImGui::EndPopup();
+				DuplicateSelectedEntity();
 			}
 		}
 		else
 		{
-			if (ImGui::BeginPopupContextWindow("##SceneHierarchyContext"))
+			if ( keyEvent.key == VORTEK_KEY_DELETE )
 			{
-				if (ImGui::Selectable("Add New Game Object"))
-				{
-					if (!pCurrentScene->AddGameObject())
-					{
-						VORTEK_ERROR("Failed to add new game object to scene [{}]", pCurrentScene->GetName());
-					}
-				}
-
-				ImGui::EndPopup();
+				DeleteSelectedEntity();
 			}
 		}
+	}
+}
 
-		if ( m_bWindowActive && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered() &&
-			(ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right)))
+void SceneHierarchyDisplay::OnAddComponent( Vortek::Editor::Events::AddComponentEvent& addCompEvent )
+{
+	if ( addCompEvent.pEntity && addCompEvent.eType == Events::EComponentType::Text )
+	{
+		if ( !addCompEvent.pEntity->HasComponent<UIComponent>() )
 		{
-			m_pSelectedEntity = nullptr;
+			addCompEvent.pEntity->AddComponent<UIComponent>();
 		}
 	}
+}
 
-	SceneHierarchyDisplay::SceneHierarchyDisplay()
+void SceneHierarchyDisplay::OpenContext( SceneObject* pCurrentScene )
+{
+	if ( !pCurrentScene )
+		return;
+
+	if ( m_pSelectedEntity )
 	{
-		ADD_SWE_HANDLER(Events::SwitchEntityEvent, &SceneHierarchyDisplay::OnEntityChanged, *this);
-		ADD_EVENT_HANDLER(KeyEvent, &SceneHierarchyDisplay::OnKeyPressed, *this);
-		ADD_EVENT_HANDLER( Events::AddComponentEvent, &SceneHierarchyDisplay::OnAddComponent, *this )
-	}
-
-	SceneHierarchyDisplay::~SceneHierarchyDisplay() = default;
-
-	void SceneHierarchyDisplay::Update()
-	{
-	}
-
-	void SceneHierarchyDisplay::Draw()
-	{
-		auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
-		if ( !ImGui::Begin( ICON_FA_SITEMAP " Scene Hierarchy" ) || !pCurrentScene )
+		if ( ImGui::BeginPopupContextWindow() )
 		{
-			ImGui::End();
-			return;
-		}
-
-		m_bWindowActive = ImGui::IsWindowFocused();
-
-		OpenContext(pCurrentScene);
-
-		ImGui::Separator();
-		ImGui::AddSpaces(1);
-		ImGui::InlineLabel(ICON_FA_SEARCH, 32.f);
-		m_TextFilter.Draw("##search_filter");
-		ImGui::AddSpaces(1);
-		ImGui::Separator();
-
-		auto& registry = pCurrentScene->GetRegistry();
-		auto sceneEntities = registry.GetRegistry().view<entt::entity>(entt::exclude<TileComponent, ScriptComponent>);
-
-		for (auto entity : sceneEntities)
-		{
-			Entity ent{ registry, entity };
-			if (!m_TextFilter.PassFilter(ent.GetName().c_str()))
-				continue;
-
-			// Do not redraw the children
-			const auto& relations = ent.GetComponent<Relationship>();
-			if (relations.parent == entt::null)
+			// Uneditable entities cannot be made into prefabs
+			if ( !m_pSelectedEntity->HasComponent<UneditableComponent>() )
 			{
-				if (OpenTreeNode(ent))
+				if ( ImGui::Selectable( "Create Prefab" ) )
 				{
-					ImGui::TreePop();
+					auto newPrefab = Vortek::Core::PrefabCreator::CreatePrefab( Vortek::Core::EPrefabType::Character,
+																			  *m_pSelectedEntity );
+					ASSET_MANAGER().AddPrefab( m_pSelectedEntity->GetName() + "_pfab", std::move( newPrefab ) );
 				}
 			}
-		}
 
+			if ( ImGui::Selectable( "Delete" ) )
+			{
+				if ( !DeleteSelectedEntity() )
+				{
+					VORTEK_ERROR( "Failed to delete the selected entity." );
+				}
+			}
+
+			if ( ImGui::Selectable( "Duplicate" ) )
+			{
+				if ( !DuplicateSelectedEntity() )
+				{
+					VORTEK_ERROR( "Failed to duplicated the selected entity." );
+				}
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+	else
+	{
+		if ( ImGui::BeginPopupContextWindow( "##SceneHierarchyContext" ) )
+		{
+			if ( ImGui::Selectable( "Add New Game Object" ) )
+			{
+				if ( !pCurrentScene->AddGameObject() )
+				{
+					VORTEK_ERROR( "Failed to add new game object to scene [{}]", pCurrentScene->GetName() );
+				}
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
+	if ( m_bWindowActive && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered() &&
+		 ( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ImGui::IsMouseClicked( ImGuiMouseButton_Right ) ) )
+	{
+		m_pSelectedEntity = nullptr;
+	}
+}
+
+SceneHierarchyDisplay::SceneHierarchyDisplay()
+{
+	ADD_SWE_HANDLER( Events::SwitchEntityEvent, &SceneHierarchyDisplay::OnEntityChanged, *this );
+	ADD_EVENT_HANDLER( KeyEvent, &SceneHierarchyDisplay::OnKeyPressed, *this );
+	ADD_EVENT_HANDLER( Events::AddComponentEvent, &SceneHierarchyDisplay::OnAddComponent, *this )
+}
+
+SceneHierarchyDisplay::~SceneHierarchyDisplay() = default;
+
+void SceneHierarchyDisplay::Update()
+{
+}
+
+void SceneHierarchyDisplay::Draw()
+{
+	auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
+	if ( !ImGui::Begin( ICON_FA_SITEMAP " Scene Hierarchy" ) || !pCurrentScene )
+	{
 		ImGui::End();
-
-		DrawGameObjectDetails();
+		return;
 	}
-} // namespace VORTEK_EDITOR
+
+	m_bWindowActive = ImGui::IsWindowFocused();
+
+	OpenContext( pCurrentScene );
+
+	ImGui::Separator();
+	ImGui::AddSpaces( 1 );
+	ImGui::InlineLabel( ICON_FA_SEARCH, 32.f );
+	m_TextFilter.Draw( "##search_filter" );
+	ImGui::AddSpaces( 1 );
+	ImGui::Separator();
+
+	auto& registry = pCurrentScene->GetRegistry();
+	auto sceneEntities = registry.GetRegistry().view<entt::entity>( entt::exclude<TileComponent, ScriptComponent> );
+
+	for ( auto entity : sceneEntities )
+	{
+		Entity ent{ &registry, entity };
+		if ( !m_TextFilter.PassFilter( ent.GetName().c_str() ) )
+			continue;
+
+		// Do not redraw the children
+		const auto& relations = ent.GetComponent<Relationship>();
+		if ( relations.parent == entt::null )
+		{
+			if ( OpenTreeNode( ent ) )
+			{
+				ImGui::TreePop();
+			}
+		}
+	}
+
+	ImGui::End();
+
+	DrawGameObjectDetails();
+}
+} // namespace Vortek::Editor

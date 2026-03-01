@@ -6,9 +6,9 @@
 
 #include <Logger/Logger.h>
 
-using namespace VORTEK_PHYSICS;
+using namespace Vortek::Physics;
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 
 PhysicsComponent::PhysicsComponent( const PhysicsAttributes& physicsAttr )
@@ -18,7 +18,7 @@ PhysicsComponent::PhysicsComponent( const PhysicsAttributes& physicsAttr )
 {
 }
 
-void PhysicsComponent::Init( VORTEK_PHYSICS::PhysicsWorld pPhysicsWorld, int windowWidth, int windowHeight )
+void PhysicsComponent::Init( Vortek::Physics::PhysicsWorld pPhysicsWorld, int windowWidth, int windowHeight )
 {
 	if ( !pPhysicsWorld )
 	{
@@ -46,7 +46,7 @@ void PhysicsComponent::Init( VORTEK_PHYSICS::PhysicsWorld pPhysicsWorld, int win
 	bodyDef.fixedRotation = m_InitialAttribs.bFixedRotation;
 
 	// Create the Rigid Body
-	m_pRigidBody = VORTEK_PHYSICS::MakeSharedBody( pPhysicsWorld->CreateBody( &bodyDef ) );
+	m_pRigidBody = Vortek::Physics::MakeSharedBody( pPhysicsWorld->CreateBody( &bodyDef ) );
 
 	if ( !m_pRigidBody )
 	{
@@ -124,7 +124,7 @@ const bool PhysicsComponent::IsSensor() const
 	return m_pRigidBody->GetFixtureList()->IsSensor();
 }
 
-VORTEK_PHYSICS::ObjectData PhysicsComponent::CastRay( const b2Vec2& point1, const b2Vec2& point2 ) const
+Vortek::Physics::ObjectData PhysicsComponent::CastRay( const b2Vec2& point1, const b2Vec2& point2 ) const
 {
 	if ( !m_pRigidBody )
 	{
@@ -170,11 +170,11 @@ VORTEK_PHYSICS::ObjectData PhysicsComponent::CastRay( const b2Vec2& point1, cons
 		}
 	}
 
-	return VORTEK_PHYSICS::ObjectData{};
+	return Vortek::Physics::ObjectData{};
 }
 
-std::vector<VORTEK_PHYSICS::ObjectData> PhysicsComponent::BoxTrace( const b2Vec2& lowerBounds,
-																	const b2Vec2& upperBounds ) const
+std::vector<Vortek::Physics::ObjectData> PhysicsComponent::BoxTrace( const b2Vec2& lowerBounds,
+																   const b2Vec2& upperBounds ) const
 {
 	if ( !m_pRigidBody )
 	{
@@ -186,7 +186,7 @@ std::vector<VORTEK_PHYSICS::ObjectData> PhysicsComponent::BoxTrace( const b2Vec2
 	if ( !pWorld )
 		return {};
 
-	std::vector<VORTEK_PHYSICS::ObjectData> objectDataVec{};
+	std::vector<Vortek::Physics::ObjectData> objectDataVec{};
 
 	BoxTraceCallback callback{};
 
@@ -229,7 +229,7 @@ std::vector<VORTEK_PHYSICS::ObjectData> PhysicsComponent::BoxTrace( const b2Vec2
 	return objectDataVec;
 }
 
-VORTEK_PHYSICS::ObjectData PhysicsComponent::GetCurrentObjectData()
+Vortek::Physics::ObjectData PhysicsComponent::GetCurrentObjectData()
 {
 	VORTEK_ASSERT( m_pRigidBody );
 
@@ -359,9 +359,9 @@ void PhysicsComponent::CreatePhysicsLuaBind( sol::state& lua, entt::registry& re
 		"bCollider",
 		&ObjectData::bCollider,
 		"bTrigger",
-		&ObjectData::bTrigger,
-		"bIsFriendly",
 		&ObjectData::bIsFriendly,
+		"bIsFriendly",
+		&ObjectData::bTrigger,
 		"entityID",
 		&ObjectData::entityID,
 		"contactEntities", // This returns the vector directly. Use physics.contactEntites
@@ -444,7 +444,7 @@ void PhysicsComponent::CreatePhysicsLuaBind( sol::state& lua, entt::registry& re
 		// TODO: Add in filters and other properties as needed
 	);
 
-	auto& pPhysicsWorld = registry.ctx().get<VORTEK_PHYSICS::PhysicsWorld>();
+	auto& pPhysicsWorld = registry.ctx().get<Vortek::Physics::PhysicsWorld>();
 	VORTEK_ASSERT( pPhysicsWorld && "Physics World was not setup properly." );
 
 	if ( !pPhysicsWorld )
@@ -456,7 +456,7 @@ void PhysicsComponent::CreatePhysicsLuaBind( sol::state& lua, entt::registry& re
 	auto& coreGlobals = CORE_GLOBALS();
 
 	lua.new_usertype<PhysicsComponent>(
-		"PhysicsComponent",
+		"PhysicsComp",
 		"type_id",
 		&entt::type_hash<PhysicsComponent>::value,
 		sol::call_constructor,
@@ -653,4 +653,4 @@ void PhysicsComponent::CreatePhysicsLuaBind( sol::state& lua, entt::registry& re
 
 	);
 }
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

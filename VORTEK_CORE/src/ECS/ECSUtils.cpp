@@ -4,7 +4,7 @@
 
 #include <ranges>
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 
 entt::entity FindEntityByTag( Registry& registry, const std::string& sTag )
@@ -12,7 +12,7 @@ entt::entity FindEntityByTag( Registry& registry, const std::string& sTag )
 	auto ids = registry.GetRegistry().view<Identification>( entt::exclude<TileComponent> );
 
 	auto parItr = std::ranges::find_if( ids, [ & ]( const auto& e ) {
-		Entity en{ registry, e };
+		Entity en{ &registry, e };
 		return en.GetName() == sTag;
 	} );
 
@@ -24,4 +24,4 @@ entt::entity FindEntityByTag( Registry& registry, const std::string& sTag )
 	return entt::entity{ entt::null };
 }
 
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

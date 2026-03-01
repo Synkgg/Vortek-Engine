@@ -1,9 +1,10 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 struct State;
+
 class StateMachine
 {
   public:
@@ -27,4 +28,4 @@ class StateMachine
 	std::string m_sCurrentState;
 	std::optional<sol::table> m_StateTable;
 };
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

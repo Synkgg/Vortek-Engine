@@ -13,7 +13,7 @@ remove that install and add an ```overlay-port``` to install the correct version
 
 ### VCPKG Overlay-port Instructions
 There are two files that will need to be changed inside of your vcpkg ```ports``` folder.
-You can find those files here: ```[your_storage_path]\VORTEK2D\thirdparty\vcpkg\port_files\box2d```.
+You can find those files here: ```[your_storage_path]\Vortek2D\thirdparty\vcpkg\port_files\box2d```.
 
 * Open vcpkg in the cmdline and remove your current box2d, if installed.
 
@@ -35,3 +35,5 @@ Use this cmd for that in the cmdline:
 
 ```vcpkg list```
 
+### OVERLAYS HAVE BEEN REMOVED
+Overlay ports have been removed, we are now using FetchContent to grab the desired box2d 2.4.2 src and build it directly.

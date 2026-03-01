@@ -4,20 +4,49 @@
 #include <Windowing/Inputs/Gamepad.h>
 
 #include <Logger/Logger.h>
-#include <VORTEKUtilities/SDL_Wrappers.h>
+#include <VortekUtilities/SDL_Wrappers.h>
 #include <glm/glm.hpp>
 
 #include <Rendering/Core/Camera2D.h>
 
-using namespace VORTEK_WINDOWING::Inputs;
+using namespace Vortek::Windowing::Inputs;
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 InputManager::InputManager()
 	: m_pKeyboard{ std::make_unique<Keyboard>() }
 	, m_pMouse{ std::make_unique<Mouse>() }
 {
+	// Load already connected devices
+	for ( int i = 0; i < SDL_NumJoysticks(); ++i )
+	{
+		SDL_GameController* pController = SDL_GameControllerOpen( i );
+		if ( pController )
+		{
+			std::shared_ptr<Gamepad> gamepad{ nullptr };
+			try
+			{
+				gamepad = std::make_shared<Gamepad>( std::move( MakeSharedFromSDLType<Controller>( pController ) ) );
+			}
+			catch ( ... )
+			{
+				std::string error{ SDL_GetError() };
+				VORTEK_ERROR( "Failed to Open gamepad device -- {}", error );
+				continue;
+			}
+
+			for ( int j = 1; j <= MAX_CONTROLLERS; j++ )
+			{
+				if ( m_mapGameControllers.contains( j ) )
+					continue;
+
+				m_mapGameControllers.emplace( j, std::move( gamepad ) );
+				VORTEK_LOG( "Gamepad [{}] was added at index [{}]", i, j );
+				break;
+			}
+		}
+	}
 }
 
 void InputManager::RegisterLuaKeyNames( sol::state& lua )
@@ -196,7 +225,7 @@ InputManager& InputManager::GetInstance()
 	return instance;
 }
 
-void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Registry& registry )
+void InputManager::CreateLuaInputBindings( sol::state& lua, Vortek::Core::ECS::Registry& registry )
 {
 	RegisterLuaKeyNames( lua );
 	RegisterMouseBtnNames( lua );
@@ -204,7 +233,7 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 
 	auto& inputManager = GetInstance();
 	auto& keyboard = inputManager.GetKeyboard();
-	auto& camera = registry.GetContext<std::shared_ptr<VORTEK_RENDERING::Camera2D>>();
+	auto& camera = registry.GetContext<std::shared_ptr<Vortek::Rendering::Camera2D>>();
 
 	lua.new_usertype<Keyboard>(
 		"Keyboard",
@@ -262,6 +291,10 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 	lua.new_usertype<Gamepad>(
 		"Gamepad",
 		sol::no_constructor,
+		"anyConnected",
+		[ & ] { return inputManager.GamepadConnected(); },
+		"connected",
+		[ & ]( int index ) { return inputManager.GamepadConnected( index ); },
 		"justPressed",
 		[ & ]( int index, int btn ) {
 			auto gamepad = inputManager.GetController( index );
@@ -311,7 +344,30 @@ void InputManager::CreateLuaInputBindings( sol::state& lua, VORTEK_CORE::ECS::Re
 				return Uint8{ 0 };
 			}
 			return gamepad->GetJoystickHatValue();
-		} );
+		},
+		"rumble",
+		[ & ]( int index, Uint16 lowFrequency, Uint16 highFrequency, Uint32 durationMs ) {
+			auto gamepad = inputManager.GetController( index );
+			if ( !gamepad )
+			{
+				VORTEK_ERROR( "Invalid Gamepad index [{}] provided or gamepad is not plugged in!", index );
+				return;
+			}
+
+			gamepad->RumbleController( lowFrequency, highFrequency, durationMs );
+		},
+		"isRumbleSupported",
+		[ & ]( int index) {
+			auto gamepad = inputManager.GetController( index );
+			if ( !gamepad )
+			{
+				VORTEK_ERROR( "Invalid Gamepad index [{}] provided or gamepad is not plugged in!", index );
+				return false;
+			}
+
+			return gamepad->IsRumbleSupported( );
+		}
+	);
 }
 
 void InputManager::UpdateInputs()
@@ -319,6 +375,17 @@ void InputManager::UpdateInputs()
 	m_pKeyboard->Update();
 	m_pMouse->Update();
 	UpdateGamepads();
+}
+
+bool InputManager::GamepadConnected() const
+{
+	return std::ranges::any_of( m_mapGameControllers, []( const auto& pair ) { return pair.second != nullptr; } );
+}
+
+bool InputManager::GamepadConnected( int location ) const
+{
+	auto gamepadItr = m_mapGameControllers.find( location );
+	return gamepadItr != m_mapGameControllers.end() && gamepadItr->second != nullptr;
 }
 
 std::shared_ptr<Gamepad> InputManager::GetController( int index )
@@ -333,12 +400,21 @@ std::shared_ptr<Gamepad> InputManager::GetController( int index )
 	return gamepadItr->second;
 }
 
-bool InputManager::AddGamepad( Sint32 gamepadIndex )
+int InputManager::AddGamepad( Sint32 gamepadIndex )
 {
+	// Trying to add a controller with the same id.
+	if ( std::ranges::any_of( m_mapGameControllers, [ &gamepadIndex ]( const auto& pair ) {
+			 return pair.second->CheckJoystickID( gamepadIndex );
+		 } ) )
+	{
+		VORTEK_WARN( "Trying to add a controller that is already mapped. Gamepad ID: {}", gamepadIndex );
+		return -1;
+	}
+
 	if ( m_mapGameControllers.size() >= MAX_CONTROLLERS )
 	{
-		VORTEK_ERROR( "Trying to add too many controllers! Max Controllers allowed = {}", MAX_CONTROLLERS );
-		return false;
+		VORTEK_WARN( "Trying to add too many controllers! Max Controllers allowed = {}", MAX_CONTROLLERS );
+		return -1;
 	}
 
 	std::shared_ptr<Gamepad> gamepad{ nullptr };
@@ -351,7 +427,7 @@ bool InputManager::AddGamepad( Sint32 gamepadIndex )
 	{
 		std::string error{ SDL_GetError() };
 		VORTEK_ERROR( "Failed to Open gamepad device -- {}", error );
-		return false;
+		return -1;
 	}
 
 	for ( int i = 1; i <= MAX_CONTROLLERS; i++ )
@@ -361,28 +437,31 @@ bool InputManager::AddGamepad( Sint32 gamepadIndex )
 
 		m_mapGameControllers.emplace( i, std::move( gamepad ) );
 		VORTEK_LOG( "Gamepad [{}] was added at index [{}]", gamepadIndex, i );
-		return true;
+		return i;
 	}
 
 	VORTEK_ASSERT( false && "Failed to add the new controller!" );
 	VORTEK_ERROR( "Failed to add the new controller!" );
-	return false;
+	return -1;
 }
 
-bool InputManager::RemoveGamepad( Sint32 gamepadID )
+int InputManager::RemoveGamepad( Sint32 gamepadID )
 {
-	auto gamepadRemoved = std::erase_if(
-		m_mapGameControllers, [ & ]( auto& gamepad ) { return gamepad.second->CheckJoystickID( gamepadID ); } );
+	auto gamepadItr = std::ranges::find_if(
+		m_mapGameControllers, [ & ]( const auto& gamepad ) { return gamepad.second->CheckJoystickID( gamepadID ); } );
 
-	if ( gamepadRemoved > 0 )
+	int index{ -1 };
+	if ( gamepadItr == m_mapGameControllers.end() )
 	{
-		VORTEK_LOG( "Gamepad Removed -- [{}]", gamepadID );
-		return true;
+		VORTEK_ASSERT( false && "Failed to remove Gamepad must not have been mapped correctly." );
+		VORTEK_ERROR( "Failed to remove Gamepad ID [{}] must not have been mapped correctly.", gamepadID );
+		return index;
 	}
 
-	VORTEK_ASSERT( false && "Failed to remove Gamepad must not have been mapped!" );
-	VORTEK_ERROR( "Failed to remove Gamepad [{}] must not have been mapped!", gamepadID );
-	return false;
+	index = gamepadItr->first;
+	m_mapGameControllers.erase( gamepadItr );
+	VORTEK_LOG( "Gamepad ID [{}] at index [{}] was removed", gamepadID, index );
+	return index;
 }
 
 void InputManager::GamepadBtnPressed( const SDL_Event& event )
@@ -440,4 +519,4 @@ void InputManager::UpdateGamepads()
 			gamepad->Update();
 	}
 }
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

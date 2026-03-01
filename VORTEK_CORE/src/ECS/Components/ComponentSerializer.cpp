@@ -4,27 +4,32 @@
 #include "VortekFilesystem/Serializers/LuaSerializer.h"
 #include "Physics/PhysicsUtilities.h"
 
-using namespace VORTEK_PHYSICS;
+using namespace Vortek::Physics;
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
 											  const TransformComponent& transform )
 {
 	serializer.StartNewObject( "transform" )
 		.StartNewObject( "position" )
 		.AddKeyValuePair( "x", transform.position.x )
 		.AddKeyValuePair( "y", transform.position.y )
-		.EndObject()
+		.EndObject() // position
+		.StartNewObject( "localPosition" )
+		.AddKeyValuePair( "x", transform.localPosition.x )
+		.AddKeyValuePair( "y", transform.localPosition.y )
+		.EndObject() // localPosition
 		.StartNewObject( "scale" )
 		.AddKeyValuePair( "x", transform.scale.x )
 		.AddKeyValuePair( "y", transform.scale.y )
-		.EndObject()
+		.EndObject() // scale
 		.AddKeyValuePair( "rotation", transform.rotation )
+		.AddKeyValuePair( "localRotation", transform.localRotation )
 		.EndObject();
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
 											  const SpriteComponent& sprite )
 {
 	serializer.StartNewObject( "sprite" )
@@ -53,19 +58,18 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer&
 		.EndObject();
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
 											  const AnimationComponent& animation )
 {
 	serializer.StartNewObject( "animation" )
 		.AddKeyValuePair( "numFrames", animation.numFrames )
 		.AddKeyValuePair( "frameRate", animation.frameRate )
-		.AddKeyValuePair( "frameOffset", animation.frameOffset )
 		.AddKeyValuePair( "bVertical", animation.bVertical )
 		.AddKeyValuePair( "bLooped", animation.bLooped )
 		.EndObject();
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
 											  const BoxColliderComponent& boxCollider )
 {
 	serializer.StartNewObject( "boxCollider" )
@@ -78,7 +82,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer&
 		.EndObject();
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
 											  const CircleColliderComponent& circleCollider )
 {
 	serializer.StartNewObject( "circleCollider" )
@@ -90,7 +94,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer&
 		.EndObject();
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const TextComponent& text )
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const TextComponent& text )
 {
 	serializer
 		.StartNewObject( "text" ) // Start text table
@@ -108,7 +112,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer&
 	serializer.EndObject(); // End Text table
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
 											  const PhysicsComponent& physics )
 {
 	const auto& attributes = physics.GetAttributes();
@@ -156,7 +160,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer&
 		.EndObject();
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
 											  const RigidBodyComponent& rigidBody )
 {
 	serializer
@@ -168,7 +172,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer&
 		.EndObject(); // End rigid body table
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const Identification& id )
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const Identification& id )
 {
 	serializer
 		.StartNewObject( "id" ) // Start id table
@@ -177,7 +181,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer&
 		.EndObject(); // End id table
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const UIComponent& id )
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const UIComponent& id )
 {
 	serializer.StartNewObject( "ui" ).EndObject();
 	// TODO: Add more members as needed.
@@ -190,8 +194,19 @@ void ComponentSerializer::DeserializeComponent( const rapidjson::Value& jsonValu
 	transform.position =
 		glm::vec2{ jsonValue[ "position" ][ "x" ].GetFloat(), jsonValue[ "position" ][ "y" ].GetFloat() };
 
+	if ( jsonValue.HasMember( "localPosition" ) )
+	{
+		transform.localPosition =
+			glm::vec2{ jsonValue[ "localPosition" ][ "x" ].GetFloat(), jsonValue[ "localPosition" ][ "y" ].GetFloat() };
+	}
+
 	transform.scale = glm::vec2{ jsonValue[ "scale" ][ "x" ].GetFloat(), jsonValue[ "scale" ][ "y" ].GetFloat() };
 	transform.rotation = jsonValue[ "rotation" ].GetFloat();
+
+	if ( jsonValue.HasMember( "localRotation" ) )
+	{
+		transform.localRotation = jsonValue[ "localRotation" ].GetFloat();
+	}
 }
 
 void ComponentSerializer::DeserializeComponent( const rapidjson::Value& jsonValue, SpriteComponent& sprite )
@@ -222,13 +237,20 @@ void ComponentSerializer::DeserializeComponent( const rapidjson::Value& jsonValu
 			sprite.isoCellY = jsonValue[ "isoCellY" ].GetInt();
 		}
 	}
+
+	if (jsonValue.HasMember("color"))
+	{
+		sprite.color.r = jsonValue[ "color" ][ "r" ].GetUint();
+		sprite.color.g = jsonValue[ "color" ][ "g" ].GetUint();
+		sprite.color.b = jsonValue[ "color" ][ "b" ].GetUint();
+		sprite.color.a = jsonValue[ "color" ][ "a" ].GetUint();
+	}
 }
 
 void ComponentSerializer::DeserializeComponent( const rapidjson::Value& jsonValue, AnimationComponent& animation )
 {
 	animation.numFrames = jsonValue[ "numFrames" ].GetInt();
 	animation.frameRate = jsonValue[ "frameRate" ].GetInt();
-	animation.frameOffset = jsonValue[ "frameOffset" ].GetInt();
 	animation.bVertical = jsonValue[ "bVertical" ].GetBool();
 	animation.bLooped = jsonValue[ "bLooped" ].GetBool();
 }
@@ -256,10 +278,10 @@ void ComponentSerializer::DeserializeComponent( const rapidjson::Value& jsonValu
 	text.wrap = jsonValue[ "wrap" ].GetFloat();
 	text.bHidden = jsonValue[ "bHidden" ].GetBool();
 
-	text.color = VORTEK_RENDERING::Color{ .r = static_cast<GLubyte>( jsonValue[ "color" ][ "r" ].GetInt() ),
-										  .g = static_cast<GLubyte>( jsonValue[ "color" ][ "g" ].GetInt() ),
-										  .b = static_cast<GLubyte>( jsonValue[ "color" ][ "b" ].GetInt() ),
-										  .a = static_cast<GLubyte>( jsonValue[ "color" ][ "a" ].GetInt() ) };
+	text.color = Vortek::Rendering::Color{ .r = static_cast<GLubyte>( jsonValue[ "color" ][ "r" ].GetInt() ),
+										 .g = static_cast<GLubyte>( jsonValue[ "color" ][ "g" ].GetInt() ),
+										 .b = static_cast<GLubyte>( jsonValue[ "color" ][ "b" ].GetInt() ),
+										 .a = static_cast<GLubyte>( jsonValue[ "color" ][ "a" ].GetInt() ) };
 }
 
 void ComponentSerializer::DeserializeComponent( const rapidjson::Value& jsonValue, PhysicsComponent& physics )
@@ -316,7 +338,7 @@ void ComponentSerializer::DeserializeComponent( const rapidjson::Value& jsonValu
 	// The UI Component is currently only used as a flag for UI Rendering
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 											  const TransformComponent& transform )
 {
 	serializer.StartNewTable( "transform" )
@@ -324,15 +346,20 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& 
 		.AddKeyValuePair( "x", transform.position.x, false )
 		.AddKeyValuePair( "y", transform.position.y, false, true )
 		.EndTable( false )
+		.StartNewTable( "localPosition", true )
+		.AddKeyValuePair( "x", transform.localPosition.x, false )
+		.AddKeyValuePair( "y", transform.localPosition.y, false, true )
+		.EndTable( false )
 		.StartNewTable( "scale" )
 		.AddKeyValuePair( "x", transform.scale.x, false )
 		.AddKeyValuePair( "y", transform.scale.y, false, true )
 		.EndTable( false )
-		.AddKeyValuePair( "rotation", transform.rotation, false, true )
+		.AddKeyValuePair( "rotation", transform.rotation, false )
+		.AddKeyValuePair( "localRotation", transform.localRotation, false, true )
 		.EndTable();
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 											  const SpriteComponent& sprite )
 {
 	serializer.StartNewTable( "sprite" )
@@ -361,19 +388,18 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& 
 		.EndTable(); // SPRITE
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 											  const AnimationComponent& animation )
 {
 	serializer.StartNewTable( "animation" )
 		.AddKeyValuePair( "numFrames", animation.numFrames, false )
 		.AddKeyValuePair( "frameRate", animation.frameRate, false )
-		.AddKeyValuePair( "frameOffset", animation.frameOffset, false )
 		.AddKeyValuePair( "bVertical", animation.bVertical, false )
 		.AddKeyValuePair( "bLooped", animation.bLooped, false, true )
 		.EndTable( false );
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 											  const BoxColliderComponent& boxCollider )
 {
 	serializer.StartNewTable( "boxCollider" )
@@ -386,7 +412,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& 
 		.EndTable( false );
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 											  const CircleColliderComponent& circleCollider )
 {
 	serializer.StartNewTable( "circleCollider" )
@@ -398,7 +424,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& 
 		.EndTable( false );
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const TextComponent& text )
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const TextComponent& text )
 {
 	serializer
 		.StartNewTable( "text" ) // Start text table
@@ -416,7 +442,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& 
 	serializer.EndTable(); // End Text table
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 											  const PhysicsComponent& physics )
 {
 	const auto& attributes = physics.GetAttributes();
@@ -464,7 +490,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& 
 		.EndTable();	   // Physics
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 											  const RigidBodyComponent& rigidBody )
 {
 	serializer
@@ -476,7 +502,7 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& 
 		.EndTable(); // End rigid body table
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const Identification& id )
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const Identification& id )
 {
 	serializer
 		.StartNewTable( "id" ) // Start id table
@@ -485,16 +511,22 @@ void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& 
 		.EndTable(); // End id table
 }
 
-void ComponentSerializer::SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const UIComponent& ui )
+void ComponentSerializer::SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const UIComponent& ui )
 {
+	serializer.StartNewTable( "ui" ).EndTable();
 }
 
 void ComponentSerializer::DeserializeComponent( const sol::table& table, TransformComponent& transform )
 {
 	transform.position =
 		glm::vec2{ table[ "position" ][ "x" ].get_or( 0.f ), table[ "position" ][ "y" ].get_or( 0.f ) };
+
+	transform.localPosition =
+		glm::vec2{ table[ "localPosition" ][ "x" ].get_or( 0.f ), table[ "localPosition" ][ "y" ].get_or( 0.f ) };
+
 	transform.scale = glm::vec2{ table[ "scale" ][ "x" ].get_or( 0.f ), table[ "scale" ][ "y" ].get_or( 0.f ) };
 	transform.rotation = table[ "rotation" ].get_or( 0.f );
+	transform.localRotation = table[ "localRotation" ].get_or( 0.f );
 }
 
 void ComponentSerializer::DeserializeComponent( const sol::table& table, SpriteComponent& sprite )
@@ -532,7 +564,6 @@ void ComponentSerializer::DeserializeComponent( const sol::table& table, Animati
 {
 	animation.numFrames = table[ "numFrames" ].get_or( 0 );
 	animation.frameRate = table[ "frameRate" ].get_or( 0 );
-	animation.frameOffset = table[ "frameOffset" ].get_or( 0 );
 	animation.bVertical = table[ "bVertical" ].get_or( false );
 	animation.bLooped = table[ "bLooped" ].get_or( false );
 }
@@ -558,7 +589,7 @@ void ComponentSerializer::DeserializeComponent( const sol::table& table, TextCom
 	text.wrap = table[ "wrap" ].get_or( 0 );
 	text.bHidden = table[ "bHidden" ].get_or( false );
 
-	text.color = VORTEK_RENDERING::Color{ .r = static_cast<GLubyte>( table[ "color" ][ "r" ].get_or( 255U ) ),
+	text.color = Vortek::Rendering::Color{ .r = static_cast<GLubyte>( table[ "color" ][ "r" ].get_or( 255U ) ),
 										 .g = static_cast<GLubyte>( table[ "color" ][ "g" ].get_or( 255U ) ),
 										 .b = static_cast<GLubyte>( table[ "color" ][ "b" ].get_or( 255U ) ),
 										 .a = static_cast<GLubyte>( table[ "color" ][ "a" ].get_or( 255U ) ) };
@@ -614,4 +645,4 @@ void ComponentSerializer::DeserializeComponent( const sol::table& table, UICompo
 {
 }
 
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

@@ -2,7 +2,7 @@
 #include "Core/States/State.h"
 #include "Logger/Logger.h"
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 StateMachine::StateMachine()
 	: StateMachine( sol::lua_nil_t{} )
@@ -53,7 +53,9 @@ void StateMachine::ChangeState( const std::string& stateName, bool bRemoveState,
 		}
 
 		if ( bRemoveState )
-			oldState->bKillState;
+		{
+			oldState->bKillState = true;
+		}
 
 		m_sCurrentState = stateName;
 	}
@@ -211,4 +213,4 @@ void StateMachine::CreateLuaStateMachine( sol::state& lua )
 		"destroy",
 		&StateMachine::DestroyStates );
 }
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

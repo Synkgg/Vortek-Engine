@@ -1,13 +1,13 @@
-#include "Gui.h"
+#include "editor/utilities/imgui/Gui.h"
 #include "Logger/Logger.h"
-#include "../fonts/IconsFontAwesome5.h"
-#include "../fonts/editor_fonts.h"
+#include "editor/utilities/fonts/IconsFontAwesome5.h"
+#include "editor/utilities/fonts/editor_fonts.h"
+#include "Core/Resources/fonts/default_fonts.h"
 #include <Windowing/Window/Window.h>
-#include "../fonts/fonts_editor.h"
 
 // IMGUI
 // ===================================
-#include "ImGuiUtils.h"
+#include "editor/utilities/imgui/ImGuiUtils.h"
 #include "imgui.h"
 #include <imgui_internal.h>
 #include <imgui_impl_sdl2.h>
@@ -15,9 +15,9 @@
 #include <SDL_opengl.h>
 // ===================================
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
-bool Gui::InitImGui( VORTEK_WINDOWING::Window* pWindow )
+bool Gui::InitImGui( Vortek::Windowing::Window* pWindow )
 {
 	if ( m_bInitialized )
 		return false;
@@ -38,34 +38,39 @@ bool Gui::InitImGui( VORTEK_WINDOWING::Window* pWindow )
 
 	io.ConfigWindowsMoveFromTitleBarOnly = true;
 
+	ImFont* pDefaultFont = io.Fonts->AddFontDefault();
+	ImGui::AddFont( "default", pDefaultFont, 13.f );
+
 	float baseFontSize = 16.0f;
 	float iconFontSize = baseFontSize * 2.0f / 3.0f;
 
-	// 1. Load ExtraBold first (optional heading font)
-	ImFont* fontExtraBold = io.Fonts->AddFontFromMemoryTTF( OpenSans_ExtraBold, sizeof( OpenSans_ExtraBold ), 18.0f );
+		// 1. Load ExtraBold first (optional heading font)
+	ImFont* fontExtraBold = io.Fonts->AddFontFromMemoryTTF( Vortek::Editor::EditorFonts::g_OpenSans_ExtraBold,
+															sizeof( Vortek::Editor::EditorFonts::g_OpenSans_ExtraBold ),
+															18.0f );
 
 	// 2. Load ImGui default font (optional)
 	ImFont* fontDefault = io.Fonts->AddFontDefault();
 
 	// 3. Load Regular font and make it default
-	ImFont* fontRegular = io.Fonts->AddFontFromMemoryTTF( OpenSans_Regular, sizeof( OpenSans_Regular ), 18.0f );
+	ImFont* fontRegular = io.Fonts->AddFontFromMemoryTTF( Vortek::Editor::EditorFonts::g_OpenSans_Regular,
+														  sizeof( Vortek::Editor::EditorFonts::g_OpenSans_Regular ),
+														  18.0f );
 	io.FontDefault = fontRegular;
 
-	// 4. Merge Font Awesome icons into Regular font
+	// merge in icons from Font Awesome
 	static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
 	ImFontConfig icons_config;
-	icons_config.MergeMode = true; // merge into last-added font
+	icons_config.MergeMode = true;
 	icons_config.PixelSnapH = true;
 	icons_config.GlyphMinAdvanceX = iconFontSize;
 	icons_config.GlyphOffset = ImVec2{ 0.f, 2.f };
 
-	io.Fonts->AddFontFromMemoryTTF( fa_solid_900, fa_solid_900_size, baseFontSize, &icons_config, icons_ranges );
+	io.Fonts->AddFontFromMemoryTTF(EditorFonts::g_FaSolid900, EditorFonts::g_FaSolid900Size, baseFontSize, &icons_config, icons_ranges );
 
 	// 5. Optional: register named fonts for easy reference
 	ImGui::AddFont( "OpenSans-Regular", fontRegular, 18.f );
 	ImGui::AddFont( "OpenSans-ExtraBold", fontExtraBold, 18.f );
-
-	io.ConfigViewportsNoDecoration = false;
 
 	if ( !ImGui_ImplSDL2_InitForOpenGL( pWindow->GetWindow().get(), pWindow->GetGLContext() ) )
 	{
@@ -80,7 +85,6 @@ bool Gui::InitImGui( VORTEK_WINDOWING::Window* pWindow )
 	}
 
 	ImGui::InitDefaultStyles();
-
 	return true;
 }
 void Gui::Begin()
@@ -90,7 +94,7 @@ void Gui::Begin()
 	ImGui::NewFrame();
 }
 
-void Gui::End( VORTEK_WINDOWING::Window* pWindow )
+void Gui::End( Vortek::Windowing::Window* pWindow )
 {
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
@@ -111,4 +115,4 @@ void Gui::ShowImGuiDemo()
 	ImGui::ShowDemoWindow();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

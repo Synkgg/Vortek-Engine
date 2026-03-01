@@ -8,17 +8,17 @@
 #include <Rendering/Essentials/Texture.h>
 #include <Rendering/Core/BatchRenderer.h>
 
-#include "VORTEKUtilities/HelperUtilities.h"
+#include "VortekUtilities/HelperUtilities.h"
 
 #include <Logger/Logger.h>
 
 #include <ranges>
 
-using namespace VORTEK_CORE::ECS;
-using namespace VORTEK_RENDERING;
+using namespace Vortek::Core::ECS;
+using namespace Vortek::Rendering;
 using namespace VORTEK_RESOURCES;
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 RenderSystem::RenderSystem()
 	: m_pBatchRenderer{ std::make_unique<SpriteBatchRenderer>() }
@@ -27,7 +27,7 @@ RenderSystem::RenderSystem()
 
 RenderSystem::~RenderSystem() = default;
 
-void RenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera )
+void RenderSystem::Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera )
 {
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& assetManager = mainRegistry.GetAssetManager();
@@ -54,7 +54,7 @@ void RenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERIN
 		const auto& transform = spriteView.get<TransformComponent>( entity );
 		const auto& sprite = spriteView.get<SpriteComponent>( entity );
 
-		if ( !VORTEK_CORE::EntityInView( transform, sprite.width, sprite.height, camera ) )
+		if ( !Vortek::Core::EntityInView( transform, sprite.width, sprite.height, camera ) )
 			continue;
 
 		if ( sprite.sTextureName.empty() || sprite.bHidden )
@@ -70,7 +70,7 @@ void RenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERIN
 		glm::vec4 spriteRect{ transform.position.x, transform.position.y, sprite.width, sprite.height };
 		glm::vec4 uvRect{ sprite.uvs.u, sprite.uvs.v, sprite.uvs.uv_width, sprite.uvs.uv_height };
 
-		glm::mat4 model = VORTEK_CORE::RSTModel( transform, sprite.width, sprite.height );
+		glm::mat4 model = Vortek::Core::RSTModel( transform, sprite.width, sprite.height );
 
 		if ( sprite.bIsoMetric )
 		{
@@ -95,7 +95,7 @@ void RenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERIN
 	spriteShader->Disable();
 }
 
-void RenderSystem::CreateRenderSystemLuaBind( sol::state& lua, VORTEK_CORE::ECS::Registry& registry )
+void RenderSystem::CreateRenderSystemLuaBind( sol::state& lua, Vortek::Core::ECS::Registry& registry )
 {
 	auto& pCamera = registry.GetContext<std::shared_ptr<Camera2D>>();
 
@@ -108,4 +108,4 @@ void RenderSystem::CreateRenderSystemLuaBind( sol::state& lua, VORTEK_CORE::ECS:
 									[ & ]( RenderSystem& system, Registry& reg ) { system.Update( reg, *pCamera ); } );
 }
 
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

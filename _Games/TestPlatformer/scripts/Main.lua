@@ -1,8 +1,8 @@
 -- Main Lua Script!
 -- [[
-S2D_RunScript("assets/scripts/Platformer/script_list.lua")
+RunScript("assets/scripts/Platformer/script_list.lua")
 
-S2D_LoadScriptTable(ScriptList)
+LoadScriptTable(ScriptList)
 
 LoadAssets(AssetDefs)
 gFollowCam = nil 

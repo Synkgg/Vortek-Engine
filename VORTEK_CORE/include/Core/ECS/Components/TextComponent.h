@@ -2,12 +2,12 @@
 #include <sol/sol.hpp>
 #include <Rendering/Essentials/Vertex.h>
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 struct TextComponent
 {
-	/* The name of the font to use. This must exist in the Asset Manager. Defaults to OpenSans. */
-	std::string sFontName{ "OpenSans" };
+	/* The name of the font to use. This must exist in the Asset Manager. Defaults to pixel-32. */
+	std::string sFontName{ "pixel-32" };
 	/* The actual string value to be drawn to the screen. */
 	std::string sTextStr{};
 	/* Any padding to be used around the text. */
@@ -19,7 +19,7 @@ struct TextComponent
 	/* The height of the containing text box. */
 	float textBoxHeight{ -1.f };
 	/* Color of the text. Defaults to white. */
-	VORTEK_RENDERING::Color color{ 255, 255, 255, 255 };
+	Vortek::Rendering::Color color{ 255, 255, 255, 255 };
 	/* Should the text be drawn or hidden? */
 	bool bHidden{ false };
 	/* Text Component has been changed, sizes need to be updated. */
@@ -29,4 +29,4 @@ struct TextComponent
 
 	static void CreateLuaTextBindings( sol::state& lua );
 };
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

@@ -7,16 +7,16 @@
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include <Logger/Logger.h>
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 
 PhysicsSystem::PhysicsSystem()
 {
 }
 
-void PhysicsSystem::Update( VORTEK_CORE::ECS::Registry& registry )
+void PhysicsSystem::Update( Vortek::Core::ECS::Registry& registry )
 {
 	auto boxView = registry.GetRegistry().view<PhysicsComponent, TransformComponent, BoxColliderComponent>();
 	auto& coreEngine = CoreEngineData::GetInstance();
@@ -81,4 +81,4 @@ void PhysicsSystem::Update( VORTEK_CORE::ECS::Registry& registry )
 			transform.rotation = glm::degrees( pRigidBody->GetAngle() );
 	}
 }
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

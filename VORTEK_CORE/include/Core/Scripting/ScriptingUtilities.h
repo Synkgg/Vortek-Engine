@@ -4,7 +4,7 @@
 #include <initializer_list>
 #include <utility>
 
-namespace VORTEK_CORE::Scripting
+namespace Vortek::Core::Scripting
 {
 
 struct MainScriptFunctions
@@ -89,6 +89,6 @@ struct ScriptingHelpers
 	static void CreateLuaHelpers( sol::state& lua );
 };
 
-} // namespace VORTEK_CORE::Scripting
+} // namespace Vortek::Core::Scripting
 
-using MainScriptPtr = std::shared_ptr<VORTEK_CORE::Scripting::MainScriptFunctions>;
+using MainScriptPtr = std::shared_ptr<Vortek::Core::Scripting::MainScriptFunctions>;

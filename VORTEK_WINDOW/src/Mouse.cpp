@@ -2,7 +2,7 @@
 #include <SDL.h>
 #include <Logger/Logger.h>
 
-namespace VORTEK_WINDOWING::Inputs
+namespace Vortek::Windowing::Inputs
 {
 
 void Mouse::Update()
@@ -110,4 +110,4 @@ const std::tuple<int, int> Mouse::GetMouseScreenPosition()
 	SDL_GetMouseState( &m_X, &m_Y );
 	return std::make_tuple( m_X, m_Y );
 }
-} // namespace VORTEK_WINDOWING::Inputs
+} // namespace Vortek::Windowing::Inputs

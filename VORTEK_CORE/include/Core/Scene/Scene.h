@@ -3,9 +3,9 @@
 #include <sol/sol.hpp>
 #include "Core/ECS/Entity.h"
 #include "Core/Character/PlayerStart.h"
-#include "VORTEKUtilities/HelperUtilities.h"
+#include "VortekUtilities/HelperUtilities.h"
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 struct Canvas
 {
@@ -52,7 +52,7 @@ class Scene
 	 */
 	int AddLayer( const std::string& sLayerName, bool bVisible );
 
-	int AddLayer( const VORTEK_UTIL::SpriteLayerParams& layerParam );
+	int AddLayer( const Vortek::Utilities::SpriteLayerParams& layerParam );
 
 	/*
 	 * @brief Checks to see if the layer already exists in the scene.
@@ -73,8 +73,8 @@ class Scene
 	inline void SetDefaultMusic( const std::string& sDefaultMusic ) { m_sDefaultMusic = sDefaultMusic; }
 
 	inline Canvas& GetCanvas() { return m_Canvas; }
-	inline VORTEK_CORE::ECS::Registry& GetRegistry() { return m_Registry; }
-	inline VORTEK_CORE::ECS::Registry* GetRegistryPtr() { return &m_Registry; }
+	inline Vortek::Core::ECS::Registry& GetRegistry() { return m_Registry; }
+	inline Vortek::Core::ECS::Registry* GetRegistryPtr() { return &m_Registry; }
 	inline const std::string& GetSceneDataPath() { return m_sSceneDataPath; }
 	inline EMapType GetMapType() const { return m_eMapType; }
 	inline bool IsLoaded() const { return m_bSceneLoaded; }
@@ -83,23 +83,24 @@ class Scene
 	 * @return Returns true if there are layers present, false otherwise.
 	 */
 	inline bool HasTileLayers() const { return !m_LayerParams.empty(); }
-	inline std::vector<VORTEK_UTIL::SpriteLayerParams>& GetLayerParams() { return m_LayerParams; }
+	inline std::vector<Vortek::Utilities::SpriteLayerParams>& GetLayerParams() { return m_LayerParams; }
 
 	inline PlayerStart& GetPlayerStart() { return m_PlayerStart; }
 	inline bool IsPlayerStartEnabled() const { return m_bUsePlayerStart; }
 	inline void SetPlayerStartEnabled( bool bEnable ) { m_bUsePlayerStart = bEnable; }
 	inline const std::string& GetSceneName() const { return m_sSceneName; }
+	inline const std::string& GetFilepath() const { return m_sSceneDataPath; }
 
 	static void CreateLuaBind( sol::state& lua );
 
   protected:
 	bool LoadSceneData();
-	bool SaveSceneData( bool bOverride = false);
+	bool SaveSceneData(bool bOverride = false);
 	void SetCanvasOffset();
-
+	
   protected:
 	/* The registry that is used in the tilemap editor and the scene hierarchy. */
-	VORTEK_CORE::ECS::Registry m_Registry;
+	Vortek::Core::ECS::Registry m_Registry;
 	/* The name of the scene object represents. */
 	std::string m_sSceneName;
 	/* The filepath which to load and save the tilemap. */
@@ -115,14 +116,14 @@ class Scene
 	/* All scenes will have a default player start. This flag will control it's use. */
 	bool m_bUsePlayerStart;
 
-	VORTEK_CORE::Canvas m_Canvas;
+	Vortek::Core::Canvas m_Canvas;
 
 	/* The type of map to create tiles. Iso or regular grid. */
 	EMapType m_eMapType;
 
-	std::vector<VORTEK_UTIL::SpriteLayerParams> m_LayerParams;
+	std::vector<Vortek::Utilities::SpriteLayerParams> m_LayerParams;
 
 	PlayerStart m_PlayerStart;
 };
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

@@ -1,4 +1,4 @@
-#include "VortekFileSystem/Serializers/LuaSerializer.h"
+#include "VortekFilesystem/Serializers/LuaSerializer.h"
 #include "Logger/Logger.h"
 #include <set>
 #include <algorithm>
@@ -8,9 +8,13 @@ constexpr char INDENT = '\t';
 constexpr char NEW_LINE = '\n';
 constexpr char SPACE = ' ';
 
-#define SPECIAL_CASES std::set<char>{ '"', '\\', '\n', '\t', '\r' }
+#define SPECIAL_CASES                                                                                                  \
+	std::set<char>                                                                                                     \
+	{                                                                                                                  \
+		'"', '\\', '\n', '\t', '\r'                                                                                    \
+	}
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 LuaSerializer::LuaSerializer( const std::string& sFilepath )
 	: m_FileStream{}
@@ -22,12 +26,13 @@ LuaSerializer::LuaSerializer( const std::string& sFilepath )
 	, m_bNewLineAdded{ false }
 {
 	m_FileStream.open( sFilepath, std::ios::out | std::ios::trunc );
-	VORTEK_ASSERT(m_FileStream.is_open() /*&&
-					  fmt::format( "LuaSerialization failed. Failed to open file [{}]", sFilename )*/ );
+	VORTEK_ASSERT( m_FileStream.is_open() /*&&
+				  fmt::format( "LuaSerialization failed. Failed to open file [{}]", sFilename )*/ );
 
 	if ( !m_FileStream.is_open() )
 		throw std::runtime_error( fmt::format( "LuaSerialization failed. Failed to open file [{}]", sFilepath ) );
 }
+
 
 LuaSerializer::~LuaSerializer()
 {
@@ -119,7 +124,7 @@ LuaSerializer& LuaSerializer::EndTable( bool bNewLine )
 
 void LuaSerializer::AddIndents()
 {
-	std::string indent{};
+	std::string indent{  };
 	for ( int i = 0; i < m_NumIndents; i++ )
 	{
 		indent += INDENT;
@@ -172,4 +177,4 @@ std::string LuaSerializer::AddQuotes( const std::string& str )
 	quotedStr += stringToQuote + "\"";
 	return quotedStr;
 }
-} // namespace VORTEK_FILESYSTEM
+} // namespace Vortek::Filesystem

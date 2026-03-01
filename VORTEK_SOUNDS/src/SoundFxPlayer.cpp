@@ -2,7 +2,7 @@
 #include "Sounds/Essentials/SoundFX.h"
 #include <Logger/Logger.h>
 
-namespace VORTEK_SOUNDS
+namespace Vortek::Sounds
 {
 
 void SoundFxPlayer::Play( SoundFX& soundFx )
@@ -53,4 +53,4 @@ bool SoundFxPlayer::IsPlaying( int channel )
 	return Mix_Playing( channel );
 }
 
-} // namespace VORTEK_SOUNDS
+} // namespace Vortek::Sounds

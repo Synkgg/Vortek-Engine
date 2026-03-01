@@ -1,4 +1,4 @@
-#include "GridSystem.h"
+#include "editor/systems/GridSystem.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "Rendering/Core/RectBatchRenderer.h"
@@ -10,16 +10,16 @@
 
 #include "editor/scene/SceneObject.h"
 
-using namespace VORTEK_CORE;
+using namespace Vortek::Core;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 GridSystem::GridSystem()
-	: m_pBatchRenderer{ std::make_unique<VORTEK_RENDERING::RectBatchRenderer>() }
+	: m_pBatchRenderer{ std::make_unique<Vortek::Rendering::RectBatchRenderer>() }
 {
 }
 
-void GridSystem::Update( VORTEK_CORE::Scene& currentScene, VORTEK_RENDERING::Camera2D& camera )
+void GridSystem::Update( Vortek::Core::Scene& currentScene, Vortek::Rendering::Camera2D& camera )
 {
 	if ( currentScene.GetMapType() == EMapType::IsoGrid )
 	{
@@ -44,7 +44,7 @@ void GridSystem::Update( VORTEK_CORE::Scene& currentScene, VORTEK_RENDERING::Cam
 	int cols = canvasWidth / tileWidth;
 	int rows = canvasHeight / tileHeight;
 
-	VORTEK_RENDERING::Color color{};
+	Vortek::Rendering::Color color{};
 
 	for ( int row = 0; row < rows; row++ )
 	{
@@ -56,7 +56,7 @@ void GridSystem::Update( VORTEK_CORE::Scene& currentScene, VORTEK_RENDERING::Cam
 			else
 				color = { 200, 200, 200, 70 };
 
-			VORTEK_RENDERING::Rect rect{
+			Vortek::Rendering::Rect rect{
 				.position = glm::vec2{ static_cast<float>( col * tileWidth ), static_cast<float>( row * tileHeight ) },
 				.width = static_cast<float>( tileWidth ),
 				.height = static_cast<float>( tileHeight ),
@@ -72,7 +72,7 @@ void GridSystem::Update( VORTEK_CORE::Scene& currentScene, VORTEK_RENDERING::Cam
 	pColorShader->Disable();
 }
 
-void GridSystem::UpdateIso( VORTEK_CORE::Scene& currentScene, VORTEK_RENDERING::Camera2D& camera )
+void GridSystem::UpdateIso( Vortek::Core::Scene& currentScene, Vortek::Rendering::Camera2D& camera )
 {
 	auto& assetManager = MAIN_REGISTRY().GetAssetManager();
 	const auto& canvas = currentScene.GetCanvas();
@@ -99,7 +99,7 @@ void GridSystem::UpdateIso( VORTEK_CORE::Scene& currentScene, VORTEK_RENDERING::
 	int cols = canvasWidth / tileWidth;
 	int rows = canvasHeight / tileHeight;
 
-	VORTEK_RENDERING::Color color{};
+	Vortek::Rendering::Color color{};
 
 	for ( int row = 0; row < rows; row++ )
 	{
@@ -111,15 +111,15 @@ void GridSystem::UpdateIso( VORTEK_CORE::Scene& currentScene, VORTEK_RENDERING::
 			else
 				color = { 200, 200, 200, 70 };
 
-			// Currently we are not going to use the canvas offset. We have control of the camera, so going into the
-			// negatives should not really matter.
-			VORTEK_RENDERING::Rect rect{ .position =
-											 glm::vec2{ static_cast<float>( ( /*canvas.offset.x +*/ tileHalfWidth ) +
-																			( row - col ) * tileHalfWidth ),
-														static_cast<float>( ( row + col ) * tileHalfHeight ) },
-										 .width = static_cast<float>( tileWidth ),
-										 .height = static_cast<float>( tileHeight ),
-										 .color = color };
+			// Currently we are not going to use the canvas offset. We have control of the camera, so going into the negatives
+			// should not really matter.
+			Vortek::Rendering::Rect rect{ .position =
+											glm::vec2{ static_cast<float>( ( /*canvas.offset.x +*/ tileHalfWidth ) +
+																		   ( row - col ) * tileHalfWidth ),
+													   static_cast<float>( ( row + col ) * tileHalfHeight ) },
+										.width = static_cast<float>( tileWidth ),
+										.height = static_cast<float>( tileHeight ),
+										.color = color };
 
 			m_pBatchRenderer->AddIsoRect( rect );
 		}
@@ -131,4 +131,4 @@ void GridSystem::UpdateIso( VORTEK_CORE::Scene& currentScene, VORTEK_RENDERING::
 	pColorShader->Disable();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

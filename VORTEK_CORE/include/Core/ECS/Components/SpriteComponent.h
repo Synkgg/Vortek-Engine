@@ -1,9 +1,9 @@
 #pragma once
 #include <Rendering/Essentials/Vertex.h>
 #include <sol/sol.hpp>
-#include "../Registry.h"
+#include "Core/ECS/Registry.h"
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 /*
  * UV coordinates tell opengl which part of the image that should be used
@@ -28,7 +28,7 @@ struct SpriteComponent
 	/* The UV values to be used for the sprite texture. Usually generated upon creation. */
 	UVs uvs{ .u = 0.f, .v = 0.f, .uv_width = 0.f, .uv_height = 0.f };
 	/* The color to add to the sprite. Defaults to white. */
-	VORTEK_RENDERING::Color color{ .r = 255, .g = 255, .b = 255, .a = 255 };
+	Vortek::Rendering::Color color{ .r = 255, .g = 255, .b = 255, .a = 255 };
 	/* The start position of the x coordinate for sprite sheets. Used to aid in generating the uv values. */
 	int start_x{ 0 };
 	/* The start position of the y coordinate for sprite sheets. Used to aid in generating the uv values. */
@@ -48,4 +48,4 @@ struct SpriteComponent
 
 	static void CreateSpriteLuaBind( sol::state& lua );
 };
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

@@ -2,7 +2,7 @@
 #include <chrono>
 using namespace std::chrono;
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 class Timer
 {
@@ -27,4 +27,4 @@ class Timer
 	inline const bool IsRunning() const { return m_bIsRunning; }
 	inline const bool IsPaused() const { return m_bIsPaused; }
 };
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities

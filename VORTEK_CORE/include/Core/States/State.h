@@ -1,7 +1,7 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 struct State
 {
@@ -18,4 +18,4 @@ struct State
 
 	static void CreateLuaStateBind( sol::state& lua );
 };
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

@@ -2,9 +2,12 @@
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
+#include <glm/gtc/epsilon.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 #include "Core/Scripting/ScriptingUtilities.h"
 
-namespace VORTEK_CORE::Scripting
+namespace Vortek::Core::Scripting
 {
 
 // glm::vec2
@@ -247,21 +250,21 @@ static void MathFreeFunctions( sol::state& lua )
 static void MathConstants( sol::state& lua )
 {
 	// clang-format off
-		auto constants = MakeReadOnlyTable(lua,
-			{
-				std::make_pair("PI",			3.14159265359f),
-				std::make_pair("TWO_PI",		6.28318530717f),
-				std::make_pair("PI_SQUARED",	9.86960440108f),
-				std::make_pair("PI_OVER_2",	1.57079632679f),
-				std::make_pair("PI_OVER_4",	0.78539816339f),
-				std::make_pair("PHI",			1.6180339887498948482045868343656381f),
-				std::make_pair("EULERS",		2.71828182845904523536f),
-				std::make_pair("SQRT_2",		1.4142135623730950488016887242097f),
-				std::make_pair("SQRT_3",		1.7320508075688772935274463415059f),
-				std::make_pair("INV_SQRT_2",	0.70710678118654752440084436210485f),
-				std::make_pair("INV_SQRT_3",	0.57735026918962576450914878050196f)
-			}
-		);
+	auto constants = MakeReadOnlyTable( lua,
+		{
+			std::make_pair( "PI",			3.14159265359f ),
+			std::make_pair( "TWO_PI",		6.28318530717f ),
+			std::make_pair( "PI_SQUARED",	9.86960440108f ),
+			std::make_pair( "PI_OVER_2",	1.57079632679f ),
+			std::make_pair( "PI_OVER_4",	0.78539816339f ),
+			std::make_pair( "PHI",			1.6180339887498948482045868343656381f ),
+			std::make_pair( "EULERS",		2.71828182845904523536f ),
+			std::make_pair( "SQRT_2",		1.4142135623730950488016887242097f ),
+			std::make_pair( "SQRT_3",		1.7320508075688772935274463415059f ),
+			std::make_pair( "INV_SQRT_2",	0.70710678118654752440084436210485f ),
+			std::make_pair( "INV_SQRT_3",	0.57735026918962576450914878050196f )
+		}
+	);
 	// clang-format on
 
 	lua[ "Constants" ] = constants;
@@ -276,4 +279,4 @@ void GLMBindings::CreateGLMBindings( sol::state& lua )
 	MathFreeFunctions( lua );
 	MathConstants( lua );
 }
-} // namespace VORTEK_CORE::Scripting
+} // namespace Vortek::Core::Scripting

@@ -19,7 +19,7 @@ function TitleState:Create(stack)
 	state:set_variable_table(this)
 	state:set_on_enter(
 		function()
-			S2D_log("Enter Title State")
+			log("Enter Title State")
 		end
 	)
 	state:set_on_exit(
@@ -51,8 +51,8 @@ function TitleState:Create(stack)
 end
 
 function TitleState:OnExit()
-	self.m_Title:kill()
-	self.m_PressEnter:kill()
+	self.m_Title:destroy()
+	self.m_PressEnter:destroy()
 	-- TODO: 
 end
 

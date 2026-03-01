@@ -2,7 +2,7 @@
 #include "Texture.h"
 #include <memory>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class TextureLoader
 {
@@ -31,4 +31,4 @@ class TextureLoader
 
 	static bool IsPNG( const uint8_t* data, size_t size );
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

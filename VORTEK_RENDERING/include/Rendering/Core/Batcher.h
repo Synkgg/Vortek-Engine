@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 constexpr size_t NUM_SPRITE_VERTICES = 4;
 constexpr size_t NUM_SPRITE_INDICES = 6;
@@ -55,7 +55,7 @@ class Batcher
 	GLuint m_VBO;
 	GLuint m_IBO;
 	bool m_bUseIBO;
-
+	
 };
 
 template <typename TBatch, typename TGlyph>
@@ -135,6 +135,7 @@ inline Batcher<TBatch, TGlyph>::Batcher( bool bUseIBO )
 	, m_VAO{ 0 }
 	, m_VBO{ 0 }
 	, m_IBO{ 0 }
+
 	, m_bUseIBO{ bUseIBO }
 {
 	Initialize();
@@ -182,4 +183,4 @@ inline void Batcher<TBatch, TGlyph>::Flush( std::vector<TVertex>& vertices )
 	m_Offset = 0;
 }
 
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

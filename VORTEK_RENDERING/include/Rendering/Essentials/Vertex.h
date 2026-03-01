@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <sstream>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 struct Color
@@ -71,4 +71,4 @@ struct PickingVertex
 	uint32_t uid{ 0 };
 };
 
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

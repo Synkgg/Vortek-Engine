@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VORTEK_SOUNDS
+namespace Vortek::Sounds
 {
 /*
  * @brief The MusicPlayer class is a simple wrapper around SDL_Mixer for music.
@@ -59,4 +59,4 @@ class MusicPlayer
 	 */
 	bool IsPaused();
 };
-} // namespace VORTEK_SOUNDS
+} // namespace Vortek::Sounds

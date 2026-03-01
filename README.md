@@ -1,17 +1,49 @@
 
-![Image](https://github.com/user-attachments/assets/8e07697b-d2be-42e2-aefe-538ffa82f040)
+![new_logo](https://github.com/user-attachments/assets/1c6b585d-6b34-4f38-a9e3-84af16954a2c)
 
 
-# Overview
-Vortek Engine is based on the Youtube Series "Scion2D" From 
-[Dustin Clark](https://github.com/dwjclark11). His Youtube is,
-[Here](https://www.youtube.com/playlist?list=PL3HUvSWOJR7XRDwVVQqqWO-zyyscb8L-v) I recommend leaving him a subscribe and joining his discord.
+# 🎮 Vortek2D – A Simple 2D Game Engine for Learning and Teaching
+
+Vortek2D is a lightweight, educational 2D game engine built with the goal of **learning by doing** 🧠💡. It's part of my journey to understand game development from the ground up — and share everything I learn through my [YouTube channel]([https://www.youtube.com/](https://www.youtube.com/playlist?list=PL3HUvSWOJR7XRDwVVQqqWO-zyyscb8L-v)) 📺✨.
+
+> This engine isn’t meant to compete with big names like Unity or Godot — and that’s okay!  
+> It’s about exploring, building, breaking things, and **growing as a developer** 🚀.
+
+Whether you're here to learn alongside me, peek at the source, or just curious about making your own engine, welcome! 👋
+
+---
+
+🛠 **Why Vortek2D?**
+
+- ✅ Made with ❤️ for education
+- 🎓 Teach what I learn, and learn what I teach
+- 🎮 Build real 2D games from scratch
+- 💬 Collaborate, share ideas, and grow together
+
+---
+
+## 📖 Documentation
+> **⚠️ Active Development Notice:** This engine and editor are currently under active development. The documentation is still a work in progress and will not be up to date.
+[Vortek2D Docs](https://dwjclark11.github.io/Vortek2D_Docs/)
+
+## 🚀 Features
+-  **Cross-Platform**: Builds on Windows and Linux. Currently Mac is not supported.
+-  **Modern C++20**: Use of modern c++ standards and functionality.
+-  **Integrated Tilemap Editor**: Ability to create tilemaps, create game objects, and more.
 
 ---- 
+### Hub
+![vortekhub](https://github.com/user-attachments/assets/d9be3935-fa0f-470a-ad03-d1c31a241565)
 
-# How to setup
 ----
-Requires [CMake 3.26 or Later](https://cmake.org/) and [vcpkg](https://github.com/microsoft/vcpkg), Make sure to open a powershell window and not a command prompt.
+#### Vortek Editor
+![neweditorpic](https://github.com/user-attachments/assets/147c74eb-82e7-42e5-a065-4b86b6cb1f88)
+
+----
+
+# Build
+----
+Requires [CMake 3.26](https://cmake.org/) and [vcpkg](https://github.com/microsoft/vcpkg)
 ## Get VCPKG:
 ```ps
 git clone https://github.com/microsoft/vcpkg
@@ -22,6 +54,7 @@ git clone https://github.com/microsoft/vcpkg
 VCPKG_ROOT=[path_to_vcpkg]
 VCPKG_DEFAULT_TRIPLET=x64-windows
 ```
+
 - Windows
 
 	Add the following line in your Path environnment variable:
@@ -29,12 +62,13 @@ VCPKG_DEFAULT_TRIPLET=x64-windows
 	<path_to_vcpkg_installation_folder>
 	```
 
-	In your powershell window paste/type:
+	Open a terminal and type the following:
 	```
 	vcpkg integrate install
 	vcpkg integrate powershell
 	```
- - Linux
+
+- Linux
 
 	Edit your profile's bashrc file:
 	```
@@ -60,7 +94,7 @@ VCPKG_DEFAULT_TRIPLET=x64-windows
 ## Install dependencies 
 - Windows
 	```
-	vcpkg install fmt glm entt glad soil2 sdl2 sdl2-mixer[mpg123] lua sol2 stb tinyfiledialogs rapidjson tinyxml2
+	vcpkg install fmt glm entt glad soil2 sdl2 sdl2-mixer[mpg123] lua sol2 stb tinyfiledialogs rapidjson libzippp tinyxml2
 	```
 - Linux[debian based]
 	```
@@ -78,33 +112,64 @@ VCPKG_DEFAULT_TRIPLET=x64-windows
 		```
 		sudo apt install build-essential
 		```
-- ImGui Docking and SDL2-Binding
-  * It seems like the ```ImGui[sdl2-binding]``` no longer exists in vcpkg. Also the current ```Imgui[docking-experimental]``` does not seem to be up to date either.
-  * For now, we grabbed the latest from the docking imgui branch and build with the editor. I have added the necessary files under the [thirdparty](https://github.com/Synkgg/Vortek-Engine/tree/main/thirdparty/imgui/imgui_backends) folder.
-  * These should already be setup in cmake.
-  * Will move back to using vcpkg bindings once the correct version is available.
-- Box2d Install
-  * There has been a huge change in the latest box2d that is a breaking change to our codebase.
-  * We are using Box2D 2.41, the latest 3.1, uses a C-API that is done in a completely different way.
-  * Eventually we are going to have to update the code to support the latest; however, we currently have a work around.
-  * Please see [dwjclark11 SCION_PHYSICS Readme.me](https://github.com/dwjclark11/Scion2D/tree/master/SCION_PHYSICS) file for the workaround steps.
-    
+	```
+	vcpkg install fmt glm entt glad soil2 sdl2[alsa] sdl2-mixer[mpg123] lua sol2 stb tinyfiledialogs rapidjson libzippp tinyxml2
+	```
+
 ## Clone the repository 
 ```
-git clone [https://github.com/dwjclark11/Scion2D.git](https://github.com/Synkgg/Vortek-Engine.git)
-cd Vortek-Engine
+git clone https://github.com/dwjclark11/Vortek2D.git
+cd Vortek2D
 cmake -S . -B build
 ```
+ 
+## Use the built-in OpenGL debugger
+Note: this requires a graphics adapter with OpenGL version >= 4.3 capabilities.
 
-## Documentation
-[Documentation](https://synkgg.github.io/Vortek-Engine/)
+In Vortek2D/CMakeLists.txt:
+* Set the variable ```VORTEK_OPENGL_DEBUG_CALLBACK``` to ```ON```.
+* Optionnaly, set the variable ```VORTEK_OPENGL_DEBUG_FORWARD_COMPATIBILITY``` to ```ON``` in order to enable warnings about deprecated OpenGL functions.
 
-## Supported Platforms
-- Windows
-- Linux | Partially Supported
+Activate the debugger in your code as soon as you have a valid OpenGL context made current:
+* ```Vortek::Rendering::OpenGLDebugger::init()```.
+* Optionnaly, you can opt out a list of warning wy doing the following:
+	```
+	std::vector<unsigned int> ignore{ 1281, 131169, 131185, 131204, 31218 };
+	Vortek::Rendering::OpenGLDebugger::init( ignore );
+	```
+
+* To allow the debugger to break, call ```Vortek::Rendering::OpenGLDebugger::breakOnError( true/false )``` and/or ```Vortek::Rendering::OpenGLDebugger::breakOnWarning( true/false )```.
+* To ignore a specific warning, call ```Vortek::Rendering::OpenGLDebugger::push( Id )```.
+* To reinstate, call ```Vortek::Rendering::OpenGLDebugger::pop( Id )```.
+* To set the severity level, call ```Vortek::Rendering::OpenGLDebugger::setSeverityLevel( Vortek::Rendering::OpenGLDebuggerSeverity::Disable/Notification/Low/Medium/High )```.
+
+## Force the discrete GPU on Optimus laptops
+In Vortek2D/CMakeLists.txt:
+* Set the variable ```VORTEK_OPENGL_FORCE_DISCRETE_GPU``` to ```ON```.
+Note: Ids can differ between platforms or drivers.
+Note for linux users: this is currently working only on nVidia GPUs.
+
+## 🎯 Supported Platforms
+
+| Platform | Compiler   | Status             |
+| -------- | ---------- | ------------------ |
+| Windows  | MSVC 2019+ | ✅ Fully Supported |
+| Windows  | MinGW/GCC  | 🔧 To be tested    |
+| Linux    | GCC 10+    | ✅ Fully Supported |
+| Linux    | Clang 12+  | 🔧 To be tested    |
+
+* Linux GCC build has warnings but builds successfully.
+
+## 📝 License
+
+This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+This project would not be possible without the help of all the contributors, the motivation to keep working forward through the wonderful comments and supporters from my YouTube Channel. 
+Also from all the wonderful open source projects that I have been able to use in the creation of the engine.
 
 ### Open Source Dependencies
-List of all the open source dependencies we use in the engine.
+Check out these amazing open source projects that we are using in the engine. Make sure to give them all a star! for all of their amazing work.
 
 -   **[EnTT](https://github.com/skypjack/entt)** - Fast and reliable Entity Component System.
 -   **[SDL2](https://github.com/libsdl-org/SDL)** -  a cross-platform library that provides an abstraction layer for computer multimedia hardware components.
@@ -117,3 +182,8 @@ List of all the open source dependencies we use in the engine.
 -   **[stb](https://github.com/nothings/stb)** - Single-file public domain libraries.
 -   **[Lua](https://www.lua.org/)** - Powerful, efficient scripting language.
 -   **[tinyfiledialogs](https://github.com/native-toolkit/libtinyfiledialogs)** - Cross-Platform Native dialog library for WINDOWS MAC OSX GTK+ QT CONSOLE **[Official](https://sourceforge.net/projects/tinyfiledialogs/)**.
+-   **[Libzippp](https://github.com/ctabin/libzippp)** - C++ wrapper around the libzip library.
+-   **[tinyxml2](https://github.com/leethomason/tinyxml2)** - TinyXML2 is a simple, small, efficient, C++ XML parser that can be easily integrated into other programs.
+-   **[FMT](https://github.com/fmtlib/fmt)** - A modern formatting library
+
+_Thank you to all the contributors and maintainers of these projects!_ ❤️

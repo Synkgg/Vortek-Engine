@@ -19,12 +19,14 @@
 #include <execinfo.h> // For capturing stack traces in unix-based systems
 #include <cxxabi.h>	  // Needed for demangling c++ symbols
 #include <cstdlib>
+#include <fcntl.h>
+#include <unistd.h>
 #define PATH_SEPARATOR "/"
 #endif
 
 namespace fs = std::filesystem;
 
-namespace VORTEK_LOGGER
+namespace Vortek::Logger
 {
 
 #ifdef _WIN32
@@ -160,7 +162,7 @@ void CrashLogger::LaunchCrashReporter( const std::string& sFilename )
 			_exit( 1 );
 		}
 
-		pit_t pid2 = fork();
+		pid_t pid2 = fork();
 		if ( pid2 < 0 )
 		{
 			perror( "second fork failed." );
@@ -425,4 +427,4 @@ void CrashLogger::CrashHandler( int signal )
 	std::exit( signal );
 }
 
-} // namespace VORTEK_LOGGER
+} // namespace Vortek::Logger

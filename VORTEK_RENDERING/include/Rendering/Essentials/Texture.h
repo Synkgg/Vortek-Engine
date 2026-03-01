@@ -2,7 +2,7 @@
 #include <glad/glad.h>
 #include <string>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Texture
 {
@@ -36,9 +36,9 @@ class Texture
 	void Unbind();
 
 	/*
-	 * @brief Deletes the underlying OpenGL Texture.
-	 * Only use this if texture is no longer needed.
-	 */
+	* @brief Deletes the underlying OpenGL Texture.
+	* Only use this if texture is no longer needed.
+	*/
 	void Destroy();
 
   private:
@@ -50,4 +50,4 @@ class Texture
 	bool m_bTileset;
 	bool m_bEditorTexture;
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

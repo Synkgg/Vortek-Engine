@@ -4,7 +4,7 @@
 #include <string>
 #include <memory>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 struct Line
@@ -40,4 +40,4 @@ struct Text
 	Color color{ 255, 255, 255, 255 };
 };
 
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

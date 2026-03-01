@@ -2,7 +2,7 @@
 #include "Batcher.h"
 #include "Rendering/Essentials/BatchTypes.h"
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 class CircleBatchRenderer : public Batcher<RectBatch, CircleGlyph>
@@ -21,4 +21,4 @@ class CircleBatchRenderer : public Batcher<RectBatch, CircleGlyph>
 	virtual void GenerateBatches() override;
 	void Initialize();
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

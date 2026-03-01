@@ -2,7 +2,7 @@
 #include "Core/ECS/Entity.h"
 #include <glm/glm.hpp>
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 class Prefab;
@@ -12,9 +12,9 @@ class Scene;
 class PlayerStart
 {
   public:
-	PlayerStart( VORTEK_CORE::ECS::Registry& registry, Scene& sceneRef );
+	PlayerStart( Vortek::Core::ECS::Registry& registry, Scene& sceneRef );
 
-	void CreatePlayer( VORTEK_CORE::ECS::Registry& registry );
+	void CreatePlayer( Vortek::Core::ECS::Registry& registry );
 	std::string GetCharacterName();
 	void SetCharacter( const Prefab& prefab );
 
@@ -32,10 +32,10 @@ class PlayerStart
 
 	inline bool IsCharacterSet() const { return m_pCharacterPrefab != nullptr; }
 	inline bool IsPlayerStartCreated() const { return m_bVisualEntityCreated; }
-
+	
   private:
 	Scene& m_SceneRef;
-	std::shared_ptr<VORTEK_CORE::ECS::Entity> m_pVisualEntity;
+	std::shared_ptr<Vortek::Core::ECS::Entity> m_pVisualEntity;
 	std::shared_ptr<Prefab> m_pCharacterPrefab;
 	std::string m_sCharacterName;
 	bool m_bCharacterLoaded;
@@ -44,4 +44,4 @@ class PlayerStart
 	// TODO: Determine if this is needed.
 	std::shared_ptr<Character> m_pCharacter;
 };
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

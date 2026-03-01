@@ -1,12 +1,12 @@
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "Rendering/Essentials/Texture.h"
 #include "Rendering/Essentials/TextureLoader.h"
-
 #include "Logger/Logger.h"
+#include <SDL_mixer.h>
 
-using namespace VORTEK_RENDERING;
+using namespace Vortek::Rendering;
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 void ProjectInfo::SetProjectPath( const fs::path& path )
 {
@@ -58,20 +58,20 @@ void ProjectInfo::SetFileIconPath( const fs::path& path )
 	m_FileIconPath = path;
 
 	// Set the texture
-	if ( m_pIconTexture )
+	if (m_pIconTexture)
 	{
 		m_pIconTexture->Destroy();
 		m_pIconTexture.reset();
 	}
 
-	m_pIconTexture = TextureLoader::Create( Texture::TextureType::ICON, path.string(), false );
-	if ( !m_pIconTexture )
+	m_pIconTexture = TextureLoader::Create( Texture::TextureType::ICON, path.string(), false);
+	if (!m_pIconTexture)
 	{
 		VORTEK_ERROR( "Failed to load icon texture: [{}]", path.string() );
 		return;
 	}
 
-	// VORTEK_ASSERT( m_pIconTexture && "Loading of icon texture failed." );
+	//VORTEK_ASSERT( m_pIconTexture && "Loading of icon texture failed." );
 	VORTEK_LOG( "Created Icon Texture: [{}]", path.string() );
 }
 
@@ -82,7 +82,7 @@ std::optional<fs::path> ProjectInfo::GetFileIconPath() const
 
 bool ProjectInfo::AddFolderPath( EProjectFolderType eFolderType, const std::filesystem::path& path )
 {
-	auto [ it, bSuccess ] = m_mapProjectFolderPaths.try_emplace( eFolderType, path );
+	auto [ it, bSuccess] = m_mapProjectFolderPaths.try_emplace( eFolderType, path );
 	return bSuccess;
 }
 std::optional<fs::path> ProjectInfo::TryGetFolderPath( EProjectFolderType eFolderType )
@@ -94,4 +94,76 @@ std::optional<fs::path> ProjectInfo::TryGetFolderPath( EProjectFolderType eFolde
 
 	return std::nullopt;
 }
-} // namespace VORTEK_CORE
+
+
+bool AudioConfigInfo::UpdateSoundChannels( int numChannels )
+{
+	if ( allocatedSoundChannels + numChannels > 64)
+	{
+		VORTEK_ERROR( "Failed to update sound channels. Max 64 channels are supported." );
+		return false;
+	}
+	else if (allocatedSoundChannels + numChannels < 8)
+	{
+		VORTEK_ERROR( "Failed to update sound channels. There must be at least 8 sound channels." );
+		return false;
+	}
+
+	if ( numChannels > 0 )
+		AddChannels( numChannels );
+	else if ( numChannels < 0 )
+		RemoveChannels( -numChannels );
+
+	Mix_AllocateChannels( allocatedSoundChannels );
+
+	return true;
+}
+
+bool AudioConfigInfo::EnableChannelOverride( int channel, bool bEnable )
+{
+	auto channelItr = mapSoundChannelVolume.find( channel );
+	if (channelItr == mapSoundChannelVolume.end())
+	{
+		VORTEK_ERROR( "Failed to change sound channel override. Channel[{}] is invalid.", channel );
+		return false;
+	}
+
+	channelItr->second.first = bEnable;
+	return true;
+}
+
+bool AudioConfigInfo::SetChannelVolume( int channel, int volume )
+{
+	auto channelItr = mapSoundChannelVolume.find( channel );
+	if ( channelItr == mapSoundChannelVolume.end() )
+	{
+		VORTEK_ERROR( "Failed to set sound channel volume. Channel[{}] is invalid.", channel );
+		return false;
+	}
+
+	channelItr->second.second = volume;
+	return true;
+}
+
+void AudioConfigInfo::AddChannels( int numChannels )
+{
+	for (int i = 0; i < numChannels; ++i)
+	{
+		int channelID{ allocatedSoundChannels + i };
+		mapSoundChannelVolume.emplace( channelID, std::make_pair( false, 100 ) );
+	}
+
+	allocatedSoundChannels += numChannels;
+}
+
+void AudioConfigInfo::RemoveChannels( int numChannels )
+{
+	for (int i = 0; i < numChannels && allocatedSoundChannels > 0; ++i)
+	{
+		int channelID{ allocatedSoundChannels - 1 };
+		mapSoundChannelVolume.erase( channelID );
+		--allocatedSoundChannels;
+	}
+}
+
+} // namespace Vortek::Core

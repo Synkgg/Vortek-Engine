@@ -1,4 +1,4 @@
-#include "TileTool.h"
+#include "editor/tools/TileTool.h"
 #include "Logger/Logger.h"
 #include "editor/utilities/EditorUtilities.h"
 #include "Core/ECS/MainRegistry.h"
@@ -11,13 +11,13 @@
 
 #include "editor/scene/SceneObject.h"
 
-#include "VORTEKUtilities/MathUtilities.h"
+#include "VortekUtilities/MathUtilities.h"
 
 constexpr int MOUSE_SPRITE_LAYER = 10;
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 uint32_t TileTool::CheckForTile( const glm::vec2& position )
 {
@@ -28,11 +28,11 @@ uint32_t TileTool::CheckForTile( const glm::vec2& position )
 
 	for ( auto entity : tileView )
 	{
-		Entity tile{ *m_pRegistry, entity };
+		Entity tile{ m_pRegistry, entity };
 		const auto& transform = tile.GetComponent<TransformComponent>();
 		const auto& sprite = tile.GetComponent<SpriteComponent>();
 
-		if ( m_pCurrentScene && m_pCurrentScene->GetMapType() == VORTEK_CORE::EMapType::Grid )
+		if ( m_pCurrentScene && m_pCurrentScene->GetMapType() == Vortek::Core::EMapType::Grid )
 		{
 			if ( position.x >= transform.position.x &&
 				 position.x < transform.position.x + sprite.width * transform.scale.x &&
@@ -64,16 +64,16 @@ uint32_t TileTool::CheckForTile( const glm::vec2& position )
 	return entt::null;
 }
 
-VORTEK_CORE::ECS::Entity TileTool::CreateEntity()
+Vortek::Core::ECS::Entity TileTool::CreateEntity()
 {
 	VORTEK_ASSERT( m_pRegistry && "The registry must be valid to create an entity." );
-	return VORTEK_CORE::ECS::Entity{ *m_pRegistry, "", "" };
+	return Vortek::Core::ECS::Entity{ m_pRegistry, "", "" };
 }
 
-VORTEK_CORE::ECS::Entity TileTool::CreateEntity( uint32_t id )
+Vortek::Core::ECS::Entity TileTool::CreateEntity( uint32_t id )
 {
 	VORTEK_ASSERT( m_pRegistry && "The registry must be valid to create an entity." );
-	return VORTEK_CORE::ECS::Entity{ *m_pRegistry, static_cast<entt::entity>( id ) };
+	return Vortek::Core::ECS::Entity{ m_pRegistry, static_cast<entt::entity>( id ) };
 }
 
 void TileTool::DrawMouseSprite()
@@ -111,7 +111,7 @@ void TileTool::ExamineMousePosition()
 
 	if ( m_bGridSnap )
 	{
-		if ( m_pCurrentScene->GetMapType() == VORTEK_CORE::EMapType::Grid )
+		if ( m_pCurrentScene->GetMapType() == Vortek::Core::EMapType::Grid )
 		{
 			glm::vec2 mouseGrid{ mouseWorldPos.x / ( m_MouseRect.x * transform.scale.x ),
 								 mouseWorldPos.y / ( m_MouseRect.y * transform.scale.y ) };
@@ -134,7 +134,7 @@ void TileTool::ExamineMousePosition()
 			float doubleWidthOver4 = doubleWidth / 4.f;
 			float tileHeightOver4 = canvas.tileHeight / 4.f;
 
-			auto [ cellX, cellY ] = VORTEK_CORE::ConvertWorldPosToIsoCoords( mouseWorldPos, canvas );
+			auto [ cellX, cellY ] = Vortek::Core::ConvertWorldPosToIsoCoords( mouseWorldPos, canvas );
 
 			transform.position.x =
 				( ( doubleWidthOver4 * cellX ) - ( doubleWidthOver4 * cellY ) ) * 2.f /* + canvas.offset.x*/;
@@ -154,13 +154,13 @@ TileTool::TileTool()
 	: AbstractTool()
 	, m_MouseRect{ 16.f }
 	, m_bGridSnap{ true }
-	, m_pBatchRenderer{ std::make_shared<VORTEK_RENDERING::SpriteBatchRenderer>() }
+	, m_pBatchRenderer{ std::make_shared<Vortek::Rendering::SpriteBatchRenderer>() }
 	, m_pMouseTile{ std::make_shared<Tile>() }
 {
 	m_GridCoords = glm::vec2{ 0.f };
 }
 
-void TileTool::Update( VORTEK_CORE::Canvas& canvas )
+void TileTool::Update( Vortek::Core::Canvas& canvas )
 {
 	AbstractTool::Update( canvas );
 	ExamineMousePosition();
@@ -180,14 +180,14 @@ void TileTool::LoadSpriteTextureData( const std::string& textureName )
 	m_pMouseTile->sprite = SpriteComponent{ .sTextureName = textureName,
 											.width = m_MouseRect.x,
 											.height = m_MouseRect.y,
-											.color = VORTEK_RENDERING::Color{ 255, 255, 255, 255 },
+											.color = Vortek::Rendering::Color{ 255, 255, 255, 255 },
 											.start_x = 0,
 											.start_y = 0,
 											.layer = currentLayer };
 
 	auto pTexture = MAIN_REGISTRY().GetAssetManager().GetTexture( textureName );
 	VORTEK_ASSERT( pTexture && "Texture must exist" );
-	VORTEK_CORE::GenerateUVs( m_pMouseTile->sprite, pTexture->GetWidth(), pTexture->GetHeight() );
+	Vortek::Core::GenerateUVs( m_pMouseTile->sprite, pTexture->GetWidth(), pTexture->GetHeight() );
 }
 
 const std::string& TileTool::GetSpriteTexture() const
@@ -215,7 +215,7 @@ void TileTool::SetSpriteRect( const glm::vec2& spriteRect )
 
 	auto pTexture = MAIN_REGISTRY().GetAssetManager().GetTexture( sprite.sTextureName );
 	VORTEK_ASSERT( pTexture && "Texture Must exist." );
-	VORTEK_CORE::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
+	Vortek::Core::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
 }
 
 const bool TileTool::SpriteValid() const
@@ -228,4 +228,4 @@ const bool TileTool::CanDrawOrCreate() const
 	return IsActivated() && !OutOfBounds() && IsOverTilemapWindow() && SpriteValid() && m_pCurrentScene &&
 		   m_pCurrentScene->HasTileLayers();
 }
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

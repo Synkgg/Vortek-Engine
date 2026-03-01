@@ -7,11 +7,10 @@
 #include "Core/ECS/Registry.h"
 #include <Logger/Logger.h>
 
-using namespace VORTEK_RENDERING;
+using namespace Vortek::Rendering;
 using namespace VORTEK_RESOURCES;
 
-void VORTEK_CORE::Scripting::RendererBinder::CreateRenderingBind( sol::state& lua,
-																  VORTEK_CORE::ECS::Registry& registry )
+void Vortek::Core::Scripting::RendererBinder::CreateRenderingBind( sol::state& lua, Vortek::Core::ECS::Registry& registry )
 {
 	// Get the Asset Manager
 	auto& mainRegistry = MAIN_REGISTRY();

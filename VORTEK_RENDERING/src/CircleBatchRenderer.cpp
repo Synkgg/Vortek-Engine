@@ -1,7 +1,7 @@
 #include "Rendering/Core/CircleBatchRenderer.h"
 #include "Rendering/Essentials/Primitives.h"
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 void CircleBatchRenderer::GenerateBatches()
@@ -29,13 +29,13 @@ void CircleBatchRenderer::GenerateBatches()
 		m_Offset += NUM_SPRITE_INDICES;
 		m_CurrentObject++;
 
-		if ( m_CurrentObject == MAX_SPRITES )
+		if (m_CurrentObject == MAX_SPRITES)
 		{
-			Flush( vertices );
+			Flush(vertices);
 		}
 	}
 
-	if ( !vertices.empty() && !m_Batches.empty() )
+	if ( !vertices.empty() && !m_Batches.empty())
 	{
 		glBindBuffer( GL_ARRAY_BUFFER, GetVBO() );
 
@@ -160,4 +160,4 @@ void CircleBatchRenderer::Render()
 
 	DisableVAO();
 }
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

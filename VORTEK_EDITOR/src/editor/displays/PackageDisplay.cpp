@@ -1,4 +1,4 @@
-#include "PackageDisplay.h"
+#include "Editor/displays/PackageDisplay.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include "Core/ECS/MainRegistry.h"
@@ -18,12 +18,15 @@
 #include <imgui_stdlib.h>
 
 namespace fs = std::filesystem;
-using namespace VORTEK_FILESYSTEM;
+using namespace Vortek::Filesystem;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 PackageGameDisplay::PackageGameDisplay()
-	: m_pGameConfig{ std::make_unique<VORTEK_CORE::GameConfig>() }
+	: m_pGameConfig
+{
+	std::make_unique < Vortek::Core::GameConfig>()
+}
 	, m_pPackager{ nullptr }
 	, m_sDestinationPath{}
 	, m_sScriptListPath{}
@@ -35,7 +38,7 @@ PackageGameDisplay::PackageGameDisplay()
 	, m_bScriptListExists{ false }
 	, m_bPackageHasErrors{ false }
 {
-	const auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	const auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 	auto optScriptListPath = pProjectInfo->GetScriptListPath();
 	VORTEK_ASSERT( optScriptListPath && "Script List path not set correctly in project info." );
 
@@ -78,7 +81,7 @@ void PackageGameDisplay::Draw()
 		return;
 	}
 
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 
 	ImGui::SeparatorText( "Package and Export Game" );
 	ImGui::NewLine();
@@ -99,7 +102,7 @@ void PackageGameDisplay::Draw()
 		if ( ImGui::Button( "..."
 							"##dest" ) )
 		{
-			VORTEK_FILESYSTEM::FileDialog fd{};
+			Vortek::Filesystem::FileDialog fd{};
 			const auto sFilepath = fd.SelectFolderDialog( "Choose Destination Folder", BASE_PATH );
 			if ( !sFilepath.empty() )
 			{
@@ -111,9 +114,9 @@ void PackageGameDisplay::Draw()
 				else
 				{
 					VORTEK_ERROR( "Failed to set destination. "
-								 "Destination [{}] is a reserved path. "
-								 "Please select a different path.",
-								 sFilepath );
+								  "Destination [{}] is a reserved path. "
+								  "Please select a different path.",
+								  sFilepath );
 
 					bDestinationError = true;
 				}
@@ -222,8 +225,6 @@ void PackageGameDisplay::Draw()
 		}
 
 		ImGui::PopItemWidth();
-
-		ImGui::EndChild();
 	}
 
 	ImGui::Separator();
@@ -250,7 +251,7 @@ void PackageGameDisplay::Draw()
 		{
 			// We want to ensure we are packaging the most current data.
 			// Save all files, before packaging.
-			auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+			auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 			VORTEK_ASSERT( pProjectInfo && "Project Info must exist!" );
 			// Save entire project
 			ProjectLoader pl{};
@@ -260,8 +261,8 @@ void PackageGameDisplay::Draw()
 				VORTEK_ASSERT( optProjectFilePath && "Project file path not set correctly in project info." );
 
 				VORTEK_ERROR( "Failed to save project [{}] at file [{}].",
-							 pProjectInfo->GetProjectName(),
-							 optProjectFilePath->string() );
+							  pProjectInfo->GetProjectName(),
+							  optProjectFilePath->string() );
 
 				return;
 			}
@@ -274,6 +275,7 @@ void PackageGameDisplay::Draw()
 			m_pGameConfig->velocityIterations = coreGlobals.GetVelocityIterations();
 			m_pGameConfig->gravity = coreGlobals.GetGravity();
 			m_pGameConfig->sGameName = pProjectInfo->GetProjectName();
+			m_pGameConfig->audioConfig = pProjectInfo->GetAudioConfig();
 
 			// Set window flags
 			uint32_t flags{ 0 };
@@ -291,8 +293,8 @@ void PackageGameDisplay::Draw()
 				fmt::format( "{}{}{}", m_sDestinationPath, PATH_SEPARATOR, m_pGameConfig->sGameName );
 
 			auto pPackageData = std::make_unique<PackageData>();
-			pPackageData->pProjectInfo = std::make_unique<VORTEK_CORE::ProjectInfo>( *pProjectInfo );
-			pPackageData->pGameConfig = std::make_unique<VORTEK_CORE::GameConfig>( *m_pGameConfig );
+			pPackageData->pProjectInfo = std::make_unique<Vortek::Core::ProjectInfo>( *pProjectInfo );
+			pPackageData->pGameConfig = std::make_unique<Vortek::Core::GameConfig>( *m_pGameConfig );
 			pPackageData->sTempDataPath = fs::path{ pProjectInfo->GetProjectPath() / "tempData" }.string();
 			pPackageData->sFinalDestination = sFullDestination;
 			pPackageData->sAssetFilepath = pPackageData->sTempDataPath + PATH_SEPARATOR + "assetDefs.lua";
@@ -312,6 +314,8 @@ void PackageGameDisplay::Draw()
 		ImGui::TextColored( ImVec4{ 1.f, 0.f, 0.f, 1.f }, "Unable to package game. Script List does not exist." );
 	}
 
+	ImGui::EndChild();
+
 	ImGui::End();
 }
 
@@ -321,4 +325,4 @@ bool PackageGameDisplay::CanPackageGame() const
 		   fs::exists( fs::path{ m_sDestinationPath } ) && !m_sDestinationPath.empty();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Edior

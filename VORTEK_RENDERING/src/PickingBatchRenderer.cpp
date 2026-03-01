@@ -1,7 +1,7 @@
 #include "Rendering/Core/PickingBatchRenderer.h"
 #include <algorithm>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 void PickingBatchRenderer::Initialize()
@@ -119,4 +119,4 @@ void PickingBatchRenderer::AddSprite( const glm::vec4& spriteRect, const glm::ve
 	);
 	// clang-format on
 }
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

@@ -1,7 +1,7 @@
 #include "Windowing/Inputs/Keyboard.h"
 #include <Logger/Logger.h>
 
-namespace VORTEK_WINDOWING::Inputs
+namespace Vortek::Windowing::Inputs
 {
 
 Keyboard::Keyboard()
@@ -229,4 +229,4 @@ const bool Keyboard::IsKeyJustReleased( int key ) const
 
 	return keyItr->second.bJustReleased;
 }
-} // namespace VORTEK_WINDOWING::Inputs
+} // namespace Vortek::Windowing::Inputs

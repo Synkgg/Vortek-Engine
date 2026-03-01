@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/ECS/Registry.h"
 
-#define MAIN_REGISTRY() VORTEK_CORE::ECS::MainRegistry::GetInstance()
+#define MAIN_REGISTRY() Vortek::Core::ECS::MainRegistry::GetInstance()
 #define ASSET_MANAGER() MAIN_REGISTRY().GetAssetManager()
 #define EVENT_DISPATCHER() MAIN_REGISTRY().GetEventDispatcher()
 #define ADD_EVENT_HANDLER( Event, Func, Handler ) EVENT_DISPATCHER().AddHandler<Event, Func>( Handler );
@@ -10,32 +10,32 @@ namespace VORTEK_RESOURCES
 {
 class AssetManager;
 }
-namespace VORTEK_SOUNDS
+namespace Vortek::Sounds
 {
 class MusicPlayer;
 class SoundFxPlayer;
-} // namespace VORTEK_SOUNDS
+} // namespace Vortek::Sounds
 
-namespace VORTEK_CORE::Events
+namespace Vortek::Core::Events
 {
 class EventDispatcher;
 }
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Renderer;
 }
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 class RenderSystem;
 class RenderUISystem;
 class RenderShapeSystem;
 class AnimationSystem;
 class PhysicsSystem;
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 class MainRegistry
 {
@@ -43,11 +43,11 @@ class MainRegistry
 	static MainRegistry& GetInstance();
 	bool Initialize( bool bEnableFilewatcher = false );
 
-	VORTEK_CORE::Events::EventDispatcher& GetEventDispatcher();
+	Vortek::Core::Events::EventDispatcher& GetEventDispatcher();
 	VORTEK_RESOURCES::AssetManager& GetAssetManager();
-	VORTEK_SOUNDS::MusicPlayer& GetMusicPlayer();
-	VORTEK_SOUNDS::SoundFxPlayer& GetSoundPlayer();
-	VORTEK_RENDERING::Renderer& GetRenderer();
+	Vortek::Sounds::MusicPlayer& GetMusicPlayer();
+	Vortek::Sounds::SoundFxPlayer& GetSoundPlayer();
+	Vortek::Rendering::Renderer& GetRenderer();
 
 	template <typename TContext>
 	TContext AddToContext( TContext context )
@@ -61,11 +61,11 @@ class MainRegistry
 		return m_pMainRegistry->GetContext<TContext>();
 	}
 
-	VORTEK_CORE::Systems::RenderSystem& GetRenderSystem();
-	VORTEK_CORE::Systems::RenderUISystem& GetRenderUISystem();
-	VORTEK_CORE::Systems::RenderShapeSystem& GetRenderShapeSystem();
-	VORTEK_CORE::Systems::AnimationSystem& GetAnimationSystem();
-	VORTEK_CORE::Systems::PhysicsSystem& GetPhysicsSystem();
+	Vortek::Core::Systems::RenderSystem& GetRenderSystem();
+	Vortek::Core::Systems::RenderUISystem& GetRenderUISystem();
+	Vortek::Core::Systems::RenderShapeSystem& GetRenderShapeSystem();
+	Vortek::Core::Systems::AnimationSystem& GetAnimationSystem();
+	Vortek::Core::Systems::PhysicsSystem& GetPhysicsSystem();
 	Registry* GetRegistry();
 
   private:
@@ -80,4 +80,4 @@ class MainRegistry
 	std::unique_ptr<Registry> m_pMainRegistry{ nullptr };
 	bool m_bInitialized{ false };
 };
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

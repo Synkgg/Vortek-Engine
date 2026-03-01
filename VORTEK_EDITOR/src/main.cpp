@@ -43,7 +43,7 @@ int main()
 #endif // !VORTEK_OPENGL_FORCE_DISCRETE_GPU
 #endif // !__linux
 
-	auto& app = VORTEK_EDITOR::Application::GetInstance();
+	auto& app = Vortek::Editor::Application::GetInstance();
 	app.Run();
 
 	return 0;

@@ -6,7 +6,7 @@
 
 namespace fs = std::filesystem;
 
-namespace VORTEK_CORE::Scripting
+namespace Vortek::Core::Scripting
 {
 void LuaFilesystem::CreateLuaFileSystemBind( sol::state& lua )
 {
@@ -104,4 +104,4 @@ void LuaFilesystem::CreateLuaFileSystemBind( sol::state& lua )
 			return data;
 		} );
 }
-} // namespace VORTEK_CORE::Scripting
+} // namespace Vortek::Core::Scripting

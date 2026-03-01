@@ -1,6 +1,6 @@
 #include "Registry.h"
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 template <typename TContext>
 inline TContext Registry::AddToContext( TContext context )
@@ -35,7 +35,7 @@ bool Registry::HasContext()
 template <typename... Excludes>
 inline void Registry::DestroyEntities()
 {
-	auto view = m_pRegistry->view<entt::entity>( entt::exclude<Excludes...> );
+	auto view = m_pRegistry->view<entt::entity>( entt::exclude<Excludes ...> );
 	for ( auto entity : view )
 	{
 		m_pRegistry->destroy( entity );
@@ -49,9 +49,9 @@ entt::runtime_view& add_component_to_view( Registry* registry, entt::runtime_vie
 }
 
 template <typename TComponent>
-entt::runtime_view& exclude_component_from_view( Registry* registry, entt::runtime_view& view )
+auto exclude_component_from_view( Registry* registry, entt::runtime_view* view )
 {
-	return view.exclude( registry->GetRegistry().storage<TComponent>() );
+	view->exclude( registry->GetRegistry().storage<TComponent>() );
 }
 
 template <typename TComponent>
@@ -63,4 +63,4 @@ void Registry::RegisterMetaComponent()
 		.template func<&add_component_to_view<TComponent>>( "add_component_to_view"_hs )
 		.template func<&exclude_component_from_view<TComponent>>( "exclude_component_from_view"_hs );
 }
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

@@ -25,7 +25,6 @@
 #include "editor/displays/SceneDisplay.h"
 #include "editor/displays/ScriptDisplay.h"
 #include "editor/displays/ScriptEditorDisplay.h"
-#include "editor/displays/PackageDisplay.h"
 #include "editor/displays/SceneHierarchyDisplay.h"
 #include "editor/displays/TileDetailsDisplay.h"
 #include "editor/displays/TilesetDisplay.h"
@@ -33,6 +32,7 @@
 #include "editor/displays/LogDisplay.h"
 #include "editor/displays/EditorStyleToolDisplay.h"
 #include "editor/displays/ContentDisplay.h"
+#include "editor/displays/PackageDisplay.h"
 #include "editor/displays/ProjectSettingsDisplay.h"
 
 #include "editor/scene/SceneManager.h"
@@ -41,7 +41,8 @@
 #include "editor/utilities/EditorState.h"
 #include "editor/utilities/EditorFramebuffers.h"
 #include "editor/utilities/DrawComponentUtils.h"
-#include "editor/utilities/EditorSettings.h"
+#include "editor/utilities/fonts/IconsFontAwesome5.h"
+
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "editor/systems/GridSystem.h"
 #include "editor/systems/EditorRenderSystem.h"
@@ -52,7 +53,6 @@
 
 #include "VortekUtilities/ThreadPool.h"
 #include "VortekUtilities/HelperUtilities.h"
-
 #include "editor/hub/Hub.h"
 
 // IMGUI
@@ -60,28 +60,16 @@
 #include <imgui_internal.h>
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_opengl3.h>
-#include <Notifications/imgui_notify.h>
+#include <imgui_notify.h>
 #include <SDL_opengl.h>
 #include "editor/utilities/imgui/Gui.h"
 // ===================================
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 bool Application::Initialize()
 {
-#ifndef NDEBUG
-#ifdef _WIN32
-	VORTEK_INIT_LOGS( true, true );
-#else
-	// ADD Linux stuff
-#endif
-#else
-#ifdef _WIN32
 	VORTEK_INIT_LOGS( false, true );
-#else
-	// ADD Linux stuff
-#endif
-#endif
 	VORTEK_INIT_CRASH_LOGS();
 
 	// Init SDL
@@ -115,8 +103,8 @@ bool Application::Initialize()
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
 
 	// Create the Window
-	m_pWindow = std::make_unique<VORTEK_WINDOWING::Window>(
-		"Vortek Engine", 800, 600, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, true, SDL_WINDOW_OPENGL );
+	m_pWindow = std::make_unique<Vortek::Windowing::Window>(
+		"VORTEK Engine", 800, 600, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, true, SDL_WINDOW_OPENGL );
 
 	/*
 	 * SDL Hack - If we create the window as borderless, we lose the icon in the title bar.
@@ -175,10 +163,10 @@ bool Application::Initialize()
 #ifdef VORTEK_OPENGL_DEBUG_CALLBACK
 	// OpenGL debug callback initialization. A valid current OpenGL context is necessary.
 	std::vector<unsigned int> ignore{ /* 1281, 131169, 131185, 131204, 31218*/ };
-	VORTEK_RENDERING::OpenGLDebugger::init( ignore );
-	VORTEK_RENDERING::OpenGLDebugger::breakOnError( false );
-	VORTEK_RENDERING::OpenGLDebugger::breakOnWarning( false );
-	VORTEK_RENDERING::OpenGLDebugger::setSeverityLevel( VORTEK_RENDERING::OpenGLDebuggerSeverity::Medium );
+	Vortek::Rendering::OpenGLDebugger::init( ignore );
+	Vortek::Rendering::OpenGLDebugger::breakOnError( false );
+	Vortek::Rendering::OpenGLDebugger::breakOnWarning( false );
+	Vortek::Rendering::OpenGLDebugger::setSeverityLevel( Vortek::Rendering::OpenGLDebuggerSeverity::Medium );
 #endif
 
 	auto& mainRegistry = MAIN_REGISTRY();
@@ -200,7 +188,7 @@ bool Application::Initialize()
 		return false;
 	}
 
-	mainRegistry.AddToContext<VORTEK_CORE::ProjectInfoPtr>( std::make_shared<VORTEK_CORE::ProjectInfo>() );
+	mainRegistry.AddToContext<Vortek::Core::ProjectInfoPtr>( std::make_shared<Vortek::Core::ProjectInfo>() );
 	mainRegistry.AddToContext<EditorStatePtr>( std::make_shared<EditorState>() );
 	m_pHub = std::make_unique<Hub>( *m_pWindow );
 
@@ -242,10 +230,10 @@ bool Application::InitApp()
 	}
 
 	pEditorFramebuffers->mapFramebuffers.emplace( FramebufferType::SCENE,
-												  std::make_shared<VORTEK_RENDERING::Framebuffer>( 640, 480, false ) );
+												  std::make_shared<Vortek::Rendering::Framebuffer>( 640, 480, false ) );
 
 	pEditorFramebuffers->mapFramebuffers.emplace( FramebufferType::TILEMAP,
-												  std::make_shared<VORTEK_RENDERING::Framebuffer>( 640, 480, false ) );
+												  std::make_shared<Vortek::Rendering::Framebuffer>( 640, 480, false ) );
 
 	if ( !MAIN_REGISTRY().AddToContext<std::shared_ptr<GridSystem>>( std::make_shared<GridSystem>() ) )
 	{
@@ -259,32 +247,32 @@ bool Application::InitApp()
 		return false;
 	}
 
-	auto pPickingTexture = std::make_shared<VORTEK_RENDERING::PickingTexture>( 640, 480 );
+	auto pPickingTexture = std::make_shared<Vortek::Rendering::PickingTexture>( 640, 480 );
 	if ( !pPickingTexture )
 	{
 		VORTEK_ERROR( "Failed to create the picking texture." );
 		return false;
 	}
 
-	if ( !MAIN_REGISTRY().AddToContext<std::shared_ptr<VORTEK_RENDERING::PickingTexture>>( pPickingTexture ) )
+	if ( !MAIN_REGISTRY().AddToContext<std::shared_ptr<Vortek::Rendering::PickingTexture>>( pPickingTexture ) )
 	{
 		VORTEK_ERROR( "Failed to add the picking texture to the registry context!" );
 		return false;
 	}
 
-	ADD_EVENT_HANDLER( VORTEK_EDITOR::Events::CloseEditorEvent, &Application::OnCloseEditor, *this );
+	ADD_EVENT_HANDLER( Vortek::Editor::Events::CloseEditorEvent, &Application::OnCloseEditor, *this );
 
 	// Register Meta Functions
 	RegisterEditorMetaFunctions();
-	VORTEK_CORE::CoreEngineData::RegisterMetaFunctions();
+	Vortek::Core::CoreEngineData::RegisterMetaFunctions();
 
 	// We can now set the Crash Logger path to the running project
 	const auto& sProjectPath = CORE_GLOBALS().GetProjectPath();
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 	VORTEK_CRASH_LOGGER().SetProjectPath( pProjectInfo->GetProjectPath().string() );
 
-	MAIN_REGISTRY().AddToContext<SharedThreadPool>( std::make_shared<VORTEK_UTIL::ThreadPool>( 6 ) );
- 
+	MAIN_REGISTRY().AddToContext<SharedThreadPool>( std::make_shared<Vortek::Utilities::ThreadPool>( 6 ) );
+
 	return true;
 }
 
@@ -294,37 +282,37 @@ bool Application::LoadShaders()
 	auto& assetManager = mainRegistry.GetAssetManager();
 
 	if ( !assetManager.AddShaderFromMemory(
-			 "basic", VORTEK_CORE::Shaders::basicShaderVert, VORTEK_CORE::Shaders::basicShaderFrag ) )
+			 "basic", Vortek::Core::Shaders::basicShaderVert, Vortek::Core::Shaders::basicShaderFrag ) )
 	{
 		VORTEK_ERROR( "Failed to add the basic shader to the asset manager" );
 		return false;
 	}
 
 	if ( !assetManager.AddShaderFromMemory(
-			 "color", VORTEK_CORE::Shaders::colorShaderVert, VORTEK_CORE::Shaders::colorShaderFrag ) )
+			 "color", Vortek::Core::Shaders::colorShaderVert, Vortek::Core::Shaders::colorShaderFrag ) )
 	{
 		VORTEK_ERROR( "Failed to add the color shader to the asset manager" );
 		return false;
 	}
 
 	if ( !assetManager.AddShaderFromMemory(
-			 "circle", VORTEK_CORE::Shaders::circleShaderVert, VORTEK_CORE::Shaders::circleShaderFrag ) )
+			 "circle", Vortek::Core::Shaders::circleShaderVert, Vortek::Core::Shaders::circleShaderFrag ) )
 	{
 		VORTEK_ERROR( "Failed to add the color shader to the asset manager" );
 		return false;
 	}
 
 	if ( !assetManager.AddShaderFromMemory(
-			 "font", VORTEK_CORE::Shaders::fontShaderVert, VORTEK_CORE::Shaders::fontShaderFrag ) )
+			 "font", Vortek::Core::Shaders::fontShaderVert, Vortek::Core::Shaders::fontShaderFrag ) )
 	{
 		VORTEK_ERROR( "Failed to add the font shader to the asset manager" );
 		return false;
 	}
 
 	if ( !assetManager.AddShaderFromMemory(
-			 "picking", VORTEK_CORE::Shaders::pickingShaderVert, VORTEK_CORE::Shaders::pickingShaderFrag ) )
+			 "picking", Vortek::Core::Shaders::pickingShaderVert, Vortek::Core::Shaders::pickingShaderFrag ) )
 	{
-		VORTEK_ERROR( "Failed to add the picking shader to the asset manager" );
+		VORTEK_ERROR( "Failed to add the font shader to the asset manager" );
 		return false;
 	}
 
@@ -353,6 +341,15 @@ bool Application::LoadEditorTextures()
 	}
 
 	assetManager.GetTexture( "stop_button" )->SetIsEditorTexture( true );
+
+	if ( !assetManager.AddTextureFromMemory(
+			 "music_icon", EditorTextures::g_MusicIcon, EditorTextures::g_MusicIconSize ) )
+	{
+		VORTEK_ERROR( "Failed to load texture [music_icon] from memory." );
+		return false;
+	}
+
+	assetManager.GetTexture( "music_icon" )->SetIsEditorTexture( true );
 
 	if ( !assetManager.AddTextureFromMemory(
 			 "scene_icon", EditorTextures::g_SceneIcon, EditorTextures::g_SceneIconSize ) )
@@ -422,13 +419,6 @@ bool Application::LoadEditorTextures()
 
 	assetManager.GetTexture( "file_icon" )->SetIsEditorTexture( true );
 
-	if ( !assetManager.AddTextureFromMemory(
-			 "music_icon", EditorTextures::g_MusicIcon, EditorTextures::g_MusicIconSize ) )
-	{
-		VORTEK_ERROR( "Failed to load texture [music_icon] from memory." );
-		return false;
-	}
-
 	assetManager.GetTexture( "music_icon" )->SetIsEditorTexture( true );
 
 	if ( !assetManager.AddTextureFromMemory(
@@ -486,10 +476,9 @@ bool Application::LoadEditorTextures()
 	return true;
 }
 
-
 void Application::ProcessEvents()
 {
-	auto& inputManager = VORTEK_CORE::InputManager::GetInstance();
+	auto& inputManager = Vortek::Core::InputManager::GetInstance();
 	auto& keyboard = inputManager.GetKeyboard();
 	auto& mouse = inputManager.GetMouse();
 
@@ -501,13 +490,13 @@ void Application::ProcessEvents()
 		case SDL_QUIT: m_bIsRunning = false; break;
 		case SDL_KEYDOWN:
 			keyboard.OnKeyPressed( m_Event.key.keysym.sym );
-			EVENT_DISPATCHER().EmitEvent( VORTEK_CORE::Events::KeyEvent{
-				.key = m_Event.key.keysym.sym, .eType = VORTEK_CORE::Events::EKeyEventType::Pressed } );
+			EVENT_DISPATCHER().EmitEvent( Vortek::Core::Events::KeyEvent{
+				.key = m_Event.key.keysym.sym, .eType = Vortek::Core::Events::EKeyEventType::Pressed } );
 			break;
 		case SDL_KEYUP:
 			keyboard.OnKeyReleased( m_Event.key.keysym.sym );
-			EVENT_DISPATCHER().EmitEvent( VORTEK_CORE::Events::KeyEvent{
-				.key = m_Event.key.keysym.sym, .eType = VORTEK_CORE::Events::EKeyEventType::Released } );
+			EVENT_DISPATCHER().EmitEvent( Vortek::Core::Events::KeyEvent{
+				.key = m_Event.key.keysym.sym, .eType = Vortek::Core::Events::EKeyEventType::Released } );
 			break;
 		case SDL_MOUSEBUTTONDOWN: mouse.OnBtnPressed( m_Event.button.button ); break;
 		case SDL_MOUSEBUTTONUP: mouse.OnBtnReleased( m_Event.button.button ); break;
@@ -518,8 +507,27 @@ void Application::ProcessEvents()
 		case SDL_MOUSEMOTION: mouse.SetMouseMoving( true ); break;
 		case SDL_CONTROLLERBUTTONDOWN: inputManager.GamepadBtnPressed( m_Event ); break;
 		case SDL_CONTROLLERBUTTONUP: inputManager.GamepadBtnReleased( m_Event ); break;
-		case SDL_CONTROLLERDEVICEADDED: inputManager.AddGamepad( m_Event.jdevice.which ); break;
-		case SDL_CONTROLLERDEVICEREMOVED: inputManager.RemoveGamepad( m_Event.jdevice.which ); break;
+		case SDL_CONTROLLERDEVICEADDED: {
+			int index = inputManager.AddGamepad( m_Event.jdevice.which );
+			if ( index > 0 )
+			{
+				EVENT_DISPATCHER().EmitEvent( Vortek::Core::Events::GamepadConnectEvent{
+					.eConnectType = Vortek::Core::Events::EGamepadConnectType::Connected, .index = index } );
+			}
+
+			break;
+		}
+		case SDL_CONTROLLERDEVICEREMOVED: {
+			int index = inputManager.RemoveGamepad( m_Event.jdevice.which );
+
+			if ( index > 0 )
+			{
+				EVENT_DISPATCHER().EmitEvent( Vortek::Core::Events::GamepadConnectEvent{
+					.eConnectType = Vortek::Core::Events::EGamepadConnectType::Disconnected, .index = index } );
+			}
+
+			break;
+		}
 		case SDL_JOYAXISMOTION: inputManager.GamepadAxisValues( m_Event ); break;
 		case SDL_JOYHATMOTION: inputManager.GamepadHatValues( m_Event ); break;
 		case SDL_WINDOWEVENT: {
@@ -538,7 +546,7 @@ void Application::ProcessEvents()
 			break;
 		}
 		case SDL_DROPFILE: {
-			EVENT_DISPATCHER().EmitEvent( VORTEK_EDITOR::Events::FileEvent{
+			EVENT_DISPATCHER().EmitEvent( Vortek::Editor::Events::FileEvent{
 				.eAction = Events::EFileAction::FileDropped, .sFilepath = std::string{ m_Event.drop.file } } );
 
 			break;
@@ -550,7 +558,6 @@ void Application::ProcessEvents()
 		ImGui_ImplSDL2_ProcessEvent( &m_Event );
 	}
 }
-
 
 void Application::Update()
 {
@@ -568,7 +575,7 @@ void Application::Update()
 void Application::UpdateInputs()
 {
 	// Update inputs
-	auto& inputManager = VORTEK_CORE::InputManager::GetInstance();
+	auto& inputManager = Vortek::Core::InputManager::GetInstance();
 	auto& keyboard = inputManager.GetKeyboard();
 	keyboard.Update();
 	auto& mouse = inputManager.GetMouse();
@@ -590,7 +597,7 @@ void Application::Render()
 void Application::CleanUp()
 {
 	// Save the editor state.
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 	auto& pEditorState = MAIN_REGISTRY().GetContext<EditorStatePtr>();
 	pEditorState->Save( *pProjectInfo );
 
@@ -692,7 +699,7 @@ bool Application::CreateDisplays()
 	auto pPackageDisplay = std::make_unique<PackageGameDisplay>();
 	if ( !pPackageDisplay )
 	{
-		VORTEK_ERROR( "Failed to Create Package Display!" );
+		VORTEK_ERROR( "Failed to Create Script Display!" );
 		return false;
 	}
 
@@ -740,9 +747,9 @@ void Application::InitDisplays()
 		ImGui::DockBuilderDockWindow( ICON_FA_CLIPBOARD_LIST " Tile Details", RightNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_LAYER_GROUP " Tile Layers", TileLayerId );
 		ImGui::DockBuilderDockWindow( ICON_FA_SITEMAP " Scene Hierarchy", leftNodeId );
-		ImGui::DockBuilderDockWindow( ICON_FA_IMAGE "Scene", centerNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_IMAGE " Scene", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_CODE " Script List", centerNodeId );
-		ImGui::DockBuilderDockWindow( ICON_FA_DESKTOP " Script Editor", centerNodeId );
+		ImGui::DockBuilderDockWindow( ICON_FA_CODE " Script Editor", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_ARCHIVE " Game Packager", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_COG " Project Settings", centerNodeId );
 		ImGui::DockBuilderDockWindow( ICON_FA_MAP " Tilemap Editor", centerNodeId );
@@ -771,18 +778,18 @@ void Application::RenderDisplays()
 
 void Application::RegisterEditorMetaFunctions()
 {
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::Identification>();
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::TransformComponent>();
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::SpriteComponent>();
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::AnimationComponent>();
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::PhysicsComponent>();
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::TextComponent>();
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::RigidBodyComponent>();
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::BoxColliderComponent>();
-	DrawComponentsUtil::RegisterUIComponent<VORTEK_CORE::ECS::CircleColliderComponent>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::Identification>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::TransformComponent>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::SpriteComponent>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::AnimationComponent>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::PhysicsComponent>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::TextComponent>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::RigidBodyComponent>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::BoxColliderComponent>();
+	DrawComponentsUtil::RegisterUIComponent<Vortek::Core::ECS::CircleColliderComponent>();
 }
 
-void Application::OnCloseEditor( VORTEK_EDITOR::Events::CloseEditorEvent& close )
+void Application::OnCloseEditor( Vortek::Editor::Events::CloseEditorEvent& close )
 {
 	// TODO: Maybe add a check for save??
 	m_bIsRunning = false;
@@ -828,4 +835,4 @@ void Application::Run()
 
 	CleanUp();
 }
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

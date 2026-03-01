@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 /*
  * Rigid Body Component - Use this when you don't want the physics to be controlled by
@@ -19,4 +19,4 @@ struct RigidBodyComponent
 
 	static void CreateRigidBodyBind( sol::state& lua );
 };
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

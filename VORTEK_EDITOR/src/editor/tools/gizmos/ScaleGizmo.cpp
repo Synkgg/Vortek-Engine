@@ -1,4 +1,4 @@
-#include "ScaleGizmo.h"
+#include "editor/tools/gizmos/ScaleGizmo.h"
 #include "editor/utilities/EditorUtilities.h"
 #include "Rendering/Core/BatchRenderer.h"
 #include "Rendering/Core/Camera2D.h"
@@ -14,12 +14,12 @@
 
 #include "Logger/Logger.h"
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
 // TODO: Add a scaling factor to the editor for all gizmos.
-constexpr float SCALING_FACTOR = 0.01f;
+constexpr float SCALING_FACTOR = 0.1f;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 ScaleGizmo::ScaleGizmo()
 	: Gizmo()
@@ -27,7 +27,7 @@ ScaleGizmo::ScaleGizmo()
 	Init( "x_axis_scale", "y_axis_scale" );
 }
 
-void ScaleGizmo::Update( VORTEK_CORE::Canvas& canvas )
+void ScaleGizmo::Update( Vortek::Core::Canvas& canvas )
 {
 	Gizmo::Update( canvas );
 
@@ -39,7 +39,7 @@ void ScaleGizmo::Update( VORTEK_CORE::Canvas& canvas )
 
 	Show();
 
-	Entity selectedEntity{ *m_pRegistry, m_SelectedEntity };
+	Entity selectedEntity{ m_pRegistry, m_SelectedEntity };
 	auto& selectedTransform = selectedEntity.GetComponent<TransformComponent>();
 
 	float deltaX{ GetDeltaX() * SCALING_FACTOR };
@@ -56,7 +56,7 @@ void ScaleGizmo::Update( VORTEK_CORE::Canvas& canvas )
 	ExamineMousePosition();
 }
 
-void ScaleGizmo::Draw( VORTEK_RENDERING::Camera2D* pCamera )
+void ScaleGizmo::Draw( Vortek::Rendering::Camera2D* pCamera )
 {
 	if ( m_bHidden )
 		return;
@@ -126,4 +126,4 @@ void ScaleGizmo::Draw( VORTEK_RENDERING::Camera2D* pCamera )
 	pShader->Disable();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

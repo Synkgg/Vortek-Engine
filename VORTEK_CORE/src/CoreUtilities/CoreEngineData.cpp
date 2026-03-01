@@ -6,33 +6,33 @@
 
 #include <Logger/Logger.h>
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 constexpr float METERS_TO_PIXELS = 12.f;
 constexpr float PIXELS_TO_METERS = 1.f / METERS_TO_PIXELS;
 
 // clang-format off
-	static std::unordered_map<EGameType, std::string> g_mapGameTypeToStr
-	{
-		{ EGameType::TopDown,		"Top Down" },
-		{ EGameType::Platformer,	"Platformer" },
-		{ EGameType::Fighting,		"Fighting" },
-		{ EGameType::Puzzle,		"Puzzle" },
-		{ EGameType::Rougelike,		"Rougelike" },
-		{ EGameType::NoType,		"No Type" }
-	};
+static std::unordered_map<EGameType, std::string> g_mapGameTypeToStr
+{
+	{ EGameType::TopDown,		"Top Down" },
+	{ EGameType::Platformer,	"Platformer" },
+	{ EGameType::Fighting,		"Fighting" },
+	{ EGameType::Puzzle,		"Puzzle" },
+	{ EGameType::Rougelike,		"Rougelike" },
+	{ EGameType::NoType,		"No Type" }
+};
 
-	static std::unordered_map< std::string, EGameType > g_mapStrToGameType
-	{
-		{ "Top Down",				EGameType::TopDown },
-		{ "Platformer" ,			EGameType::Platformer},
-		{ "Fighting",				EGameType::Fighting },
-		{ "Puzzle",					EGameType::Puzzle},
-		{ "Rougelike",				EGameType::Rougelike },
-		{ "No Type",				EGameType::NoType }
-	};
+static std::unordered_map< std::string, EGameType > g_mapStrToGameType
+{
+	{ "Top Down",				EGameType::TopDown },
+	{ "Platformer" ,			EGameType::Platformer },
+	{ "Fighting",				EGameType::Fighting },
+	{ "Puzzle",					EGameType::Puzzle },
+	{ "Rougelike",				EGameType::Rougelike },
+	{ "No Type",				EGameType::NoType }
+};
 
 // clang-format on
 
@@ -103,7 +103,7 @@ void CoreEngineData::SetScaledHeight( float newHeight )
 
 std::string CoreEngineData::GetGameTypeStr( EGameType eType )
 {
-	if ( auto itr = g_mapGameTypeToStr.find( eType ); itr != g_mapGameTypeToStr.end() )
+	if (auto itr = g_mapGameTypeToStr.find(eType); itr != g_mapGameTypeToStr.end())
 	{
 		return itr->second;
 	}
@@ -155,7 +155,7 @@ void CoreEngineData::RegisterMetaFunctions()
 	Registry::RegisterMetaComponent<UIComponent>();
 
 	// Register User Data Types
-	VORTEK_CORE::Scripting::UserDataBinder::register_meta_user_data<ObjectData>();
+	Vortek::Core::Scripting::UserDataBinder::register_meta_user_data<ObjectData>();
 }
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

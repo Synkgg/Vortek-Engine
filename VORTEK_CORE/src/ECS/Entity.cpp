@@ -5,19 +5,19 @@
 #include "Core/CoreUtilities/CoreUtilities.h"
 #include "Core/Scene/Scene.h"
 
-using namespace VORTEK_CORE::Utils;
+using namespace Vortek::Core::Utils;
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 
-Entity::Entity( Registry& registry )
+Entity::Entity( Registry* registry )
 	: Entity( registry, "GameObject", "" )
 {
 }
 
-Entity::Entity( Registry& registry, const std::string& name, const std::string& group )
-	: m_Registry( registry )
-	, m_Entity{ registry.CreateEntity() }
+Entity::Entity( Registry* registry, const std::string& name, const std::string& group )
+	: m_Registry{ registry }
+	, m_Entity{ registry->CreateEntity() }
 	, m_sName{ name }
 	, m_sGroup{ group }
 {
@@ -28,9 +28,9 @@ Entity::Entity( Registry& registry, const std::string& name, const std::string& 
 	AddComponent<Relationship>( Relationship{ .self = m_Entity } );
 }
 
-Entity::Entity( Registry& registry, const entt::entity& entity )
-	: m_Registry( registry )
-	, m_Entity( entity )
+Entity::Entity( Registry* registry, const entt::entity& entity )
+	: m_Registry{ registry }
+	, m_Entity{ entity }
 	, m_sName{}
 	, m_sGroup{}
 {
@@ -42,9 +42,69 @@ Entity::Entity( Registry& registry, const entt::entity& entity )
 	}
 }
 
-bool Entity::AddChild( entt::entity child )
+Entity::Entity( const Entity& other )
+	: m_Registry{ other.m_Registry }
+	, m_Entity{ other.m_Entity }
+	, m_sName{ other.m_sName }
+	, m_sGroup{ other.m_sGroup }
 {
-	auto& registry = m_Registry.GetRegistry();
+
+}
+
+Entity& Entity::operator=( const Entity& other )
+{
+	if (this != &other)
+	{
+		this->m_Registry = other.m_Registry;
+		this->m_Entity = other.m_Entity;
+		this->m_sName = other.m_sName;
+		this->m_sGroup = other.m_sGroup;
+	}
+
+	return *this;
+}
+
+Entity::Entity( Entity&& other ) noexcept
+	: m_Registry{ other.m_Registry }
+	, m_Entity{ other.m_Entity }
+	, m_sName{ std::move(other.m_sName) }
+	, m_sGroup{ std::move(other.m_sGroup)}
+{
+	other.m_Registry = nullptr;
+	other.m_Entity = entt::null;
+	other.m_sName.clear();
+	other.m_sGroup.clear();
+}
+
+Entity& Entity::operator=( Entity&& other ) noexcept
+{
+	if (this != &other)
+	{
+
+	}
+
+	return *this;
+}
+
+Entity::~Entity() {
+
+}
+
+bool Entity::AddChild( entt::entity child, bool bSetLocal )
+{
+	auto& registry = m_Registry->GetRegistry();
+	if (auto* pChildUneditable = registry.try_get<UneditableComponent>(child))
+	{
+		VORTEK_WARN( "Failed to add child. Child is an uneditable entity." );
+		return false;
+	}
+
+	if ( auto* pParentUneditable = registry.try_get<UneditableComponent>( m_Entity ) )
+	{
+		VORTEK_WARN( "Failed to add child. Parent is an uneditable entity." );
+		return false;
+	}
+
 	auto& relations = registry.get<Relationship>( m_Entity );
 
 	Entity childEntity{ m_Registry, child };
@@ -96,10 +156,11 @@ bool Entity::AddChild( entt::entity child )
 
 		// Set the childs local position
 		auto& childTransform = childEntity.GetComponent<TransformComponent>();
-		if ( relations.parent != entt::null )
+		if ( relations.parent != entt::null && bSetLocal )
 		{
 			childTransform.localPosition =
 				childTransform.position - registry.get<TransformComponent>( relations.parent ).position;
+			childTransform.localRotation = childTransform.rotation;
 		}
 
 		return true;
@@ -147,7 +208,11 @@ bool Entity::AddChild( entt::entity child )
 
 	// Set the childs local position
 	auto& childTransform = childEntity.GetComponent<TransformComponent>();
-	childTransform.localPosition = childTransform.position - GetComponent<TransformComponent>().position;
+	if ( bSetLocal )
+	{
+		childTransform.localPosition = childTransform.position - GetComponent<TransformComponent>().position;
+		childTransform.localRotation = childTransform.rotation;
+	}
 
 	// Check to see if the parent has any children
 	// Parent has no children, add as the first child
@@ -170,13 +235,14 @@ void Entity::UpdateTransform()
 	auto& relations = GetComponent<Relationship>();
 	auto& transform = GetComponent<TransformComponent>();
 
-	glm::vec2 parentPosition{ 0.f };
+	//glm::vec2 parentPosition{ 0.f };
 	auto parent = relations.parent;
 	if ( parent != entt::null )
 	{
 		Entity ent{ m_Registry, parent };
-		parentPosition = ent.GetComponent<TransformComponent>().position;
-		transform.position = parentPosition + transform.localPosition;
+		const auto& parentTransform = ent.GetComponent<TransformComponent>();
+		transform.position = parentTransform.position + transform.localPosition;
+		transform.rotation = parentTransform.rotation + transform.localRotation; 
 	}
 
 	if ( relations.firstChild == entt::null )
@@ -198,6 +264,18 @@ void Entity::ChangeName( const std::string& sName )
 	m_sName = sName;
 }
 
+void Entity::Destroy()
+{
+	if ( !m_Registry->IsValid( m_Entity ) )
+	{
+		VORTEK_ERROR( "Failed t destroy entity. Entity ID [{}] is not valid.", static_cast<std::uint32_t>( m_Entity ) );
+		return;
+	}
+
+	// TODO: Handle Deleting children etc
+	m_Registry->AddToPendingDestruction( m_Entity );
+}
+
 void Entity::CreateLuaEntityBind( sol::state& lua, Registry& registry )
 {
 	using namespace entt::literals;
@@ -206,10 +284,10 @@ void Entity::CreateLuaEntityBind( sol::state& lua, Registry& registry )
 		sol::call_constructor,
 		sol::factories(
 			[ & ]( Registry& reg, const std::string& sName, const std::string& sGroup ) {
-				return Entity{ reg, sName, sGroup };
+				return Entity{ &reg, sName, sGroup };
 			},
-			[ & ]( const std::string& name, const std::string& group ) { return Entity{ registry, name, group }; },
-			[ & ]( std::uint32_t id ) { return Entity{ registry, static_cast<entt::entity>( id ) }; } ),
+			[ & ]( const std::string& name, const std::string& group ) { return Entity{ &registry, name, group }; },
+			[ & ]( std::uint32_t id ) { return Entity{ &registry, static_cast<entt::entity>( id ) }; } ),
 		"addComponent",
 		[]( Entity& entity, const sol::table& comp, sol::this_state s ) -> sol::object {
 			if ( !comp.valid() )
@@ -241,8 +319,8 @@ void Entity::CreateLuaEntityBind( sol::state& lua, Registry& registry )
 		&Entity::GetName,
 		"group",
 		&Entity::GetGroup,
-		"kill",
-		&Entity::Kill,
+		"destroy",
+		&Entity::Destroy,
 		"addChild",
 		[]( Entity& entity, Entity& child ) { entity.AddChild( child.GetEntity() ); },
 		"updateTransform",
@@ -252,7 +330,7 @@ void Entity::CreateLuaEntityBind( sol::state& lua, Registry& registry )
 			if ( auto* pSprite = entity.TryGetComponent<SpriteComponent>(); pSprite->bIsoMetric )
 			{
 				auto& transform = entity.GetComponent<TransformComponent>();
-				auto [ cellX, cellY ] = VORTEK_CORE::ConvertWorldPosToIsoCoords( transform.position, canvas );
+				auto [ cellX, cellY ] = Vortek::Core::ConvertWorldPosToIsoCoords( transform.position, canvas );
 				pSprite->isoCellX = cellX;
 				pSprite->isoCellY = cellY;
 			}
@@ -264,4 +342,4 @@ void Entity::CreateLuaEntityBind( sol::state& lua, Registry& registry )
 		"id",
 		[]( Entity& entity ) { return static_cast<uint32_t>( entity.GetEntity() ); } );
 }
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

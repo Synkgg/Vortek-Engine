@@ -8,7 +8,7 @@
 #include <functional>
 #include <atomic>
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 class ThreadPool
 {
@@ -113,6 +113,6 @@ class ThreadPool
 	/* Indicates if the pool is shutting down. */
 	std::atomic<bool> m_bStopped;
 };
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities
 
-using SharedThreadPool = std::shared_ptr<VORTEK_UTIL::ThreadPool>;
+using SharedThreadPool = std::shared_ptr<Vortek::Utilities::ThreadPool>;

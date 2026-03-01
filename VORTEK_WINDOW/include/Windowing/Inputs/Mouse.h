@@ -2,7 +2,7 @@
 #include "Button.h"
 #include "MouseButtons.h"
 
-namespace VORTEK_WINDOWING::Inputs
+namespace Vortek::Windowing::Inputs
 {
 class Mouse
 {
@@ -41,4 +41,4 @@ class Mouse
 	int m_WheelY{ 0 };
 	bool m_bMouseMoving{ false };
 };
-} // namespace VORTEK_WINDOWING::Inputs
+} // namespace Vortek::Windowing::Inputs

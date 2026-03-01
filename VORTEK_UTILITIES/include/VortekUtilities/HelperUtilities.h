@@ -9,10 +9,10 @@
 
 #ifdef _WIN32
 constexpr char PATH_SEPARATOR = '\\';
-#define DEFAULT_PROJECT_PATH BASE_PATH + "Vortek Projects"
+#define DEFAULT_PROJECT_PATH BASE_PATH + "VortekProjects"
 #else
 constexpr char PATH_SEPARATOR = '/';
-#define DEFAULT_PROJECT_PATH BASE_PATH + PATH_SEPARATOR + "Vortek Projects"
+#define DEFAULT_PROJECT_PATH BASE_PATH + PATH_SEPARATOR + "VortekProjects"
 #endif
 
 #define SCRIPTS "scripts"
@@ -22,7 +22,7 @@ constexpr char PATH_SEPARATOR = '/';
 constexpr const std::string_view CONTENT_FOLDER = "content";
 constexpr const std::string_view PRJ_FILE_EXT = ".veprj";
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 
 struct SpriteLayerParams
@@ -31,10 +31,10 @@ struct SpriteLayerParams
 	bool bVisible{ true };
 	int layer{ -1 };
 
-	friend bool operator==( const SpriteLayerParams& a, const SpriteLayerParams& b )
+	friend bool operator==(const SpriteLayerParams& a, const SpriteLayerParams& b)
 	{
 		return a.sLayerName == b.sLayerName && a.bVisible == b.bVisible && a.layer == b.layer;
 	}
 };
 
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities

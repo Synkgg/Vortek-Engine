@@ -1,4 +1,4 @@
-#include "MenuDisplay.h"
+#include "editor/displays/MenuDisplay.h"
 #include "Logger/Logger.h"
 #include "VortekFilesystem/Dialogs/FileDialog.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
@@ -19,12 +19,12 @@
 #include "Core/Events/EventDispatcher.h"
 #include "editor/events/EditorEventTypes.h"
 
-#include "VORTEKUtilities/VORTEKUtilities.h"
+#include "VortekUtilities/VortekUtilities.h"
 
 #include <imgui.h>
 #include <SDL.h>
 
-#include <Notifications/imgui_notify.h>
+#include <imgui_notify.h>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -73,8 +73,9 @@ int LoadEditorThemeIndex()
 	return 3; // Default to Vortek Custom
 }
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
+
 static bool bOpenEditorSettings = false;
 static int selectedTheme = LoadEditorThemeIndex();
 static const char* themes[] = { "ImGui Dark", "ImGui Light", "ImGui Classic", "Vortek Custom" };
@@ -93,17 +94,6 @@ void ApplyThemeByIndex( int index )
 
 void MenuDisplay::Draw()
 {
-
-	static bool bThemeInitialized = false;
-
-	if ( !bThemeInitialized )
-	{
-		g_SelectedThemeIndex = LoadEditorThemeIndex();
-		g_AppliedThemeIndex = g_SelectedThemeIndex;
-		ApplyThemeByIndex( g_AppliedThemeIndex );
-		bThemeInitialized = true;
-	}
-
 	auto& sceneManager = SCENE_MANAGER();
 	if ( ImGui::BeginMainMenuBar() )
 	{
@@ -121,12 +111,12 @@ void MenuDisplay::Draw()
 			{
 				VORTEK_ERROR( "Open -- Not Implemented" );
 			}
-
 			ImGui::InlineLabel( ICON_FA_SAVE, 32.f );
 			if ( ImGui::MenuItem( "Save All", "Ctrl + S" ) )
 			{
-				auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+				auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 				VORTEK_ASSERT( pProjectInfo && "Project Info must exist!" );
+
 				// Save entire project
 				ProjectLoader pl{};
 				if ( !pl.SaveLoadedProject( *pProjectInfo ) )
@@ -161,8 +151,10 @@ void MenuDisplay::Draw()
 			ImGui::InlineLabel( ICON_FA_FILE_IMPORT, 32.f );
 			if ( ImGui::MenuItem( "Import Tiled Map" ) )
 			{
-				VORTEK_FILESYSTEM::FileDialog fd{};
-				const auto sFilepath = fd.OpenFileDialog( "Import Tiled Map", BASE_PATH, { "*.lua", "*.tmx" } );
+				Vortek::Filesystem::FileDialog fd{};
+				const auto sFilepath =
+					fd.OpenFileDialog( "Import Tiled Map", BASE_PATH, { "*.lua", "*.tmx" }, "Tiled Map Files (*.lua, *.tmx)" );
+
 				if ( !sFilepath.empty() )
 				{
 					if ( !TiledMapImporter::ImportTilemapFromTiled( &SCENE_MANAGER(), sFilepath ) )
@@ -306,9 +298,9 @@ void MenuDisplay::Draw()
 
 					std::string sPlayerStartCharacter{ pCurrentScene->GetPlayerStart().GetCharacterName() };
 					auto prefabs =
-						VORTEK_UTIL::GetKeys( ASSET_MANAGER().GetAllPrefabs() /*, []( auto& prefab ) {
-			   return prefab.second->GetType() == VORTEK_CORE::EPrefabType::Character;
-		   } */ );
+						Vortek::Utilities::GetKeys( ASSET_MANAGER().GetAllPrefabs() /*, []( auto& prefab ) {
+			  return prefab.second->GetType() == Vortek::Core::EPrefabType::Character;
+		  } */ );
 
 					ImGui::InlineLabel( ICON_FA_FLAG ICON_FA_GAMEPAD " Player Start Character:" );
 					ImGui::SetCursorPosX( 250.f );
@@ -338,7 +330,7 @@ void MenuDisplay::Draw()
 
 					bChanged = true;
 
-					auto musicNames = VORTEK_UTIL::GetKeys( ASSET_MANAGER().GetAllMusic() );
+					auto musicNames = Vortek::Utilities::GetKeys( ASSET_MANAGER().GetAllMusic() );
 					musicNames.push_back( "None" );
 
 					std::string sDefaultSceneMusic{ pCurrentScene->GetDefaultMusicName() };
@@ -432,8 +424,8 @@ void MenuDisplay::Draw()
 				{
 					g_AppliedThemeIndex = g_SelectedThemeIndex; // Set the active one
 					ApplyThemeByIndex( g_AppliedThemeIndex );
-					VORTEK_EDITOR::SaveEditorConfig( VORTEK_EDITOR::g_SelectedThemeIndex,
-													 VORTEK_EDITOR::g_UseNewHubUI );
+					Vortek::Editor::SaveEditorConfig( Vortek::Editor::g_SelectedThemeIndex,
+													  Vortek::Editor::g_UseNewHubUI );
 				}
 			}
 			else if ( selectedTab == 1 )
@@ -441,11 +433,11 @@ void MenuDisplay::Draw()
 				ImGui::Text( "General Settings" );
 				ImGui::Separator();
 
-				if ( ImGui::Checkbox( "Use New Hub UI", &VORTEK_EDITOR::g_UseNewHubUI ) )
+				if ( ImGui::Checkbox( "Use New Hub UI", &Vortek::Editor::g_UseNewHubUI ) )
 				{
 					// Save config immediately on toggle
-					VORTEK_EDITOR::SaveEditorConfig( VORTEK_EDITOR::g_SelectedThemeIndex,
-													 VORTEK_EDITOR::g_UseNewHubUI );
+					Vortek::Editor::SaveEditorConfig( Vortek::Editor::g_SelectedThemeIndex,
+													  Vortek::Editor::g_UseNewHubUI );
 				}
 			}
 			else if ( selectedTab == 2 )
@@ -475,4 +467,5 @@ void MenuDisplay::DrawDisplayItem( EditorState& editorState, const std::string& 
 		ImGui::Text( ICON_FA_CHECK );
 	}
 }
-} // namespace VORTEK_EDITOR
+
+} // namespace Vortek::Editor

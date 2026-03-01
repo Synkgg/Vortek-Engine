@@ -12,7 +12,7 @@
  * @param Takes an std::string_view or string in the form of "This is a log value: {0}, and {1}", followed by
  * the arguments
  */
-#define VORTEK_LOG( x, ... ) VORTEK_LOGGER::Logger::GetInstance().Log( x __VA_OPT__(, ) __VA_ARGS__ )
+#define VORTEK_LOG( x, ... ) Vortek::Logger::Logger::GetInstance().Log( x __VA_OPT__(, ) __VA_ARGS__ )
 
 /*
  * @brief Variadic Macro for logging warnings. This macro takes in a string message, followed by the
@@ -20,7 +20,7 @@
  * @param Takes an std::string_view or string in the form of "This is a log value: {0}, and {1}", followed by
  * the arguments
  */
-#define VORTEK_WARN( x, ... ) VORTEK_LOGGER::Logger::GetInstance().Warn( x __VA_OPT__(, ) __VA_ARGS__ )
+#define VORTEK_WARN( x, ... ) Vortek::Logger::Logger::GetInstance().Warn( x __VA_OPT__(, ) __VA_ARGS__ )
 
 /*
  * @brief Variadic Macro for logging Errors. This macro takes in a string message, followed by the
@@ -29,15 +29,15 @@
  * the arguments
  */
 #define VORTEK_ERROR( x, ... )                                                                                          \
-	VORTEK_LOGGER::Logger::GetInstance().Error( std::source_location::current(), x __VA_OPT__(, ) __VA_ARGS__ )
+	Vortek::Logger::Logger::GetInstance().Error( std::source_location::current(), x __VA_OPT__(, ) __VA_ARGS__ )
 
 #define VORTEK_ASSERT( x ) assert( x )
-#define VORTEK_INIT_LOGS( console, retain ) VORTEK_LOGGER::Logger::GetInstance().Init( console, retain )
+#define VORTEK_INIT_LOGS( console, retain ) Vortek::Logger::Logger::GetInstance().Init( console, retain )
 
-#define VORTEK_GET_LOGS() VORTEK_LOGGER::Logger::GetInstance().GetLogs()
-#define VORTEK_CLEAR_LOGS() VORTEK_LOGGER::Logger::GetInstance().ClearLogs()
+#define VORTEK_GET_LOGS() Vortek::Logger::Logger::GetInstance().GetLogs()
+#define VORTEK_CLEAR_LOGS() Vortek::Logger::Logger::GetInstance().ClearLogs()
 
-namespace VORTEK_LOGGER
+namespace Vortek::Logger
 {
 struct LogEntry
 {
@@ -82,7 +82,11 @@ class Logger
 
 	inline void ClearLogs() { m_LogEntries.clear(); }
 	inline const std::vector<LogEntry>& GetLogs() { return m_LogEntries; }
-	
+
+  private:
+	std::string CurrentDateTime();
+	void WriteConsoleLog( std::string_view sv, LogEntry::LogType eType );
+
   private:
 	std::mutex m_Mutex;
 	std::vector<LogEntry> m_LogEntries;
@@ -98,8 +102,7 @@ class Logger
 		LogTime( const std::string& date );
 	};
 
-	std::string CurrentDateTime();
 };
-} // namespace VORTEK_LOGGER
+} // namespace Vortek::Logger
 
 #include "Logger.inl"

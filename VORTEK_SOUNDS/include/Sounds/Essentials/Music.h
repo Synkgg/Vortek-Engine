@@ -1,8 +1,8 @@
 #pragma once
-#include <VORTEKUtilities/SDL_Wrappers.h>
+#include <VortekUtilities/SDL_Wrappers.h>
 #include "SoundParams.h"
 
-namespace VORTEK_SOUNDS
+namespace Vortek::Sounds
 {
 class Music
 {
@@ -26,4 +26,4 @@ class Music
 	SoundParams m_Params{};
 	MusicPtr m_pMusic{ nullptr };
 };
-} // namespace VORTEK_SOUNDS
+} // namespace Vortek::Sounds

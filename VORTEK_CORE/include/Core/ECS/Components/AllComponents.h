@@ -12,8 +12,9 @@
 #include "TileComponent.h"
 #include "Relationship.h"
 #include "UIComponent.h"
+#include "PersistentComponent.h"
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 enum class EUneditableType
 {
@@ -30,4 +31,4 @@ struct UneditableComponent
 	EUneditableType eType{ EUneditableType::PlayerStart };
 };
 
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

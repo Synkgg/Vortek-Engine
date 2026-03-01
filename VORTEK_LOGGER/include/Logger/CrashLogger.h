@@ -4,10 +4,10 @@
 
 struct lua_State;
 
-#define VORTEK_CRASH_LOGGER() VORTEK_LOGGER::CrashLogger::GetInstance()
+#define VORTEK_CRASH_LOGGER() Vortek::Logger::CrashLogger::GetInstance()
 #define VORTEK_INIT_CRASH_LOGS() VORTEK_CRASH_LOGGER().Initialize()
 
-namespace VORTEK_LOGGER
+namespace Vortek::Logger
 {
 class CrashLogger
 {
@@ -134,10 +134,10 @@ class CrashLogger
 	/* Flag to determine if the logger was initialized. */
 	bool m_bInitialized{ false };
 	/* The specified project path. Used to keep logs with separate projects. */
-	std::string m_sProjectPath{};
+	std::string m_sProjectPath{ };
 	/* Stores the filename to where the crash occurred. */
-	static inline std::string sCrashFile{};
+	static inline std::string sCrashFile{ };
 	/* Stores the line number where the crash occurred. */
 	static inline int CrashLine{ -1 };
 };
-} // namespace VORTEK_LOGGER
+} // namespace Vortek::Logger

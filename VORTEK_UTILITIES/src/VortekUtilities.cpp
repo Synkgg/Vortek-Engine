@@ -1,12 +1,11 @@
 #include "VortekUtilities/VortekUtilities.h"
-#include <chrono>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 std::string AssetTypeToStr( AssetType eAssetType )
 {
@@ -44,8 +43,12 @@ AssetType StrToAssetType( const std::string& sAssetType )
 	return AssetType::NO_TYPE;
 }
 
+namespace StringUtils
+{
+
 std::string GetSubstring( std::string_view str, std::string_view find )
 {
+
 	if ( find.empty() )
 		return {};
 
@@ -87,6 +90,7 @@ std::string ConvertTo12HourFormat( const std::string& time )
 
 	return oss.str();
 }
+
 
 std::string ConvertWideToANSI( const std::wstring& wstr )
 {
@@ -136,5 +140,6 @@ std::wstring ConvertUtf8ToWide( const std::string& str )
 	return {};
 #endif
 }
+} // namespace StringUtils
 
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities

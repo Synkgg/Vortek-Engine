@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 
-namespace VORTEK_PHYSICS
+namespace Vortek::Physics
 {
 
 enum class RigidBodyType
@@ -78,4 +78,4 @@ std::string GetRigidBodyTypeString( RigidBodyType eRigidType );
 RigidBodyType GetRigidBodyTypeByString( const std::string sRigidType );
 const std::map<RigidBodyType, std::string>& GetRigidBodyStringMap();
 
-} // namespace VORTEK_PHYSICS
+} // namespace Vortek::Physics

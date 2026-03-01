@@ -1,12 +1,14 @@
 #include "Core/Scene/SceneManager.h"
 #include "Core/Scene/Scene.h"
 
-#include "VORTEKUtilities/VORTEKUtilities.h"
+#include "VortekUtilities/VortekUtilities.h"
 #include "Core/ECS/Components/AllComponents.h"
+#include "Core/ECS/Registry.h"
+#include "Core/Loaders/TilemapLoader.h"
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 SceneManager::SceneManager()
@@ -16,7 +18,7 @@ SceneManager::SceneManager()
 {
 }
 
-bool SceneManager::AddScene( const std::string& sSceneName, VORTEK_CORE::EMapType eType )
+bool SceneManager::AddScene( const std::string& sSceneName, Vortek::Core::EMapType eType )
 {
 	if ( m_mapScenes.contains( sSceneName ) )
 	{
@@ -63,7 +65,7 @@ Scene* SceneManager::GetCurrentScene()
 
 std::vector<std::string> SceneManager::GetSceneNames() const
 {
-	return VORTEK_UTIL::GetKeys( m_mapScenes );
+	return Vortek::Utilities::GetKeys( m_mapScenes );
 }
 
 bool SceneManager::LoadCurrentScene()
@@ -93,64 +95,111 @@ bool SceneManager::CheckHasScene( const std::string& sSceneName )
 
 bool SceneManager::ChangeSceneName( const std::string& sOldName, const std::string& sNewName )
 {
-	return VORTEK_UTIL::KeyChange( m_mapScenes, sOldName, sNewName );
+	return Vortek::Utilities::KeyChange( m_mapScenes, sOldName, sNewName );
 }
 
-void SceneManager::CreateLuaBind( sol::state& lua, SceneManager& sceneManager )
+void SceneManager::CreateLuaBind( sol::state& lua, ECS::Registry& registry )
 {
 	lua.new_usertype<SceneManager>(
 		"SceneManager",
 		sol::no_constructor,
+		"setCurrentScene",
+		[ &registry ]( const std::string& sSceneName )
+		{
+			auto* pSceneManagerData = registry.TryGetContext<std::shared_ptr<SceneManagerData>>();
+			if (!pSceneManagerData)
+			{
+				VORTEK_ERROR( "Scene manager data was not set correctly." );
+				return;
+			}
+
+			(*pSceneManagerData)->sSceneName = sSceneName;
+		},
 		"changeScene",
-		// TODO: This will still need testing once the runtime has been created.
 		[ & ]( const std::string& sSceneName ) {
-			auto pCurrentScene = sceneManager.GetCurrentScene();
-			if ( !pCurrentScene )
+			auto* pSceneManagerData = registry.TryGetContext<std::shared_ptr<SceneManagerData>>();
+			if ( !pSceneManagerData )
 			{
-				VORTEK_ERROR( "Failed to change to scene [{}] - Current scene is invalid.", sSceneName );
+				VORTEK_ERROR( "Scene manager data was not set correctly." );
 				return false;
 			}
 
-			if ( pCurrentScene->GetSceneName() == sSceneName )
+			( *pSceneManagerData )->sSceneName = sSceneName;
+
+			sol::optional<sol::table> optSceneData = lua[ sSceneName + "_data" ];
+			if ( optSceneData )
 			{
-				VORTEK_ERROR( "Failed to load scene [{}] - Scene has already been loaded.", sSceneName );
-				return false;
+				( *pSceneManagerData )->sDefaultMusic = ( *optSceneData )[ "default_music" ].get_or( std::string{} );
 			}
 
-			auto pScene = sceneManager.GetScene( sSceneName );
-			if ( !pScene )
-			{
-				VORTEK_ERROR( "Failed to change to scene [{}] - Scene [{}] is invalid.", sSceneName, sSceneName );
-				return false;
-			}
+			registry.DestroyEntities();
 
-			pCurrentScene->GetRegistry().DestroyEntities<ScriptComponent>();
-			pCurrentScene->UnloadScene();
+			Vortek::Core::Loaders::TilemapLoader tl{};
 
-			if ( !pScene->IsLoaded() )
-			{
-				pScene->LoadScene();
-			}
-
-			sceneManager.SetCurrentScene( sSceneName );
+			tl.LoadTilemapFromLuaTable( registry, lua[ sSceneName + "_tilemap" ] );
+			tl.LoadGameObjectsFromLuaTable( registry, lua[ sSceneName + "_objects" ] );
 
 			return true;
 		},
 		"getCanvas", // Returns the canvas of the current scene or an empty canvas object.
 		[ & ] {
-			if ( auto pCurrentScene = sceneManager.GetCurrentScene() )
-				return pCurrentScene->GetCanvas();
+			auto* pSceneManagerData = registry.TryGetContext<std::shared_ptr<SceneManagerData>>();
+			if ( !pSceneManagerData )
+			{
+				VORTEK_ERROR( "Scene manager data was not set correctly." );
+				return Vortek::Core::Canvas{};
+			}
 
-			return VORTEK_CORE::Canvas{};
+			sol::optional<sol::table> optSceneData = lua[ (*pSceneManagerData)->sSceneName + "_data" ];
+			if ( optSceneData )
+			{
+				if ( sol::optional<sol::table> optCanvas = ( *optSceneData )[ "canvas" ] )
+				{
+					return Vortek::Core::Canvas{ .width = ( *optCanvas )[ "width" ].get_or( 640 ),
+											   .height = ( *optCanvas )[ "height" ].get_or( 480 ),
+											   .tileWidth = ( *optCanvas )[ "tileWidth" ].get_or( 16 ),
+											   .tileHeight = ( *optCanvas )[ "tileHeight" ].get_or( 16 ) };
+				}
+			}
+
+			return Vortek::Core::Canvas{};
 		},
 		"getDefaultMusic",
 		[ & ] {
-			if ( auto pCurrentScene = sceneManager.GetCurrentScene() )
-				return pCurrentScene->GetDefaultMusicName();
+			auto* pSceneManagerData = registry.TryGetContext<std::shared_ptr<SceneManagerData>>();
+			if ( !pSceneManagerData )
+			{
+				VORTEK_ERROR( "Scene manager data was not set correctly." );
+				return std::string{};
+			}
 
-			return std::string{};
+			if ((*pSceneManagerData)->sDefaultMusic.empty())
+			{
+				sol::optional<sol::table> optSceneData = lua[ ( *pSceneManagerData )->sSceneName + "_data" ];
+				if ( optSceneData )
+				{
+					for (const auto& [key, value] : *optSceneData)
+					{
+						std::string sKey = key.as<std::string>();
+						int x{};
+					}
+					( *pSceneManagerData )->sDefaultMusic = ( *optSceneData )[ "default_music" ].get_or( std::string{} );
+				}
+			}
+
+			return ( *pSceneManagerData )->sDefaultMusic;
 		},
 		"getCurrentSceneName",
-		[ & ] { return sceneManager.GetCurrentSceneName(); } );
+		[ & ] {
+			auto* pSceneManagerData = registry.TryGetContext<std::shared_ptr<SceneManagerData>>();
+			if ( !pSceneManagerData )
+			{
+				VORTEK_ERROR( "Scene manager data was not set correctly." );
+				return std::string{};
+			}
+
+			return (*pSceneManagerData)->sSceneName;
+		} );
 }
-} // namespace VORTEK_CORE
+
+} // namespace Vortek::Core

@@ -2,12 +2,12 @@
 #include <sol/sol.hpp>
 #include "Physics/UserData.h"
 
-namespace VORTEK_CORE::Events
+namespace Vortek::Core::Events
 {
 struct ContactEvent
 {
-	VORTEK_PHYSICS::ObjectData objectA{};
-	VORTEK_PHYSICS::ObjectData objectB{};
+	Vortek::Physics::ObjectData objectA{};
+	Vortek::Physics::ObjectData objectB{};
 };
 
 enum class EKeyEventType
@@ -23,6 +23,19 @@ struct KeyEvent
 	EKeyEventType eType{ EKeyEventType::NoType };
 };
 
+enum class EGamepadConnectType
+{
+	Connected,
+	Disconnected,
+	NotConnected
+};
+
+struct GamepadConnectEvent
+{
+	EGamepadConnectType eConnectType{ EGamepadConnectType::NotConnected };
+	int index{ 1 };
+};
+
 struct LuaEvent
 {
 	sol::object data{ sol::lua_nil };
@@ -33,4 +46,4 @@ struct LuaEventBinder
 	static void CreateLuaEventBindings( sol::state& lua );
 };
 
-} // namespace VORTEK_CORE::Events
+} // namespace Vortek::Core::Events

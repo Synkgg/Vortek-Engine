@@ -3,7 +3,7 @@
 #include "CoreEngineData.h"
 #include "Core/ECS/Entity.h"
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 struct FollowCamParams
@@ -19,12 +19,12 @@ struct FollowCamParams
 class FollowCamera
 {
   private:
-	VORTEK_RENDERING::Camera2D& m_Camera;
+	Vortek::Rendering::Camera2D& m_Camera;
 	FollowCamParams m_Params;
 	ECS::Entity m_Entity;
 
   public:
-	FollowCamera( VORTEK_RENDERING::Camera2D& camera, const ECS::Entity& entity, const FollowCamParams& params );
+	FollowCamera( Vortek::Rendering::Camera2D& camera, const ECS::Entity& entity, const FollowCamParams& params );
 	~FollowCamera() = default;
 
 	void Update();
@@ -36,4 +36,4 @@ class FollowCamera
 
 	static void CreateLuaFollowCamera( sol::state& lua, ECS::Registry& registry );
 };
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

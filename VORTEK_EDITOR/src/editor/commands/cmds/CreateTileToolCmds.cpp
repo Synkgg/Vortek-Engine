@@ -1,4 +1,4 @@
-#include "CreateTileToolCmds.h"
+#include "editor/commands/cmds/CreateTileToolCmds.h"
 
 #include "Core/ECS/Registry.h"
 #include "Core/ECS/Entity.h"
@@ -7,9 +7,9 @@
 #include "editor/utilities/EditorUtilities.h"
 #include "Logger/Logger.h"
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 void CreateTileToolAddCmd::undo()
 {
@@ -35,7 +35,7 @@ void CreateTileToolAddCmd::undo()
 
 	for ( auto entity : tiles )
 	{
-		Entity tile{ *pRegistry, entity };
+		Entity tile{ pRegistry, entity };
 		const auto& transform = tile.GetComponent<TransformComponent>();
 		const auto& sprite = tile.GetComponent<SpriteComponent>();
 
@@ -52,8 +52,8 @@ void CreateTileToolAddCmd::undo()
 	VORTEK_ASSERT( entityToRemove != entt::null && "Entity should not be null." );
 	if ( entityToRemove != entt::null )
 	{
-		Entity ent{ *pRegistry, entityToRemove };
-		ent.Kill();
+		Entity ent{ pRegistry, entityToRemove };
+		ent.Destroy();
 	}
 }
 
@@ -75,7 +75,7 @@ void CreateTileToolAddCmd::redo()
 		return;
 	}
 
-	Entity tile{ *pRegistry, "", "" };
+	Entity tile{ pRegistry, "", "" };
 	tile.AddComponent<TransformComponent>( pTile->transform );
 	tile.AddComponent<SpriteComponent>( pTile->sprite );
 	tile.AddComponent<TileComponent>( static_cast<std::uint32_t>( tile.GetEntity() ) );
@@ -119,7 +119,7 @@ void CreateTileToolRemoveCmd::undo()
 		return;
 	}
 
-	Entity tile{ *pRegistry, "", "" };
+	Entity tile{ pRegistry, "", "" };
 	tile.AddComponent<TransformComponent>( pTile->transform );
 	tile.AddComponent<SpriteComponent>( pTile->sprite );
 	tile.AddComponent<TileComponent>( static_cast<std::uint32_t>( tile.GetEntity() ) );
@@ -169,7 +169,7 @@ void CreateTileToolRemoveCmd::redo()
 
 	for ( auto entity : tiles )
 	{
-		Entity tile{ *pRegistry, entity };
+		Entity tile{ pRegistry, entity };
 		const auto& transform = tile.GetComponent<TransformComponent>();
 		const auto& sprite = tile.GetComponent<SpriteComponent>();
 
@@ -186,9 +186,9 @@ void CreateTileToolRemoveCmd::redo()
 	VORTEK_ASSERT( entityToRemove != entt::null && "Entity should not be null." );
 	if ( entityToRemove != entt::null )
 	{
-		Entity ent{ *pRegistry, entityToRemove };
-		ent.Kill();
+		Entity ent{ pRegistry, entityToRemove };
+		ent.Destroy();
 	}
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

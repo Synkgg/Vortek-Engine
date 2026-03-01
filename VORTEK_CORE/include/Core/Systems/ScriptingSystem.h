@@ -1,17 +1,18 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
+
 struct ProjectInfo;
 
 namespace ECS
 {
 class Registry;
 }
-}
+} // namespace Vortek::Core
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 class ScriptingSystem
 {
@@ -19,18 +20,19 @@ class ScriptingSystem
 	ScriptingSystem();
 	~ScriptingSystem() = default;
 
-	bool LoadMainScript( const std::string& sMainLuaFile, VORTEK_CORE::ECS::Registry& registry, sol::state& lua );
-	bool LoadMainScript( VORTEK_CORE::ProjectInfo& projectInfo, VORTEK_CORE::ECS::Registry& registry, sol::state& lua );
-	void Update( VORTEK_CORE::ECS::Registry& registry );
-	void Render( VORTEK_CORE::ECS::Registry& registry );
+	bool LoadMainScript( const std::string& sMainLuaFile, Vortek::Core::ECS::Registry& registry, sol::state& lua );
+	bool LoadMainScript( Vortek::Core::ProjectInfo& projectInfo, Vortek::Core::ECS::Registry& registry, sol::state& lua );
 
-	static void RegisterLuaBindings( sol::state& lua, VORTEK_CORE::ECS::Registry& registry );
-	static void RegisterLuaFunctions( sol::state& lua, VORTEK_CORE::ECS::Registry& registry );
-	static void RegisterLuaEvents( sol::state& lua, VORTEK_CORE::ECS::Registry& registry );
-	static void RegisterLuaSystems( sol::state& lua, VORTEK_CORE::ECS::Registry& registry );
+	void Update( Vortek::Core::ECS::Registry& registry );
+	void Render( Vortek::Core::ECS::Registry& registry );
+
+	static void RegisterLuaBindings( sol::state& lua, Vortek::Core::ECS::Registry& registry );
+	static void RegisterLuaFunctions( sol::state& lua, Vortek::Core::ECS::Registry& registry );
+	static void RegisterLuaEvents( sol::state& lua, Vortek::Core::ECS::Registry& registry );
+	static void RegisterLuaSystems( sol::state& lua, Vortek::Core::ECS::Registry& registry );
 
   private:
 	bool m_bMainLoaded;
 };
 
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

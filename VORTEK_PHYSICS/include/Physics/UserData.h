@@ -6,7 +6,7 @@
 #include <vector>
 #include <entt/entt.hpp>
 
-namespace VORTEK_PHYSICS
+namespace Vortek::Physics
 {
 struct UserData
 {
@@ -16,7 +16,7 @@ struct UserData
 
 /*
 * ObjectData
-* Currently this struct is used for all Rigidbodies in VORTEK2D.
+* Currently this struct is used for all Rigidbodies in Vortek2D.
 * This is waht the user data is set to and checked for in the contact listerer bindings.
 * You may need a specific user data setup for your own specific needs; however,
 * you can always use the tag and group to do different functions on the body as needed.
@@ -67,4 +67,4 @@ struct ObjectData
   private:
 	std::vector<const ObjectData*> contactEntities;
 };
-} // namespace VORTEK_PHYSICS
+} // namespace Vortek::Physics

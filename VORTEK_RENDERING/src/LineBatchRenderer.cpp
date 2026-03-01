@@ -1,6 +1,6 @@
 #include "Rendering/Core/LineBatchRenderer.h"
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 void LineBatchRenderer::GenerateBatches()
@@ -78,4 +78,4 @@ void LineBatchRenderer::AddLine( const Line& line )
 	);
 	// clang-format on
 }
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

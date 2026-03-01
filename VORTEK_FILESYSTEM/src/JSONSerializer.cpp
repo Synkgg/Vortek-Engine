@@ -3,7 +3,7 @@
 
 constexpr int MAX_DECIMAL_PLACES = 5;
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 JSONSerializer::JSONSerializer( const std::string& sFilename, int maxDecimalPlaces )
 	: m_Filestream{}
@@ -50,14 +50,14 @@ bool JSONSerializer::EndDocument()
 	if ( m_NumObjectsStarted != 1 )
 	{
 		VORTEK_ERROR( "Failed to end document correctly. There should only be one object open. Did you forget to call "
-					  "EndObject()?" );
+					 "EndObject()?" );
 		return false;
 	}
 
 	if ( m_NumArraysStarted != 0 )
 	{
 		VORTEK_ERROR( "Failed to end document correctly. Too many arrays started. Did you forget to call "
-					  "EndArray()?" );
+					 "EndArray()?" );
 		return false;
 	}
 
@@ -141,4 +141,4 @@ JSONSerializer& JSONSerializer::AddKeyValuePair( const std::string& key, const b
 	return *this;
 }
 
-} // namespace VORTEK_FILESYSTEM
+} // namespace Vortek::Filesystem

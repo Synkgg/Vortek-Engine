@@ -1,11 +1,11 @@
 #pragma once
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 class Registry;
 }
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 class PhysicsSystem
 {
@@ -13,6 +13,6 @@ class PhysicsSystem
 	PhysicsSystem();
 	~PhysicsSystem() = default;
 
-	void Update( VORTEK_CORE::ECS::Registry& registry );
+	void Update( Vortek::Core::ECS::Registry& registry );
 };
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

@@ -1,4 +1,4 @@
-#include "RectFillTool.h"
+#include "editor/tools/RectFillTool.h"
 #include "Rendering/Core/RectBatchRenderer.h"
 #include "Rendering/Core/BatchRenderer.h"
 #include "Rendering/Core/Camera2D.h"
@@ -14,12 +14,12 @@
 #include "editor/utilities/EditorUtilities.h"
 #include "editor/commands/CommandManager.h"
 
-using namespace VORTEK_RENDERING;
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Rendering;
+using namespace Vortek::Core::ECS;
 
 constexpr int PREVIEW_LAYER = 10;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 void RectFillTool::CreateTiles()
 {
@@ -154,7 +154,7 @@ void RectFillTool::RemoveTiles()
 			removedTile.bPhysics = true;
 		}
 
-		tileToRemove.Kill();
+		tileToRemove.Destroy();
 		removedTiles.push_back( removedTile );
 	}
 
@@ -291,4 +291,4 @@ void RectFillTool::Draw()
 	m_pTileFillRect->width = dx;
 	m_pTileFillRect->height = dy;
 }
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

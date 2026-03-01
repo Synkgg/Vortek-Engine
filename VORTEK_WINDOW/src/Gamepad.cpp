@@ -1,33 +1,33 @@
 #include "Windowing/Inputs/Gamepad.h"
 #include <Logger/Logger.h>
 
-namespace VORTEK_WINDOWING::Inputs
+namespace Vortek::Windowing::Inputs
 {
 
 Gamepad::Gamepad(Controller controller)
-		: m_pController{ std::move(controller) }
-		, m_mapButtons{
-			{VORTEK_GP_BTN_A, Button{}},
-			{VORTEK_GP_BTN_B, Button{}},
-			{VORTEK_GP_BTN_X, Button{}},
-			{VORTEK_GP_BTN_Y, Button{}},
-			{VORTEK_GP_BTN_BACK, Button{}},
-			{VORTEK_GP_BTN_GUIDE, Button{}},
-			{VORTEK_GP_BTN_START, Button{}},
-			{VORTEK_GP_BTN_LSTICK, Button{}},
-			{VORTEK_GP_BTN_RSTICK, Button{}},
-			{VORTEK_GP_BTN_LSHOULDER, Button{}},
-			{VORTEK_GP_BTN_RSHOULDER, Button{}},
-			{VORTEK_GP_BTN_DPAD_UP, Button{}},
-			{VORTEK_GP_BTN_DPAD_DOWN, Button{}},
-			{VORTEK_GP_BTN_DPAD_LEFT, Button{}},
-			{VORTEK_GP_BTN_DPAD_RIGHT, Button{}},
-		}
-		, m_InstanceID{ -1 }
-		, m_mapAxisValues{
-			{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}
-		}
-		, m_JoystickHatValue{ VORTEK_HAT_CENTERED }
+        : m_pController{std::move(controller)}
+        , m_mapButtons{
+            {VORTEK_GP_BTN_A, Button{}},
+            {VORTEK_GP_BTN_B, Button{}},
+            {VORTEK_GP_BTN_X, Button{}},
+            {VORTEK_GP_BTN_Y, Button{}},
+            {VORTEK_GP_BTN_BACK, Button{}},
+            {VORTEK_GP_BTN_GUIDE, Button{}},
+            {VORTEK_GP_BTN_START, Button{}},
+            {VORTEK_GP_BTN_LSTICK, Button{}},
+            {VORTEK_GP_BTN_RSTICK, Button{}},
+            {VORTEK_GP_BTN_LSHOULDER, Button{}},
+            {VORTEK_GP_BTN_RSHOULDER, Button{}},
+            {VORTEK_GP_BTN_DPAD_UP, Button{}},
+            {VORTEK_GP_BTN_DPAD_DOWN, Button{}},
+            {VORTEK_GP_BTN_DPAD_LEFT, Button{}},
+            {VORTEK_GP_BTN_DPAD_RIGHT, Button{}},
+        }
+        , m_InstanceID{-1}
+        , m_mapAxisValues{
+            {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}
+        }
+        , m_JoystickHatValue{VORTEK_HAT_CENTERED}
 {
 	SDL_Joystick* joystick = SDL_GameControllerGetJoystick( m_pController.get() );
 	if ( !m_pController || !joystick )
@@ -150,6 +150,11 @@ const bool Gamepad::IsGamepadPresent() const
 	return m_pController != nullptr && SDL_NumJoysticks() > 0;
 }
 
+const bool Gamepad::IsRumbleSupported() const
+{
+	return m_pController != nullptr ? SDL_GameControllerHasRumble( m_pController.get() ) : false;
+}
+
 const Sint16 Gamepad::GetAxisPosition( Uint8 axis )
 {
 	auto axisItr = m_mapAxisValues.find( axis );
@@ -173,4 +178,12 @@ void Gamepad::SetAxisPositionValue( Uint8 axis, Sint16 value )
 
 	axisItr->second = value;
 }
-} // namespace VORTEK_WINDOWING::Inputs
+
+void Gamepad::RumbleController( Uint16 lowFrequencyRumble, Uint16 highFrequencyRumble, Uint32 durationMs )
+{
+	if (SDL_GameControllerRumble(m_pController.get(), lowFrequencyRumble, highFrequencyRumble, durationMs) == -1)
+	{
+		VORTEK_WARN( "Rumble not supported for controller [{}] - Error: {}", m_InstanceID, SDL_GetError() );
+	}
+}
+} // namespace Vortek::Windowing::Inputs

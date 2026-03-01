@@ -1,7 +1,7 @@
 #include "Core/ECS/Components/RigidBodyComponent.h"
 #include <entt/entt.hpp>
 
-std::string VORTEK_CORE::ECS::RigidBodyComponent::to_string() const
+std::string Vortek::Core::ECS::RigidBodyComponent::to_string() const
 {
 	std::stringstream ss;
 	ss << "==== RigidBody Component ==== \n"
@@ -10,7 +10,7 @@ std::string VORTEK_CORE::ECS::RigidBodyComponent::to_string() const
 	return ss.str();
 }
 
-void VORTEK_CORE::ECS::RigidBodyComponent::CreateRigidBodyBind( sol::state& lua )
+void Vortek::Core::ECS::RigidBodyComponent::CreateRigidBodyBind( sol::state& lua )
 {
 	lua.new_usertype<RigidBodyComponent>(
 		"RigidBody",

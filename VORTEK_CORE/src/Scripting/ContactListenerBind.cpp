@@ -4,13 +4,13 @@
 #include <Physics/UserData.h>
 #include <Logger/Logger.h>
 
-using namespace VORTEK_CORE::Utils;
+using namespace Vortek::Core::Utils;
 
-namespace VORTEK_CORE::Scripting
+namespace Vortek::Core::Scripting
 {
 
 std::tuple<sol::object, sol::object> ContactListenerBinder::GetUserData(
-	VORTEK_PHYSICS::ContactListener& contactListener, sol::this_state s )
+	Vortek::Physics::ContactListener& contactListener, sol::this_state s )
 {
 	auto pUserDataA = contactListener.GetUserDataA();
 	auto pUserDataB = contactListener.GetUserDataB();
@@ -36,16 +36,16 @@ std::tuple<sol::object, sol::object> ContactListenerBinder::GetUserData(
 
 void ContactListenerBinder::CreateLuaContactListener( sol::state& lua, entt::registry& registry )
 {
-	auto& contactListener = registry.ctx().get<std::shared_ptr<VORTEK_PHYSICS::ContactListener>>();
+	auto& contactListener = registry.ctx().get<std::shared_ptr<Vortek::Physics::ContactListener>>();
 	if ( !contactListener )
 	{
 		VORTEK_ERROR( "Failed to create the contact listener lua bind - Contact listener is not in the registry!" );
 		return;
 	}
 
-	lua.new_usertype<VORTEK_PHYSICS::ContactListener>(
+	lua.new_usertype<Vortek::Physics::ContactListener>(
 		"ContactListener", sol::no_constructor, "getUserData", [ & ]( sol::this_state s ) {
 			return GetUserData( *contactListener, s );
 		} );
 }
-} // namespace VORTEK_CORE::Scripting
+} // namespace Vortek::Core::Scripting

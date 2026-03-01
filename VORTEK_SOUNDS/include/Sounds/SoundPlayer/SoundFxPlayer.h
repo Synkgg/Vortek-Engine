@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VORTEK_SOUNDS
+namespace Vortek::Sounds
 {
 class SoundFxPlayer
 {
@@ -44,4 +44,4 @@ class SoundFxPlayer
 	 */
 	bool IsPlaying( int channel );
 };
-} // namespace VORTEK_SOUNDS
+} // namespace Vortek::Sounds

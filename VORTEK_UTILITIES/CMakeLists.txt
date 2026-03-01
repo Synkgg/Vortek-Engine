@@ -1,5 +1,4 @@
 add_library(VORTEK_UTILITIES
-	
     "include/VortekUtilities/RandomGenerator.h"
     "src/RandomGenerator.cpp"
     "include/VortekUtilities/SDL_Wrappers.h"
@@ -12,7 +11,8 @@ add_library(VORTEK_UTILITIES
 	"include/VortekUtilities/MathUtilities.h"
 	"include/VortekUtilities/Tween.h"
 	"src/Tween.cpp"
- "include/VortekUtilities/ThreadPool.h")
+	"include/VortekUtilities/ThreadPool.h"
+)
 
 target_include_directories(
     VORTEK_UTILITIES PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

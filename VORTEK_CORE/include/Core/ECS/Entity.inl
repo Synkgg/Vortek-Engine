@@ -2,20 +2,20 @@
 #include "Entity.h"
 #include "Logger/Logger.h"
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 
 template <typename TComponent, typename... Args>
 TComponent& Entity::AddComponent( Args&&... args )
 {
-	auto& registry = m_Registry.GetRegistry();
+	auto& registry = m_Registry->GetRegistry();
 	return registry.emplace<TComponent>( m_Entity, std::forward<Args>( args )... );
 }
 
 template <typename TComponent, typename... Args>
 TComponent& Entity::ReplaceComponent( Args&&... args )
 {
-	auto& registry = m_Registry.GetRegistry();
+	auto& registry = m_Registry->GetRegistry();
 	if ( registry.all_of<TComponent>( m_Entity ) )
 		return registry.replace<TComponent>( m_Entity, std::forward<Args>( args )... );
 	else
@@ -25,28 +25,28 @@ TComponent& Entity::ReplaceComponent( Args&&... args )
 template <typename TComponent>
 TComponent& Entity::GetComponent()
 {
-	auto& registry = m_Registry.GetRegistry();
+	auto& registry = m_Registry->GetRegistry();
 	return registry.get<TComponent>( m_Entity );
 }
 
 template <typename TComponent>
 TComponent* Entity::TryGetComponent()
 {
-	auto& registry = m_Registry.GetRegistry();
+	auto& registry = m_Registry->GetRegistry();
 	return registry.try_get<TComponent>( m_Entity );
 }
 
 template <typename TComponent>
 bool Entity::HasComponent()
 {
-	auto& registry = m_Registry.GetRegistry();
+	auto& registry = m_Registry->GetRegistry();
 	return registry.all_of<TComponent>( m_Entity );
 }
 
 template <typename TComponent>
 auto Entity::RemoveComponent()
 {
-	auto& registry = m_Registry.GetRegistry();
+	auto& registry = m_Registry->GetRegistry();
 	return registry.remove<TComponent>( m_Entity );
 }
 
@@ -105,4 +105,4 @@ inline void Entity::RegisterMetaComponent()
 		.template func<&copy_component<TComponent>>( "copy_component"_hs )
 		.template func<&remove_component<TComponent>>( "remove_component"_hs );
 }
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

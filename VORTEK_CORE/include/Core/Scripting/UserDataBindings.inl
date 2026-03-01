@@ -1,10 +1,10 @@
-#include "UserDataBindings.h"
+#include "Core/Scripting/UserDataBindings.h"
 #include <entt/entt.hpp>
 #include <Physics/UserData.h>
 
-using namespace VORTEK_PHYSICS;
+using namespace Vortek::Physics;
 
-namespace VORTEK_CORE::Scripting
+namespace Vortek::Core::Scripting
 {
 
 template <typename DATA>
@@ -20,7 +20,7 @@ inline auto create_user_data( const sol::table& data, sol::this_state s )
 }
 
 template <typename DATA>
-inline auto set_user_data( VORTEK_PHYSICS::UserData* pUserData, const sol::table& data, sol::this_state s )
+inline auto set_user_data( Vortek::Physics::UserData* pUserData, const sol::table& data, sol::this_state s )
 {
 	auto newData = data.valid() ? data.as<DATA>() : DATA{};
 
@@ -32,7 +32,7 @@ inline auto set_user_data( VORTEK_PHYSICS::UserData* pUserData, const sol::table
 }
 
 template <typename DATA>
-inline auto get_user_data( VORTEK_PHYSICS::UserData& userData, sol::this_state s )
+inline auto get_user_data( Vortek::Physics::UserData& userData, sol::this_state s )
 {
 	auto& data = userData.userData;
 	return sol::make_reference( s, std::any_cast<DATA>( data ) );
@@ -48,4 +48,4 @@ inline void UserDataBinder::register_meta_user_data()
 		.template func<&set_user_data<DATA>>( "set_user_data"_hs )
 		.template func<&get_user_data<DATA>>( "get_user_data"_hs );
 }
-} // namespace VORTEK_CORE::Scripting
+} // namespace Vortek::Core::Scripting

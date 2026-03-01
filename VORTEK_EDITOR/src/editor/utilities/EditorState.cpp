@@ -1,4 +1,4 @@
-#include "EditorState.h"
+#include "editor/utilities/EditorState.h"
 #include "VortekFilesystem/Serializers/JSONSerializer.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
 
@@ -7,14 +7,14 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
-using namespace VORTEK_FILESYSTEM;
+using namespace Vortek::Filesystem;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
-bool EditorState::Save( VORTEK_CORE::ProjectInfo& projectInfo )
+bool EditorState::Save( Vortek::Core::ProjectInfo& projectInfo )
 {
-	const auto optEditorConfigFolder = projectInfo.TryGetFolderPath( VORTEK_CORE::EProjectFolderType::EditorConfig );
+	const auto optEditorConfigFolder = projectInfo.TryGetFolderPath( Vortek::Core::EProjectFolderType::EditorConfig );
 	if ( !optEditorConfigFolder )
 	{
 		VORTEK_ERROR( "Failed to save editor state. Editor config path is invalid" );
@@ -56,9 +56,9 @@ bool EditorState::Save( VORTEK_CORE::ProjectInfo& projectInfo )
 	return pSerializer->EndDocument();
 }
 
-bool EditorState::Load( VORTEK_CORE::ProjectInfo& projectInfo )
+bool EditorState::Load( Vortek::Core::ProjectInfo& projectInfo )
 {
-	const auto optEditorConfigFolder = projectInfo.TryGetFolderPath( VORTEK_CORE::EProjectFolderType::EditorConfig );
+	const auto optEditorConfigFolder = projectInfo.TryGetFolderPath( Vortek::Core::EProjectFolderType::EditorConfig );
 	if ( !optEditorConfigFolder )
 	{
 		VORTEK_ERROR( "Failed to load editor state. Editor config path is invalid" );
@@ -117,14 +117,14 @@ bool EditorState::Load( VORTEK_CORE::ProjectInfo& projectInfo )
 	return true;
 }
 
-bool EditorState::ImportState( const std::string& sImportedStateFile, VORTEK_CORE::ProjectInfo& projectInfo )
+bool EditorState::ImportState( const std::string& sImportedStateFile, Vortek::Core::ProjectInfo& projectInfo )
 {
 	return false;
 }
 
-bool EditorState::CreateEditorStateFile( VORTEK_CORE::ProjectInfo& projectInfo )
+bool EditorState::CreateEditorStateFile( Vortek::Core::ProjectInfo& projectInfo )
 {
-	const auto optEditorConfigFolder = projectInfo.TryGetFolderPath( VORTEK_CORE::EProjectFolderType::EditorConfig );
+	const auto optEditorConfigFolder = projectInfo.TryGetFolderPath( Vortek::Core::EProjectFolderType::EditorConfig );
 	if ( !optEditorConfigFolder )
 	{
 		VORTEK_ERROR( "Failed to save editor state. Editor config path is invalid" );
@@ -169,4 +169,4 @@ bool EditorState::CreateEditorStateFile( VORTEK_CORE::ProjectInfo& projectInfo )
 	return pSerializer->EndDocument();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

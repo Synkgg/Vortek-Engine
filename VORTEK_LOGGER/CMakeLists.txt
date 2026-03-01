@@ -9,7 +9,7 @@ add_library(VORTEK_LOGGER
 target_include_directories(
     VORTEK_LOGGER PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(VORTEK_LOGGER PUBLIC fmt::fmt)
+target_link_libraries( VORTEK_LOGGER PUBLIC fmt::fmt)
 
 target_compile_options( 
     VORTEK_LOGGER PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)

@@ -1,6 +1,6 @@
 #include "Rendering/Core/Camera2D.h"
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 void Camera2D::Initialize()
 {
@@ -100,4 +100,4 @@ glm::vec2 Camera2D::WorldCoordsToScreen( const glm::vec2& worldCoords ) const
 
 	return screenCoords;
 }
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

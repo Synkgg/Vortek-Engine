@@ -1,13 +1,13 @@
 #include "Rendering/Core/RectBatchRenderer.h"
 #include "Rendering/Essentials/Primitives.h"
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 void RectBatchRenderer::GenerateBatches()
 {
 	std::vector<Vertex> vertices;
-	vertices.resize( ( m_Glyphs.size() > MAX_SPRITES ? MAX_SPRITES : m_Glyphs.size() ) * 4 );
+	vertices.resize( (m_Glyphs.size() > MAX_SPRITES ? MAX_SPRITES : m_Glyphs.size()) * 4 );
 
 	for ( const auto& shape : m_Glyphs )
 	{
@@ -168,4 +168,4 @@ void RectBatchRenderer::AddIsoRect( const Rect& rect, glm::mat4 model )
 
 	// clang-format on
 }
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

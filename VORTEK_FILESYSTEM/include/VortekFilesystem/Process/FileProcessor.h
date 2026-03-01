@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 class FileProcessor
 {
@@ -19,5 +19,6 @@ class FileProcessor
 
 		return sParams;
 	}
+
 };
-} // namespace VORTEK_FILESYSTEM
+} // namespace Vortek::Filesystem

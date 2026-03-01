@@ -1,17 +1,17 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 class Registry;
 }
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Camera2D;
 }
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 class AnimationSystem
 {
@@ -19,8 +19,8 @@ class AnimationSystem
 	AnimationSystem() = default;
 	~AnimationSystem() = default;
 
-	void Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera );
+	void Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera );
 
-	static void CreateAnimationSystemLuaBind( sol::state& lua, VORTEK_CORE::ECS::Registry& registry );
+	static void CreateAnimationSystemLuaBind( sol::state& lua, Vortek::Core::ECS::Registry& registry );
 };
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

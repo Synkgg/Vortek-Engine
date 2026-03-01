@@ -1,5 +1,4 @@
-#include "IconReplacer.h"
-
+#include "editor/packaging/IconReplacer.h"
 #include "Logger/Logger.h"
 
 #ifdef _WIN32
@@ -76,7 +75,7 @@ struct GRPICONDIRENTRY
 // TODO: add any linux includes as necessary.
 #endif
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 class IconReplacer::Impl
@@ -186,11 +185,10 @@ bool IconReplacer::Impl::ReplaceIcon_Win()
 	// Combine GRPICONDIR and GRPICONDIRENTRY into one memory block
 	std::vector<char> groupResource( sizeof( GRPICONDIR ) + sizeof( GRPICONDIRENTRY ) );
 	memcpy( groupResource.data(), &grpDir, sizeof( GRPICONDIR ) );
-	memcpy( groupResource.data() + sizeof( GRPICONDIR ), &grpEntry, sizeof( GRPICONDIRENTRY ) );
+	memcpy( groupResource.data() + sizeof(GRPICONDIR), &grpEntry, sizeof( GRPICONDIRENTRY ) );
 
 	// Write the RT_GROUP_ICON resource with ID 1
-	if ( !UpdateResourceA(
-			 hUpdate, RT_GROUP_ICON, MAKEINTRESOURCEA( 1 ), 0, groupResource.data(), groupResource.size() ) )
+	if ( !UpdateResourceA( hUpdate, RT_GROUP_ICON, MAKEINTRESOURCEA( 1 ), 0, groupResource.data(), groupResource.size() ) )
 	{
 		EndUpdateResourceA( hUpdate, TRUE );
 		VORTEK_ERROR( "Failed to update RT_GROUP_ICON." );
@@ -209,4 +207,4 @@ bool IconReplacer::Impl::ReplaceIcon_Linux()
 }
 #endif
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

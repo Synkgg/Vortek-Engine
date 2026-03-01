@@ -1,18 +1,18 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 namespace ECS
 {
 class Registry;
 }
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core
 
-namespace VORTEK_CORE::Scripting
+namespace Vortek::Core::Scripting
 {
 struct RendererBinder
 {
-	static void CreateRenderingBind( sol::state& lua, VORTEK_CORE::ECS::Registry& registry );
+	static void CreateRenderingBind( sol::state& lua, Vortek::Core::ECS::Registry& registry );
 };
-} // namespace VORTEK_CORE::Scripting
+} // namespace Vortek::Core::Scripting

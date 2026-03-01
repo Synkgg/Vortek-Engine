@@ -1,5 +1,5 @@
-#include "AssetDisplayUtils.h"
-#include "VORTEKUtilities/VORTEKUtilities.h"
+#include "editor/displays/AssetDisplayUtils.h"
+#include "VortekUtilities/VortekUtilities.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "VortekFilesystem/Dialogs/FileDialog.h"
@@ -20,11 +20,16 @@ namespace fs = std::filesystem;
 
 #define SOUNDFX_FILTERS std::vector<const char*>{ "*.mp3", "*.wav", "*.ogg" }
 
-using namespace VORTEK_FILESYSTEM;
-using namespace VORTEK_EDITOR;
+constexpr const char* IMAGE_DESC = "Image Files (*.png, *.bmp, *.jpg)";
+constexpr const char* FONT_DESC = "Fonts (*.ttf)";
+constexpr const char* MUSIC_DESC = "Music Files (*.mp3, *.wav, *.ogg)";
+constexpr const char* SOUNDFX_DESC = "Soundfx Files (*.mp3, *.wav, *.ogg)";
 
-static const std::map<std::string, VORTEK_CORE::EMapType> g_mapStringToMapTypes{
-	{ "Grid", VORTEK_CORE::EMapType::Grid }, { "IsoGrid", VORTEK_CORE::EMapType::IsoGrid } };
+using namespace Vortek::Filesystem;
+using namespace Vortek::Editor;
+
+static const std::map<std::string, Vortek::Core::EMapType> g_mapStringToMapTypes{
+	{ "Grid", Vortek::Core::EMapType::Grid }, { "IsoGrid", Vortek::Core::EMapType::IsoGrid } };
 
 namespace
 {
@@ -34,38 +39,38 @@ class AssetModalCreator
 	AssetModalCreator() {}
 
 	bool AddAssetBasedOnType( const std::string& sAssetName, const std::string& sFilepath,
-							  VORTEK_UTIL::AssetType eAssetType, bool bPixelArt = true, bool bTileset = false,
+							  Vortek::Utilities::AssetType eAssetType, bool bPixelArt = true, bool bTileset = false,
 							  float fontSize = 32.f )
 	{
 		auto& assetManager = MAIN_REGISTRY().GetAssetManager();
 		switch ( eAssetType )
 		{
-		case VORTEK_UTIL::AssetType::TEXTURE:
+		case Vortek::Utilities::AssetType::TEXTURE:
 			return assetManager.AddTexture( sAssetName, sFilepath, bPixelArt, bTileset );
-		case VORTEK_UTIL::AssetType::FONT: return assetManager.AddFont( sAssetName, sFilepath, fontSize );
-		case VORTEK_UTIL::AssetType::SOUNDFX: return assetManager.AddSoundFx( sAssetName, sFilepath );
-		case VORTEK_UTIL::AssetType::MUSIC: return assetManager.AddMusic( sAssetName, sFilepath );
-		case VORTEK_UTIL::AssetType::SCENE: return false;
+		case Vortek::Utilities::AssetType::FONT: return assetManager.AddFont( sAssetName, sFilepath, fontSize );
+		case Vortek::Utilities::AssetType::SOUNDFX: return assetManager.AddSoundFx( sAssetName, sFilepath );
+		case Vortek::Utilities::AssetType::MUSIC: return assetManager.AddMusic( sAssetName, sFilepath );
+		case Vortek::Utilities::AssetType::SCENE: return false;
 		}
 		return false;
 	}
 
-	std::string CheckForAsset( const std::string& sAssetName, VORTEK_UTIL::AssetType eAssetType )
+	std::string CheckForAsset( const std::string& sAssetName, Vortek::Utilities::AssetType eAssetType )
 	{
 		std::string sError{};
 		if ( sAssetName.empty() )
 		{
 			sError = "Asset name cannot be empty!";
 		}
-		else if ( eAssetType == VORTEK_UTIL::AssetType::SCENE )
+		else if ( eAssetType == Vortek::Utilities::AssetType::SCENE )
 		{
 			if ( SCENE_MANAGER().HasScene( sAssetName ) )
-				sError = std::format( "Scene [{}] already exists!", sAssetName );
+				sError = fmt::format( "Scene [{}] already exists!", sAssetName );
 		}
 		else
 		{
 			if ( MAIN_REGISTRY().GetAssetManager().CheckHasAsset( sAssetName, eAssetType ) )
-				sError = std::format( "Asset [{}] already exists!", sAssetName );
+				sError = fmt::format( "Asset [{}] already exists!", sAssetName );
 		}
 
 		return sError;
@@ -84,7 +89,7 @@ class AssetModalCreator
 
 			static std::vector<std::string> mapTypes{ "Grid", "IsoGrid" };
 			static std::string sMapType{ "Grid" };
-			static VORTEK_CORE::EMapType eSelectedType{ VORTEK_CORE::EMapType::Grid };
+			static Vortek::Core::EMapType eSelectedType{ Vortek::Core::EMapType::Grid };
 
 			ImGui::InlineLabel( "Map Type" );
 			if ( ImGui::BeginCombo( "##Map Type", sMapType.c_str() ) )
@@ -98,7 +103,7 @@ class AssetModalCreator
 					}
 
 					ImGui::ItemToolTip( "{}",
-										eMapType == VORTEK_CORE::EMapType::IsoGrid
+										eMapType == Vortek::Core::EMapType::IsoGrid
 											? "Warning! IsoGrid maps are not fully supported."
 											: "2D Grid tile map." );
 				}
@@ -107,7 +112,7 @@ class AssetModalCreator
 			}
 
 			std::string sCheckName{ sAssetName.data() };
-			std::string sNameError{ CheckForAsset( sCheckName, VORTEK_UTIL::AssetType::SCENE ) };
+			std::string sNameError{ CheckForAsset( sCheckName, Vortek::Utilities::AssetType::SCENE ) };
 
 			if ( sNameError.empty() )
 			{
@@ -130,7 +135,7 @@ class AssetModalCreator
 				ImGui::TextColored( ImVec4{ 1.f, 0.f, 0.f, 1.f }, sNameError.c_str() );
 			}
 
-			if ( eSelectedType == VORTEK_CORE::EMapType::IsoGrid )
+			if ( eSelectedType == Vortek::Core::EMapType::IsoGrid )
 			{
 				ImGui::TextColored( ImVec4{ 1.f, 1.f, 0.f, 1.f }, "IsoGrid maps are not fully supported yet!" );
 			}
@@ -146,9 +151,9 @@ class AssetModalCreator
 			ImGui::EndPopup();
 		}
 	}
-	void AddAssetModal( VORTEK_UTIL::AssetType eAssetType, bool* pbOpen )
+	void AddAssetModal( Vortek::Utilities::AssetType eAssetType, bool* pbOpen )
 	{
-		std::string sAssetType{ VORTEK_EDITOR::AssetDisplayUtils::AddAssetBasedOnType( eAssetType ) };
+		std::string sAssetType{ Vortek::Editor::AssetDisplayUtils::AddAssetBasedOnType( eAssetType ) };
 
 		if ( *pbOpen )
 			ImGui::OpenPopup( sAssetType.c_str() );
@@ -171,8 +176,12 @@ class AssetModalCreator
 			if ( ImGui::Button( "Browse" ) )
 			{
 				FileDialog fd{};
-				sFilepath = fd.OpenFileDialog(
-					"Open", "", VORTEK_EDITOR::AssetDisplayUtils::GetAssetFileFilters( eAssetType ) );
+				sFilepath =
+					fd.OpenFileDialog(
+						"Open", BASE_PATH, 
+						Vortek::Editor::AssetDisplayUtils::GetAssetFileFilters( eAssetType ),
+						Vortek::Editor::AssetDisplayUtils::GetAssetDescriptionByType( eAssetType )
+					);
 
 				if ( !sFilepath.empty() )
 				{
@@ -181,12 +190,12 @@ class AssetModalCreator
 				}
 			}
 
-			if ( eAssetType == VORTEK_UTIL::AssetType::TEXTURE )
+			if ( eAssetType == Vortek::Utilities::AssetType::TEXTURE )
 			{
 				ImGui::Checkbox( "Pixel Art", &bPixelArt );
 				ImGui::Checkbox( "Tileset", &bTileset );
 			}
-			else if ( eAssetType == VORTEK_UTIL::AssetType::FONT )
+			else if ( eAssetType == Vortek::Utilities::AssetType::FONT )
 			{
 				ImGui::InputFloat( "Font Size", &fontSize, 1.f, 1.f, "%.1f" );
 			}
@@ -240,38 +249,52 @@ class AssetModalCreator
 
 } // namespace
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
-std::vector<const char*> AssetDisplayUtils::GetAssetFileFilters( VORTEK_UTIL::AssetType eAssetType )
+std::vector<const char*> AssetDisplayUtils::GetAssetFileFilters( Vortek::Utilities::AssetType eAssetType )
 {
 	switch ( eAssetType )
 	{
-	case VORTEK_UTIL::AssetType::TEXTURE: return IMAGE_FILTERS;
-	case VORTEK_UTIL::AssetType::FONT: return FONT_FILTERS;
-	case VORTEK_UTIL::AssetType::SOUNDFX: return SOUNDFX_FILTERS;
-	case VORTEK_UTIL::AssetType::MUSIC: return MUSIC_FILTERS;
+	case Vortek::Utilities::AssetType::TEXTURE: return IMAGE_FILTERS;
+	case Vortek::Utilities::AssetType::FONT: return FONT_FILTERS;
+	case Vortek::Utilities::AssetType::SOUNDFX: return SOUNDFX_FILTERS;
+	case Vortek::Utilities::AssetType::MUSIC: return MUSIC_FILTERS;
 	}
 
 	return {};
 }
-std::string AssetDisplayUtils::AddAssetBasedOnType( VORTEK_UTIL::AssetType eAssetType )
+
+const char* AssetDisplayUtils::GetAssetDescriptionByType( Vortek::Utilities::AssetType eAssetType )
 {
 	switch ( eAssetType )
 	{
-	case VORTEK_UTIL::AssetType::TEXTURE: return "Add Texture";
-	case VORTEK_UTIL::AssetType::FONT: return "Add Font";
-	case VORTEK_UTIL::AssetType::SOUNDFX: return "Add SoundFx";
-	case VORTEK_UTIL::AssetType::MUSIC: return "Add Music";
-	case VORTEK_UTIL::AssetType::SCENE: return "Add Scene";
+	case Vortek::Utilities::AssetType::TEXTURE: return IMAGE_DESC;
+	case Vortek::Utilities::AssetType::FONT: return FONT_DESC;
+	case Vortek::Utilities::AssetType::SOUNDFX: return SOUNDFX_DESC;
+	case Vortek::Utilities::AssetType::MUSIC: return MUSIC_DESC;
+	}
+
+	return "Files";
+}
+
+std::string AssetDisplayUtils::AddAssetBasedOnType( Vortek::Utilities::AssetType eAssetType )
+{
+	switch ( eAssetType )
+	{
+	case Vortek::Utilities::AssetType::TEXTURE: return "Add Texture";
+	case Vortek::Utilities::AssetType::FONT: return "Add Font";
+	case Vortek::Utilities::AssetType::SOUNDFX: return "Add SoundFx";
+	case Vortek::Utilities::AssetType::MUSIC: return "Add Music";
+	case Vortek::Utilities::AssetType::SCENE: return "Add Scene";
 	default: VORTEK_ASSERT( false && "Type has not been implemented!" ); return {};
 	}
 }
 
-void AssetDisplayUtils::OpenAddAssetModalBasedOnType( VORTEK_UTIL::AssetType eAssetType, bool* pbOpen )
+void AssetDisplayUtils::OpenAddAssetModalBasedOnType( Vortek::Utilities::AssetType eAssetType, bool* pbOpen )
 {
-	VORTEK_ASSERT( eAssetType != VORTEK_UTIL::AssetType::NO_TYPE && "The asset type must be set!" );
+	VORTEK_ASSERT( eAssetType != Vortek::Utilities::AssetType::NO_TYPE && "The asset type must be set!" );
 	static AssetModalCreator md{};
-	if ( eAssetType == VORTEK_UTIL::AssetType::SCENE )
+	if ( eAssetType == Vortek::Utilities::AssetType::SCENE )
 	{
 		md.AddSceneModal( pbOpen );
 	}
@@ -280,4 +303,4 @@ void AssetDisplayUtils::OpenAddAssetModalBasedOnType( VORTEK_UTIL::AssetType eAs
 		md.AddAssetModal( eAssetType, pbOpen );
 	}
 }
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

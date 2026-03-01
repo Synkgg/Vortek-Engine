@@ -1,4 +1,4 @@
-#include "ScriptCompiler.h"
+#include "editor/packaging/ScriptCompiler.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include "VortekUtilities/HelperUtilities.h"
 #include "VortekFilesystem/Utilities/FilesystemUtilities.h"
@@ -12,7 +12,7 @@ constexpr const std::string_view FIND_LUAC_COMMAND = "where luac";
 constexpr const std::string_view FIND_LUAC_COMMAND = "which luac";
 #endif
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 ScriptCompiler::ScriptCompiler()
@@ -57,8 +57,7 @@ bool ScriptCompiler::AddScripts( const std::string& sScriptList )
 			return false;
 		}
 
-		const std::string sContentPath =
-			fmt::format( "{}{}content{}", CORE_GLOBALS().GetProjectPath(), PATH_SEPARATOR, PATH_SEPARATOR );
+		const std::string sContentPath = fmt::format( "{}{}content{}", CORE_GLOBALS().GetProjectPath(), PATH_SEPARATOR, PATH_SEPARATOR );
 
 		for ( const auto& [ _, script ] : *optScriptList )
 		{
@@ -122,7 +121,7 @@ void ScriptCompiler::Compile()
 
 	sCommand += "\"";
 
-	const std::string sError = VORTEK_FILESYSTEM::ExecCmdWithErrorOutput( sCommand );
+	const std::string sError = Vortek::Filesystem::ExecCmdWithErrorOutput( sCommand );
 
 	if ( !sError.empty() )
 	{
@@ -155,4 +154,4 @@ std::optional<std::string> ScriptCompiler::FindLuaCompiler()
 
 	return sResult.empty() ? std::nullopt : std::optional<std::string>{ sResult };
 }
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

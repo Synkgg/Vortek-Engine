@@ -52,7 +52,7 @@ VORTEK_ERROR("This is some Error: {}", sError);
 		  update = function() 
 			  -- Call this function to Crash the game and test 
 			  -- The CrashLogger
-			  S2D_CrashTest_Start()
+			  CrashTest_Start()
 		  end
 	  }, 
 	  [2] = { 

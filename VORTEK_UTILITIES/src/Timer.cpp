@@ -1,7 +1,7 @@
 #include "VortekUtilities/Timer.h"
 #include <iostream>
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 
 void Timer::Start()
@@ -55,4 +55,4 @@ const int64_t Timer::ElapsedSec()
 {
 	return ElapsedMS() / 1000;
 }
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities

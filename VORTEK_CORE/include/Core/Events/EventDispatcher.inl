@@ -1,7 +1,7 @@
 #include "EventDispatcher.h"
 #include "Logger/Logger.h"
 
-namespace VORTEK_CORE::Events
+namespace Vortek::Core::Events
 {
 
 template <typename TEventType, auto Func, typename THandlerType>
@@ -139,4 +139,4 @@ inline void EventDispatcher::RegisterMetaEventFuncs()
 		.template func<&has_handlers<TEvent>>( "has_handlers"_hs );
 }
 
-} // namespace VORTEK_CORE::Events
+} // namespace Vortek::Core::Events

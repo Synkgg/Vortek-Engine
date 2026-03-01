@@ -1,7 +1,7 @@
 #include "Core/States/State.h"
 #include <Logger/Logger.h>
 
-void VORTEK_CORE::State::CreateLuaStateBind( sol::state& lua )
+void Vortek::Core::State::CreateLuaStateBind( sol::state& lua )
 {
 	lua.new_usertype<State>(
 		"State",

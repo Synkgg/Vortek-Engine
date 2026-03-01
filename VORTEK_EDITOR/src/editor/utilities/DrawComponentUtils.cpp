@@ -1,4 +1,4 @@
-#include "DrawComponentUtils.h"
+#include "editor/utilities/DrawComponentUtils.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
@@ -8,15 +8,15 @@
 #include "Physics/PhysicsUtilities.h"
 #include "Logger/Logger.h"
 
-#include "../utilities/imgui/ImGuiUtils.h"
-#include "../events/EditorEventTypes.h"
+#include "editor/utilities/imgui/ImGuiUtils.h"
+#include "editor/events/EditorEventTypes.h"
 
-#include "../scene/SceneManager.h"
-#include "../scene/SceneObject.h"
+#include "editor/scene/SceneManager.h"
+#include "editor/scene/SceneObject.h"
 
-using namespace VORTEK_UTIL;
-using namespace VORTEK_PHYSICS;
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Utilities;
+using namespace Vortek::Physics;
+using namespace Vortek::Core::ECS;
 
 static constexpr std::string GetPhysicsBodyDescription( RigidBodyType eType )
 {
@@ -29,9 +29,9 @@ static constexpr std::string GetPhysicsBodyDescription( RigidBodyType eType )
 	}
 }
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TransformComponent& transform )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::TransformComponent& transform )
 {
 	ImGui::SeparatorText( "Transform" );
 	ImGui::PushID( entt::type_hash<TransformComponent>::value() );
@@ -39,26 +39,26 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TransformComponen
 	{
 		ImGui::PushItemWidth( 120.f );
 		ImGui::InlineLabel( "position" );
-		ImGui::ColoredLabel( "x##pos_x", LABEL_SINGLE_SIZE, LABEL_RED, true );
+		ImGui::ColoredLabel( "x##pos_x", LABEL_SINGLE_SIZE, LABEL_RED );
 		ImGui::SameLine();
 		ImGui::InputFloat( "##position_x", &transform.position.x, 1.f, 10.f, "%.1f" );
 		ImGui::SameLine();
-		ImGui::ColoredLabel( "y##pos_y", LABEL_SINGLE_SIZE, LABEL_GREEN, true );
+		ImGui::ColoredLabel( "y##pos_y", LABEL_SINGLE_SIZE, LABEL_GREEN );
 		ImGui::SameLine();
 		ImGui::InputFloat( "##position_y", &transform.position.y, 1.f, 10.f, "%.1f" );
 
 		ImGui::InlineLabel( "scale" );
-		ImGui::ColoredLabel( "x##scl_x", LABEL_SINGLE_SIZE, LABEL_RED, true );
+		ImGui::ColoredLabel( "x##scl_x", LABEL_SINGLE_SIZE, LABEL_RED );
 		ImGui::SameLine();
-		if ( ImGui::InputFloat( "##scale_x", &transform.scale.x, 1.f, 1.f, "%.1f" ) )
+		if ( ImGui::InputFloat( "##scale_x", &transform.scale.x, 1.f, 1.f, "%.3f" ) )
 		{
 			transform.scale.x = std::clamp( transform.scale.x, 0.1f, 150.f );
 			transform.bDirty = true;
 		}
 		ImGui::SameLine();
-		ImGui::ColoredLabel( "y##scl_x", LABEL_SINGLE_SIZE, LABEL_GREEN, true );
+		ImGui::ColoredLabel( "y##scl_y", LABEL_SINGLE_SIZE, LABEL_GREEN );
 		ImGui::SameLine();
-		if ( ImGui::InputFloat( "##scale_y", &transform.scale.y, 1.f, 1.f, "%.1f" ) )
+		if ( ImGui::InputFloat( "##scale_y", &transform.scale.y, 1.f, 1.f, "%.3f" ) )
 		{
 			transform.scale.y = std::clamp( transform.scale.y, 0.1f, 150.f );
 			transform.bDirty = true;
@@ -77,7 +77,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TransformComponen
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::SpriteComponent& sprite )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::SpriteComponent& sprite )
 {
 	bool bChanged{ false };
 
@@ -123,7 +123,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::SpriteComponent& 
 		ImGui::ItemToolTip( "The current active texture of the sprite to be drawn." );
 		if ( ImGui::BeginCombo( "##texture", sSelectedTexture.c_str() ) )
 		{
-			for ( const auto& sTextureName : assetManager.GetAssetKeyNames( VORTEK_UTIL::AssetType::TEXTURE ) )
+			for ( const auto& sTextureName : assetManager.GetAssetKeyNames( Vortek::Utilities::AssetType::TEXTURE ) )
 			{
 				if ( ImGui::Selectable( sTextureName.c_str(), sTextureName == sSelectedTexture ) )
 				{
@@ -142,7 +142,11 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::SpriteComponent& 
 		ImGui::ItemToolTip( "The width of the sprite. This is used in UV calculations." );
 		if ( ImGui::InputFloat( "##width", &sprite.width, 8.f, 8.f ) )
 		{
-			sprite.width = std::clamp( sprite.width, 8.f, 1366.f );
+			if ( sprite.width < 8.f )
+			{
+				sprite.width = 8.f;
+			}
+		
 			bChanged = true;
 		}
 
@@ -150,7 +154,11 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::SpriteComponent& 
 		ImGui::ItemToolTip( "The height of the sprite. This is used in UV calculations." );
 		if ( ImGui::InputFloat( "##height", &sprite.height, 8.f, 8.f ) )
 		{
-			sprite.height = std::clamp( sprite.height, 8.f, 768.f );
+			if ( sprite.height < 8.f )
+			{
+				sprite.height = 8.f;
+			}
+
 			bChanged = true;
 		}
 
@@ -163,7 +171,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::SpriteComponent& 
 
 		ImGui::InlineLabel( "start pos" );
 		ImGui::ItemToolTip( "The index positions where we want to start our UV calculations." );
-		ImGui::ColoredLabel( "x", LABEL_SINGLE_SIZE, LABEL_RED, true );
+		ImGui::ColoredLabel( "x", LABEL_SINGLE_SIZE, LABEL_RED );
 		ImGui::SameLine();
 		if ( ImGui::InputInt( "##start_x", &sprite.start_x, 1, 1 ) )
 		{
@@ -171,7 +179,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::SpriteComponent& 
 			bChanged = true;
 		}
 		ImGui::SameLine();
-		ImGui::ColoredLabel( "y", LABEL_SINGLE_SIZE, LABEL_GREEN, true );
+		ImGui::ColoredLabel( "y", LABEL_SINGLE_SIZE, LABEL_GREEN );
 		ImGui::SameLine();
 		if ( ImGui::InputInt( "##start_y", &sprite.start_y, 1, 1 ) )
 		{
@@ -195,11 +203,11 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::SpriteComponent& 
 		if ( !pTexture )
 			return;
 
-		VORTEK_CORE::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
+		Vortek::Core::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
 	}
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::AnimationComponent& animation )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::AnimationComponent& animation )
 {
 	ImGui::SeparatorText( "Animation Component" );
 	ImGui::PushID( entt::type_hash<AnimationComponent>::value() );
@@ -214,10 +222,6 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::AnimationComponen
 		if ( ImGui::InputInt( "##frame_rate", &animation.frameRate, 1, 1 ) )
 			animation.frameRate = std::clamp( animation.frameRate, 1, 25 );
 
-		ImGui::InlineLabel( "frame offset" );
-		if ( ImGui::InputInt( "##frame_offset", &animation.frameOffset, 1, 1 ) )
-			animation.frameOffset = std::clamp( animation.frameOffset, 0, 15 );
-
 		ImGui::InlineLabel( "vertical" );
 		ImGui::ItemToolTip( "Does the sprite animations scroll vertically?" );
 		ImGui::Checkbox( "##vertical", &animation.bVertical );
@@ -230,7 +234,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::AnimationComponen
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::BoxColliderComponent& boxCollider )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::BoxColliderComponent& boxCollider )
 {
 	ImGui::SeparatorText( "Box Collider Component" );
 	ImGui::PushID( entt::type_hash<BoxColliderComponent>::value() );
@@ -247,7 +251,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::BoxColliderCompon
 
 		ImGui::InlineLabel( "offset" );
 		ImGui::ItemToolTip( "The offset of the box collider from the origin. Origin is the TL corner." );
-		ImGui::ColoredLabel( "x", LABEL_SINGLE_SIZE, LABEL_RED, true );
+		ImGui::ColoredLabel( "x", LABEL_SINGLE_SIZE, LABEL_RED );
 		ImGui::SameLine();
 		// Should probably add a way to disable clamps
 		if ( ImGui::InputFloat( "##offset_x", &boxCollider.offset.x, 1.f, 4.f ) )
@@ -255,7 +259,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::BoxColliderCompon
 			boxCollider.offset.x = std::clamp( boxCollider.offset.x, -256.f, 256.f );
 		}
 		ImGui::SameLine();
-		ImGui::ColoredLabel( "y", LABEL_SINGLE_SIZE, LABEL_GREEN, true );
+		ImGui::ColoredLabel( "y", LABEL_SINGLE_SIZE, LABEL_GREEN );
 		ImGui::SameLine();
 		if ( ImGui::InputFloat( "##offset_y", &boxCollider.offset.y, 1.f, 4.f ) )
 		{
@@ -267,7 +271,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::BoxColliderCompon
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::CircleColliderComponent& circleCollider )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::CircleColliderComponent& circleCollider )
 {
 	ImGui::SeparatorText( "Circle Collider Component" );
 	ImGui::PushID( entt::type_hash<CircleColliderComponent>::value() );
@@ -281,12 +285,12 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::CircleColliderCom
 
 		ImGui::InlineLabel( "offset" );
 		ImGui::ItemToolTip( "The offset of the circle collider from the origin. Origin is the TL corner." );
-		ImGui::ColoredLabel( "x", LABEL_SINGLE_SIZE, LABEL_RED, true );
+		ImGui::ColoredLabel( "x", LABEL_SINGLE_SIZE, LABEL_RED );
 		ImGui::SameLine();
 		if ( ImGui::InputFloat( "##offset_x", &circleCollider.offset.x, 4.f, 4.f ) )
 			circleCollider.offset.x = std::clamp( circleCollider.offset.x, 0.f, 128.f );
 		ImGui::SameLine();
-		ImGui::ColoredLabel( "y", LABEL_SINGLE_SIZE, LABEL_GREEN, true );
+		ImGui::ColoredLabel( "y", LABEL_SINGLE_SIZE, LABEL_GREEN );
 		ImGui::SameLine();
 		if ( ImGui::InputFloat( "##offset_y", &circleCollider.offset.y, 4.f, 4.f ) )
 			circleCollider.offset.y = std::clamp( circleCollider.offset.y, 0.f, 128.f );
@@ -296,7 +300,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::CircleColliderCom
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::PhysicsComponent& physics )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::PhysicsComponent& physics )
 {
 	ImGui::SeparatorText( "Physics Component" );
 	ImGui::PushID( entt::type_hash<PhysicsComponent>::value() );
@@ -347,7 +351,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::PhysicsComponent&
 		ImGui::Separator();
 		ImGui::AddSpaces( 2 );
 
-		std::string sSelectedMaskBit{};
+		std::string sSelectedMaskBit{  };
 		FilterCategory eMaskCategory{ FilterCategory::NO_CATEGORY };
 
 		ImGui::InlineLabel( "masks" );
@@ -519,7 +523,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::PhysicsComponent&
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::RigidBodyComponent& rigidbody )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::RigidBodyComponent& rigidbody )
 {
 	ImGui::SeparatorText( "Rigidbody Component" );
 	ImGui::PushID( entt::type_hash<RigidBodyComponent>::value() );
@@ -527,11 +531,11 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::RigidBodyComponen
 	{
 		ImGui::PushItemWidth( 120.f );
 		ImGui::InlineLabel( "max velocity" );
-		ImGui::ColoredLabel( "x", LABEL_SINGLE_SIZE, LABEL_RED, true );
+		ImGui::ColoredLabel( "x", LABEL_SINGLE_SIZE, LABEL_RED );
 		ImGui::SameLine();
 		ImGui::InputFloat( "##maxVelocity_x", &rigidbody.maxVelocity.x, 1.f, 10.f, "%.1f" );
 		ImGui::SameLine();
-		ImGui::ColoredLabel( "y", LABEL_SINGLE_SIZE, LABEL_GREEN, true );
+		ImGui::ColoredLabel( "y", LABEL_SINGLE_SIZE, LABEL_GREEN );
 		ImGui::SameLine();
 		ImGui::InputFloat( "##maxVelocity_y", &rigidbody.maxVelocity.y, 1.f, 10.f, "%.1f" );
 
@@ -540,103 +544,28 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::RigidBodyComponen
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TextComponent& textComponent )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::TextComponent& textComponent )
 {
-	// ImGui::SeparatorText( "Text Component" );
-	// ImGui::PushID( entt::type_hash<TextComponent>::value() );
-	// if ( ImGui::TreeNodeEx( "", ImGuiTreeNodeFlags_DefaultOpen ) )
-	//{
-	//	std::string sTextBuffer{ textComponent.sTextStr };
-	//	ImGui::InlineLabel( "text" );
-	//	if ( ImGui::InputText(
-	//			 "##_textStr", sTextBuffer.data(), sizeof( char ) * 1024, 0 /*ImGuiInputTextFlags_EnterReturnsTrue*/ ) )
-	//	{
-	//		textComponent.sTextStr = std::string{ sTextBuffer.data() };
-	//		textComponent.bDirty = true;
-	//	}
-
-	//	ImVec4 col = { textComponent.color.r / 255.f,
-	//				   textComponent.color.g / 255.f,
-	//				   textComponent.color.b / 255.f,
-	//				   textComponent.color.a / 255.f };
-	//	ImGui::InlineLabel( "Text Color" );
-	//	ImGui::ItemToolTip( "Text Color Override." );
-	//	if ( ImGui::ColorEdit4( "##textcolor", &col.x, IMGUI_COLOR_PICKER_FLAGS ) )
-	//	{
-	//		textComponent.color.r = static_cast<GLubyte>( col.x * 255.f );
-	//		textComponent.color.g = static_cast<GLubyte>( col.y * 255.f );
-	//		textComponent.color.b = static_cast<GLubyte>( col.z * 255.f );
-	//		textComponent.color.a = static_cast<GLubyte>( col.w * 255.f );
-	//	}
-
-	//	ImGui::InlineLabel( "Invisible" );
-	//	if (ImGui::Checkbox("##invis", &textComponent.bHidden))
-	//	{
-	//		textComponent.bDirty = true;
-	//	}
-
-	//	std::string sFontName{ textComponent.sFontName };
-	//	ImGui::PushItemWidth( 164.f );
-	//	ImGui::InlineLabel( "font" );
-	//	if ( ImGui::BeginCombo( "##fontName", sFontName.c_str() ) )
-	//	{
-	//		auto& assetManager = MAIN_REGISTRY().GetAssetManager();
-	//		for ( const auto& sFont : assetManager.GetAssetKeyNames( VORTEK_UTIL::AssetType::FONT ) )
-	//		{
-	//			if ( ImGui::Selectable( sFont.c_str(), sFont == sFontName ) )
-	//			{
-	//				sFontName = sFont;
-	//				textComponent.sFontName = sFontName;
-	//				textComponent.bDirty = true;
-	//			}
-	//		}
-
-	//		ImGui::EndCombo();
-	//	}
-
-	//	ImGui::PushItemWidth( 120.f );
-	//	ImGui::InlineLabel( "padding" );
-	//	if ( ImGui::InputInt( "##padding", &textComponent.padding, 0, 0 ) )
-	//	{
-	//		textComponent.bDirty = true;
-	//	}
-
-	//	ImGui::InlineLabel( "wrap" );
-	//	if ( ImGui::InputFloat( "##textWrap", &textComponent.wrap, 0.f, 0.f ) )
-	//	{
-	//		textComponent.bDirty = true;
-	//	}
-
-	//	ImGui::PopItemWidth();
-	//	ImGui::PopItemWidth();
-	//	ImGui::TreePop();
-	//}
-	// ImGui::PopID();
-
-	ImGui::SeparatorText( "Text (Script)" );
+	ImGui::SeparatorText( "Text Component" );
 	ImGui::PushID( entt::type_hash<TextComponent>::value() );
-
 	if ( ImGui::TreeNodeEx( "", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
-		// --- TEXT FIELD ---
 		std::string sTextBuffer{ textComponent.sTextStr };
-		ImGui::InlineLabel( "Text" );
-		if ( ImGui::InputText( "##_textStr", sTextBuffer.data(), 1024 ) )
+		ImGui::InlineLabel( "text" );
+		if ( ImGui::InputText(
+				 "##_textStr", sTextBuffer.data(), sizeof( char ) * 1024, 0 /*ImGuiInputTextFlags_EnterReturnsTrue*/ ) )
 		{
 			textComponent.sTextStr = std::string{ sTextBuffer.data() };
 			textComponent.bDirty = true;
 		}
 
-		// --- CHARACTER SECTION ---
-		ImGui::SeparatorText( "Character" );
-
-		// Font
 		std::string sFontName{ textComponent.sFontName };
-		ImGui::InlineLabel( "Font" );
+		ImGui::PushItemWidth( 164.f );
+		ImGui::InlineLabel( "font" );
 		if ( ImGui::BeginCombo( "##fontName", sFontName.c_str() ) )
 		{
 			auto& assetManager = MAIN_REGISTRY().GetAssetManager();
-			for ( const auto& sFont : assetManager.GetAssetKeyNames( VORTEK_UTIL::AssetType::FONT ) )
+			for ( const auto& sFont : assetManager.GetAssetKeyNames( Vortek::Utilities::AssetType::FONT ) )
 			{
 				if ( ImGui::Selectable( sFont.c_str(), sFont == sFontName ) )
 				{
@@ -645,21 +574,13 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TextComponent& te
 					textComponent.bDirty = true;
 				}
 			}
+
 			ImGui::EndCombo();
 		}
 
-		// Line Spacing
-		ImGui::InlineLabel( "Line Spacing" );
-		if ( ImGui::InputInt( "##lineSpacing", &textComponent.padding, 0, 0 ) )
-		{
-			textComponent.bDirty = true;
-		}
-
-		// --- PARAGRAPH SECTION ---
-		ImGui::SeparatorText( "Paragraph" );
-
-		ImGui::InlineLabel( "Invisible" );
-		if ( ImGui::Checkbox( "##invis", &textComponent.bHidden ) )
+		ImGui::PushItemWidth( 120.f );
+		ImGui::InlineLabel( "padding" );
+		if ( ImGui::InputInt( "##padding", &textComponent.padding, 0, 0 ) )
 		{
 			textComponent.bDirty = true;
 		}
@@ -670,28 +591,29 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::TextComponent& te
 			textComponent.bDirty = true;
 		}
 
-		// Color
+		// Color picker
 		ImVec4 col = { textComponent.color.r / 255.f,
 					   textComponent.color.g / 255.f,
 					   textComponent.color.b / 255.f,
 					   textComponent.color.a / 255.f };
-		ImGui::InlineLabel( "Color" );
-		if ( ImGui::ColorEdit4( "##textcolor", &col.x, IMGUI_COLOR_PICKER_FLAGS ) )
+		ImGui::InlineLabel( "color" );
+		ImGui::ItemToolTip( "Text Color Override." );
+		if ( ImGui::ColorEdit4( "##color", &col.x, IMGUI_COLOR_PICKER_FLAGS ) )
 		{
 			textComponent.color.r = static_cast<GLubyte>( col.x * 255.f );
 			textComponent.color.g = static_cast<GLubyte>( col.y * 255.f );
 			textComponent.color.b = static_cast<GLubyte>( col.z * 255.f );
 			textComponent.color.a = static_cast<GLubyte>( col.w * 255.f );
-			textComponent.bDirty = true;
 		}
 
+		ImGui::PopItemWidth();
+		ImGui::PopItemWidth();
 		ImGui::TreePop();
 	}
-
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Identification& identification )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Identification& identification )
 {
 	ImGui::SeparatorText( "Identificaton" );
 	ImGui::PushID( entt::type_hash<Identification>::value() );
@@ -718,8 +640,8 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Identification& i
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::TransformComponent& transform )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity,
+											 Vortek::Core::ECS::TransformComponent& transform )
 {
 	ImGui::SeparatorText( "Transform" );
 	ImGui::PushID( entt::type_hash<TransformComponent>::value() );
@@ -735,7 +657,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
 										 "This is the relative position based on the parent's position."
 									   : "World or absolute position of the game object." );
 
-		ImGui::ColoredLabel( "x##pos_x", LABEL_SINGLE_SIZE, LABEL_RED, true );
+		ImGui::ColoredLabel( "x##pos_x", LABEL_SINGLE_SIZE, LABEL_RED );
 		ImGui::SameLine();
 		if ( ImGui::InputFloat(
 				 "##position_x", bHasParent ? &transform.localPosition.x : &transform.position.x, 1.f, 10.f, "%.1f" ) )
@@ -744,7 +666,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
 		}
 
 		ImGui::SameLine();
-		ImGui::ColoredLabel( "y##pos_y", LABEL_SINGLE_SIZE, LABEL_GREEN, true );
+		ImGui::ColoredLabel( "y##pos_y", LABEL_SINGLE_SIZE, LABEL_GREEN );
 		ImGui::SameLine();
 		if ( ImGui::InputFloat(
 				 "##position_y", bHasParent ? &transform.localPosition.y : &transform.position.y, 1.f, 10.f, "%.1f" ) )
@@ -759,17 +681,17 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
 		}
 
 		ImGui::InlineLabel( "scale" );
-		ImGui::ColoredLabel( "x##scl_x", LABEL_SINGLE_SIZE, LABEL_RED, true );
+		ImGui::ColoredLabel( "x##scl_x", LABEL_SINGLE_SIZE, LABEL_RED );
 		ImGui::SameLine();
-		if ( ImGui::InputFloat( "##scale_x", &transform.scale.x, 1.f, 1.f, "%.1f" ) )
+		if ( ImGui::InputFloat( "##scale_x", &transform.scale.x, 1.f, 1.f, "%.3f" ) )
 		{
 			transform.scale.x = std::clamp( transform.scale.x, 0.1f, 150.f );
 			transform.bDirty = true;
 		}
 		ImGui::SameLine();
-		ImGui::ColoredLabel( "y##scl_y", LABEL_SINGLE_SIZE, LABEL_GREEN, true );
+		ImGui::ColoredLabel( "y##scl_y", LABEL_SINGLE_SIZE, LABEL_GREEN );
 		ImGui::SameLine();
-		if ( ImGui::InputFloat( "##scale_y", &transform.scale.y, 1.f, 1.f, "%.1f" ) )
+		if ( ImGui::InputFloat( "##scale_y", &transform.scale.y, 1.f, 1.f, "%.3f" ) )
 		{
 			transform.scale.y = std::clamp( transform.scale.y, 0.1f, 150.f );
 			transform.bDirty = true;
@@ -788,57 +710,56 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
 	ImGui::PopID();
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::SpriteComponent& sprite )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity, Vortek::Core::ECS::SpriteComponent& sprite )
 {
 	DrawImGuiComponent( sprite );
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::AnimationComponent& animation )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity,
+											 Vortek::Core::ECS::AnimationComponent& animation )
 {
 	DrawImGuiComponent( animation );
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::BoxColliderComponent& boxCollider )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity,
+											 Vortek::Core::ECS::BoxColliderComponent& boxCollider )
 {
 	DrawImGuiComponent( boxCollider );
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::CircleColliderComponent& circleCollider )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity,
+											 Vortek::Core::ECS::CircleColliderComponent& circleCollider )
 {
 	DrawImGuiComponent( circleCollider );
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::PhysicsComponent& physics )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity,
+											 Vortek::Core::ECS::PhysicsComponent& physics )
 {
 	DrawImGuiComponent( physics );
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::RigidBodyComponent& rigidbody )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity,
+											 Vortek::Core::ECS::RigidBodyComponent& rigidbody )
 {
 	DrawImGuiComponent( rigidbody );
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::TextComponent& textComponent )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity,
+											 Vortek::Core::ECS::TextComponent& textComponent )
 {
 	DrawImGuiComponent( textComponent );
 }
 
-void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
-											 VORTEK_CORE::ECS::Identification& identification )
+void DrawComponentsUtil::DrawImGuiComponent( Vortek::Core::ECS::Entity& entity,
+											 Vortek::Core::ECS::Identification& identification )
 {
 
 	ImGui::SeparatorText( "Identificaton" );
 	ImGui::PushID( entt::type_hash<Identification>::value() );
 	if ( ImGui::TreeNodeEx( "", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
-		std::string sError{};
+		std::string sError{  };
 		std::string sNameBuffer{ identification.name };
 		bool bNameError{ false };
 
@@ -867,7 +788,7 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
 			}
 			else if ( SCENE_MANAGER().CheckTagName( sBufferStr ) )
 			{
-				sError = std::format( "{} already exists!", sBufferStr );
+				sError = fmt::format( "{} already exists!", sBufferStr );
 			}
 
 			if ( !sError.empty() )
@@ -889,4 +810,4 @@ void DrawComponentsUtil::DrawImGuiComponent( VORTEK_CORE::ECS::Entity& entity,
 	ImGui::PopID();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

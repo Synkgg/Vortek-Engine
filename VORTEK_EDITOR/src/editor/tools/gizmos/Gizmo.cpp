@@ -1,4 +1,4 @@
-#include "Gizmo.h"
+#include "editor/tools/gizmos/Gizmo.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "Core/ECS/Entity.h"
@@ -16,9 +16,9 @@
 #include "Rendering/Essentials/Vertex.h"
 #include <Rendering/Essentials/Texture.h>
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 Gizmo::Gizmo()
@@ -39,7 +39,7 @@ Gizmo::Gizmo( const GizmoAxisParams& xAxisParams, const GizmoAxisParams& yAxisPa
 	: AbstractTool()
 	, m_pXAxisParams{ nullptr }
 	, m_pYAxisParams{ nullptr }
-	, m_pBatchRenderer{ std::make_unique<VORTEK_RENDERING::SpriteBatchRenderer>() }
+	, m_pBatchRenderer{ std::make_unique<Vortek::Rendering::SpriteBatchRenderer>() }
 	, m_SelectedEntity{ entt::null }
 	, m_LastMousePos{ 0.f }
 	, m_bOverXAxis{ false }
@@ -50,7 +50,7 @@ Gizmo::Gizmo( const GizmoAxisParams& xAxisParams, const GizmoAxisParams& yAxisPa
 	, m_bOnlyOneAxis{ bOneAxis }
 	, m_bUIComponent{ false }
 {
-	ADD_EVENT_HANDLER( VORTEK_EDITOR::Events::AddComponentEvent, &Gizmo::OnAddComponent, *this )
+	ADD_EVENT_HANDLER( Vortek::Editor::Events::AddComponentEvent, &Gizmo::OnAddComponent, *this )
 
 	m_pXAxisParams = std::make_unique<GizmoAxisParams>( xAxisParams );
 
@@ -64,7 +64,7 @@ Gizmo::~Gizmo()
 {
 }
 
-void Gizmo::Update( VORTEK_CORE::Canvas& canvas )
+void Gizmo::Update( Vortek::Core::Canvas& canvas )
 {
 	m_LastMousePos = GetMouseScreenCoords();
 	AbstractTool::Update( canvas );
@@ -76,7 +76,7 @@ void Gizmo::SetSelectedEntity( entt::entity entity )
 
 	if ( m_SelectedEntity != entt::null && m_pRegistry )
 	{
-		Entity ent{ *m_pRegistry, entity };
+		Entity ent{ m_pRegistry, entity };
 		SetGizmoPosition( ent );
 		GetDispatcher().EmitEvent( Events::SwitchEntityEvent{ .pEntity = &ent } );
 		m_bUIComponent = ent.HasComponent<UIComponent>();
@@ -108,10 +108,10 @@ void Gizmo::Show()
 	}
 }
 
-VORTEK_CORE::Events::EventDispatcher& Gizmo::GetDispatcher()
+Vortek::Core::Events::EventDispatcher& Gizmo::GetDispatcher()
 {
 	if ( !m_pEventDispatcher )
-		m_pEventDispatcher = std::make_unique<VORTEK_CORE::Events::EventDispatcher>();
+		m_pEventDispatcher = std::make_unique<Vortek::Core::Events::EventDispatcher>();
 
 	VORTEK_ASSERT( m_pEventDispatcher && "Event Dispatcher must be valid" );
 
@@ -128,7 +128,7 @@ void Gizmo::Init( const std::string& sXAxisTexture, const std::string& sYAxisTex
 	m_pXAxisParams->sprite.height = pXAxisTexture->GetHeight();
 	m_pXAxisParams->sprite.color = m_pXAxisParams->axisColor;
 
-	VORTEK_CORE::GenerateUVs( m_pXAxisParams->sprite, pXAxisTexture->GetWidth(), pXAxisTexture->GetHeight() );
+	Vortek::Core::GenerateUVs( m_pXAxisParams->sprite, pXAxisTexture->GetWidth(), pXAxisTexture->GetHeight() );
 
 	if ( !m_bOnlyOneAxis )
 	{
@@ -140,7 +140,7 @@ void Gizmo::Init( const std::string& sXAxisTexture, const std::string& sYAxisTex
 		m_pYAxisParams->sprite.height = pYAxisTexture->GetHeight();
 		m_pYAxisParams->sprite.color = m_pYAxisParams->axisColor;
 
-		VORTEK_CORE::GenerateUVs( m_pYAxisParams->sprite, pYAxisTexture->GetWidth(), pYAxisTexture->GetHeight() );
+		Vortek::Core::GenerateUVs( m_pYAxisParams->sprite, pYAxisTexture->GetWidth(), pYAxisTexture->GetHeight() );
 	}
 
 	Hide();
@@ -300,7 +300,7 @@ float Gizmo::GetDeltaY()
 	return 0.f;
 }
 
-void Gizmo::SetGizmoPosition( VORTEK_CORE::ECS::Entity& selectedEntity )
+void Gizmo::SetGizmoPosition( Vortek::Core::ECS::Entity& selectedEntity )
 {
 	float spriteWidth{ 0.f };
 	float spriteHeight{ 0.f };
@@ -338,7 +338,7 @@ void Gizmo::SetGizmoPosition( VORTEK_CORE::ECS::Entity& selectedEntity )
 	}
 }
 
-void Gizmo::OnAddComponent( const VORTEK_EDITOR::Events::AddComponentEvent& addCompEvent )
+void Gizmo::OnAddComponent( const Vortek::Editor::Events::AddComponentEvent& addCompEvent )
 {
 	if ( addCompEvent.eType == Events::EComponentType::UI || addCompEvent.eType == Events::EComponentType::Text )
 	{
@@ -346,4 +346,4 @@ void Gizmo::OnAddComponent( const VORTEK_EDITOR::Events::AddComponentEvent& addC
 	}
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

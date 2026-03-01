@@ -2,15 +2,57 @@
 
 namespace fs = std::filesystem;
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Texture;
 }
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 // clang-format off
+struct AudioConfigInfo
+{
+	using SoundChannelMap = std::map<int, std::pair<bool, int>>;
+
+	/* Overrides all sound and music channels. */
+	bool bGlobalOverrideEnabled{ false };
+	/* The amount to override all channels. Percentage [0 - 100]. */
+	int globalVolumeOverride{ 100 };
+	/* Overrides the music channel. This is overridden if global override is enabled. */
+	bool bMusicVolumeOverrideEnabled{ false };
+	/* The amount to override the music channel. Percentage [0 - 100]. */
+	int musicVolumeOverride{ 100 };
+	/* The number of sound channels that have been allocated. */
+	/* */
+	bool UpdateSoundChannels(int numChannels);
+	bool EnableChannelOverride(int channel, bool bEnable);
+	bool SetChannelVolume(int channel, int volume);
+
+	const SoundChannelMap& GetSoundChannelMap() const { return mapSoundChannelVolume; }
+	const int GetAllocatedChannelCount() const { return allocatedSoundChannels; }
+
+private:
+	/* @brief Adds more channels to the channel map. */
+	void AddChannels(int numChannels);
+	void RemoveChannels(int numChannels);
+
+private:
+	int allocatedSoundChannels{ 8 };
+
+	/* Map of the allocated channels. Channel to enabled/volume override. */
+	SoundChannelMap mapSoundChannelVolume{
+		{ 0, { false, 100 } },
+		{ 1, { false, 100 } },
+		{ 2, { false, 100 } },
+		{ 3, { false, 100 } },
+		{ 4, { false, 100 } },
+		{ 5, { false, 100 } },
+		{ 6, { false, 100 } },
+		{ 7, { false, 100 } }
+	};
+};
+
 /*
 * @brief Enum class defining the different folder types within a project
 */
@@ -36,7 +78,7 @@ enum class EProjectFolderType
  * @brief ProjectInfo - Class holding all metadata and state related to a single project.
  *
  * Holds the core project structure, including file paths, metadata, and configuration
- * used by the Scion2D game engine editor.
+ * used by the Vortek2D game engine editor.
  */
 class ProjectInfo
 {
@@ -125,7 +167,7 @@ class ProjectInfo
 	 * @brief Gets the pointer to the loaded icon texture, if available.
 	 * @return Raw pointer to the texture object.
 	 */
-	inline const VORTEK_RENDERING::Texture* GetIconTexturePtr() const { return m_pIconTexture.get(); }
+	inline const Vortek::Rendering::Texture* GetIconTexturePtr() const { return m_pIconTexture.get(); }
 
 	/** @brief Sets the project name. */
 	inline void SetProjectName( const std::string& sProjectName ) { m_sProjectName = sProjectName; }
@@ -147,6 +189,8 @@ class ProjectInfo
 	inline const std::string& GetDefaultScene() const { return m_sDefaultScene; }
 	/** @brief Sets the default scene name. */
 	inline void SetDefaultScene( const std::string& sDefaultScene ) { m_sDefaultScene = sDefaultScene; }
+	inline AudioConfigInfo& GetAudioConfig() { return m_AudioConfig; }
+	inline const AudioConfigInfo& GetAudioConfig() const{ return m_AudioConfig; }
 
 	/**
 	 * @brief Gets all project folder mappings.
@@ -181,7 +225,9 @@ class ProjectInfo
 	/** @brief Copyright or license notice. */
 	std::string m_sCopyRightNotice{};
 	/** @brief Shared texture pointer for the icon. */
-	std::shared_ptr<VORTEK_RENDERING::Texture> m_pIconTexture{ nullptr };
+	std::shared_ptr<Vortek::Rendering::Texture> m_pIconTexture{ nullptr };
+
+	AudioConfigInfo m_AudioConfig{};
 
 	/** @brief Whether vertical sync is enabled in the game window. */
 	bool m_bUseVSync{ true };
@@ -217,6 +263,8 @@ struct GameConfig
 
 	bool bPackageAssets{ false };
 
+	AudioConfigInfo audioConfig{};
+
 	void Reset()
 	{
 		sGameName.clear();
@@ -235,8 +283,10 @@ struct GameConfig
 		velocityIterations = 8;
 		gravity = 9.8f;
 
+		audioConfig = {};
+
 		bPackageAssets = false;
 	}
 };
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

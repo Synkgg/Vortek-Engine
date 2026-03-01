@@ -15,13 +15,13 @@
 #include <Rendering/Core/RectBatchRenderer.h>
 #include <Rendering/Core/CircleBatchRenderer.h>
 
-#include "VORTEKUtilities/MathUtilities.h"
+#include "VortekUtilities/MathUtilities.h"
 
-using namespace VORTEK_CORE::ECS;
-using namespace VORTEK_RENDERING;
+using namespace Vortek::Core::ECS;
+using namespace Vortek::Rendering;
 using namespace VORTEK_RESOURCES;
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 
 RenderShapeSystem::RenderShapeSystem()
@@ -30,7 +30,7 @@ RenderShapeSystem::RenderShapeSystem()
 {
 }
 
-void RenderShapeSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera )
+void RenderShapeSystem::Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera )
 {
 	auto& assetManager = MAIN_REGISTRY().GetAssetManager();
 
@@ -47,17 +47,16 @@ void RenderShapeSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_REN
 		const auto& transform = boxView.get<TransformComponent>( entity );
 		const auto& boxCollider = boxView.get<BoxColliderComponent>( entity );
 
-		if ( !VORTEK_CORE::EntityInView( transform,
-										 static_cast<float>( boxCollider.width ),
-										 static_cast<float>( boxCollider.height ),
-										 camera ) )
+		if ( !Vortek::Core::EntityInView( transform,
+										static_cast<float>( boxCollider.width ),
+										static_cast<float>( boxCollider.height ),
+										camera ) )
 			continue;
 
-		glm::mat4 model = VORTEK_CORE::RSTModel( transform, boxCollider.width, boxCollider.height );
+		glm::mat4 model = Vortek::Core::RSTModel( transform, boxCollider.width, boxCollider.height );
 
 		auto color = Color{ 255, 0, 0, 135 };
-		bool bUseIso{ false }; // We need another way to determine if we are using iso coords. The user might want to
-							   // use their own physics
+		bool bUseIso{ false }; // We need another way to determine if we are using iso coords. The user might want to use their own physics
 		if ( registry.GetRegistry().all_of<PhysicsComponent>( entity ) )
 		{
 			auto& physics = registry.GetRegistry().get<PhysicsComponent>( entity );
@@ -125,4 +124,4 @@ void RenderShapeSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_REN
 	m_pCircleRenderer->Render();
 	circleShader->Disable();
 }
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

@@ -1,15 +1,15 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 namespace ECS
 {
 class Registry;
 }
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core
 
-namespace VORTEK_CORE::Loaders
+namespace Vortek::Core::Loaders
 {
 
 class TilemapLoader
@@ -28,7 +28,7 @@ class TilemapLoader
 	 * @param bUseJSON        Flag indicating whether to use JSON format.
 	 * @return true if the tilemap was saved successfully, false otherwise.
 	 */
-	bool SaveTilemap( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON = false );
+	bool SaveTilemap( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON = false );
 
 	/**
 	 * @brief Loads tilemap data using the specified serialization format.
@@ -40,7 +40,7 @@ class TilemapLoader
 	 * @param bUseJSON        Flag indicating whether to use JSON format.
 	 * @return true if the tilemap was loaded successfully, false otherwise.
 	 */
-	bool LoadTilemap( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON = false );
+	bool LoadTilemap( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile, bool bUseJSON = false );
 
 	/**
 	 * @brief Loads game object data using the specified serialization format.
@@ -52,7 +52,7 @@ class TilemapLoader
 	 * @param bUseJSON          Flag indicating whether to use JSON format.
 	 * @return true if the game objects were loaded successfully, false otherwise.
 	 */
-	bool LoadGameObjects( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile,
+	bool LoadGameObjects( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile,
 						  bool bUseJSON = false );
 
 	/**
@@ -65,11 +65,11 @@ class TilemapLoader
 	 * @param bUseJSON          Flag indicating whether to use JSON format.
 	 * @return true if the game objects were saved successfully, false otherwise.
 	 */
-	bool SaveGameObjects( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile,
+	bool SaveGameObjects( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile,
 						  bool bUseJSON = false );
 
-	bool LoadTilemapFromLuaTable( VORTEK_CORE::ECS::Registry& registry, const sol::table& sTilemapTable );
-	bool LoadGameObjectsFromLuaTable( VORTEK_CORE::ECS::Registry& registry, const sol::table& sObjectTable );
+	bool LoadTilemapFromLuaTable( Vortek::Core::ECS::Registry& registry, const sol::table& sTilemapTable );
+	bool LoadGameObjectsFromLuaTable( Vortek::Core::ECS::Registry& registry, const sol::table& sObjectTable );
 
   private:
 	/**
@@ -82,7 +82,7 @@ class TilemapLoader
 	 * @param sTilemapFile    The destination JSON file path to save the tilemap data.
 	 * @return true if the tilemap was saved successfully, false otherwise.
 	 */
-	bool SaveTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile );
+	bool SaveTilemapJSON( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile );
 
 	/**
 	 * @brief Deserializes tile entities from a JSON tilemap file into the ECS registry.
@@ -94,7 +94,7 @@ class TilemapLoader
 	 * @param sTilemapFile    The source JSON file path containing the tilemap data.
 	 * @return true if the tilemap was loaded successfully, false otherwise.
 	 */
-	bool LoadTilemapJSON( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile );
+	bool LoadTilemapJSON( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile );
 
 	/**
 	 * @brief Serializes all non-tile, non-uneditable game objects from the ECS registry to a JSON file.
@@ -106,7 +106,7 @@ class TilemapLoader
 	 * @param sObjectMapFile    The destination JSON file path to save the game objects.
 	 * @return true if the game objects were saved successfully, false otherwise.
 	 */
-	bool SaveObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile );
+	bool SaveObjectMapJSON( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile );
 
 	/**
 	 * @brief Deserializes game objects from a JSON file into the ECS registry, including hierarchy.
@@ -118,16 +118,14 @@ class TilemapLoader
 	 * @param sObjectMapFile    The source JSON file path containing the game object data.
 	 * @return true if game objects were loaded successfully, false otherwise.
 	 */
-	bool LoadObjectMapJSON( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile );
+	bool LoadObjectMapJSON( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile );
 
 	// Save and load functions for lua serializer
-	bool SaveTilemapLua( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile );
-	bool LoadTilemapLua( VORTEK_CORE::ECS::Registry& registry, const std::string& sTilemapFile );
+	bool SaveTilemapLua( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile );
+	bool LoadTilemapLua( Vortek::Core::ECS::Registry& registry, const std::string& sTilemapFile );
 
-	bool SaveObjectMapLua( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile );
-	bool LoadObjectMapLua( VORTEK_CORE::ECS::Registry& registry, const std::string& sObjectMapFile );
-
-	// TODO: Save and load functions for lua serializer
+	bool SaveObjectMapLua( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile );
+	bool LoadObjectMapLua( Vortek::Core::ECS::Registry& registry, const std::string& sObjectMapFile );
 };
 
 /*
@@ -143,4 +141,4 @@ struct SaveRelationship
 	std::string sFirstChild{};
 };
 
-} // namespace VORTEK_CORE::Loaders
+} // namespace Vortek::Core::Loaders

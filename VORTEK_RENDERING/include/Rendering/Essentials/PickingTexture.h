@@ -2,7 +2,7 @@
 #include <glad/glad.h>
 #include <cstdint>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class PickingTexture
 {
@@ -33,4 +33,4 @@ class PickingTexture
 	int m_Height;
 	bool m_bShouldResize;
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

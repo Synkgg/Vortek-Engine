@@ -1,4 +1,4 @@
-#include "Hub.h"
+#include "editor/hub/Hub.h"
 
 #include <Windowing/Window/Window.h>
 #include "editor/utilities/imgui/Gui.h"
@@ -26,19 +26,59 @@
 #include <iomanip>
 #include <sstream>
 
-using namespace VORTEK_UTIL;
+using namespace Vortek::Utilities;
 
 constexpr ImVec2 BUTTON_SIZE{ 100.f, 25.f };
 constexpr ImVec2 PROJECT_BUTTON_SIZE{ 400.f, 135.f };
-std::vector<VORTEK_EDITOR::RecentProject> m_RecentProjects;
+std::vector<Vortek::Editor::RecentProject> m_RecentProjects;
 const std::string RECENT_PROJECTS_FILE = "recent_projects.txt";
 
 static char g_searchBuffer[ 128 ] = "";
 
-namespace VORTEK_EDITOR
+constexpr float HUB_HEADER_HEIGHT = 60.f;
+
+namespace Vortek::Editor
 {
 
-Hub::Hub( VORTEK_WINDOWING::Window& window )
+namespace ButtonStyles
+{
+constexpr ImU32 Primary = IM_COL32( 70, 120, 255, 255 );
+constexpr ImU32 PrimaryHover = IM_COL32( 90, 140, 255, 255 );
+constexpr ImU32 PrimaryActive = IM_COL32( 60, 105, 230, 255 );
+
+constexpr ImU32 Secondary = IM_COL32( 55, 55, 55, 255 );
+constexpr ImU32 SecondaryHover = IM_COL32( 75, 75, 75, 255 );
+constexpr ImU32 SecondaryActive = IM_COL32( 65, 65, 65, 255 );
+
+constexpr ImVec2 PrimarySize = { 260.f, 45.f };
+constexpr ImVec2 SecondarySize = { 180.f, 45.f };
+}
+
+static bool PrimaryButton( const char* label, ImVec2 size )
+{
+	ImGui::PushStyleColor( ImGuiCol_Button, ButtonStyles::Primary );
+	ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ButtonStyles::PrimaryHover );
+	ImGui::PushStyleColor( ImGuiCol_ButtonActive, ButtonStyles::PrimaryActive );
+
+	bool pressed = ImGui::Button( label, size );
+
+	ImGui::PopStyleColor( 3 );
+	return pressed;
+}
+
+static bool SecondaryButton( const char* label, ImVec2 size )
+{
+	ImGui::PushStyleColor( ImGuiCol_Button, ButtonStyles::Secondary );
+	ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ButtonStyles::SecondaryHover );
+	ImGui::PushStyleColor( ImGuiCol_ButtonActive, ButtonStyles::SecondaryActive );
+
+	bool pressed = ImGui::Button( label, size );
+
+	ImGui::PopStyleColor( 3 );
+	return pressed;
+}
+
+Hub::Hub( Vortek::Windowing::Window& window )
 	: m_Window{ window }
 	, m_bRunning{ false }
 	, m_bLoadError{ false }
@@ -95,7 +135,7 @@ bool Hub::Run()
 
 bool Hub::Initialize()
 {
-	VORTEK_EDITOR::LoadEditorConfig();
+	Vortek::Editor::LoadEditorConfig();
 
 	LoadRecentProjects();
 	return true;
@@ -115,14 +155,10 @@ void Hub::DrawGui()
 	ImGui::SetWindowPos( ImGui::GetMainViewport()->Pos );
 	ImGui::SetWindowSize( ImVec2{ m_Width, m_Height } );
 
-	auto pLogo = ASSET_MANAGER().GetTexture( "vortek_logo" );
-	if ( pLogo && m_eState != EHubState::OpenProject )
-	{
-		ImGui::SetCursorPos( ImVec2{ m_Width * 0.55f - pLogo->GetWidth(), 50.f } );
-		ImGui::Image(
-			(ImTextureID)(intptr_t)pLogo->GetID(),
-			ImVec2{ static_cast<float>( pLogo->GetWidth() * 1.5f ), static_cast<float>( pLogo->GetHeight() * 1.5f ) } );
-	}
+	ImGui::SetWindowPos( ImGui::GetMainViewport()->Pos );
+	ImGui::SetWindowSize( ImVec2{ m_Width, m_Height } );
+
+	DrawCloseButton(); // ← add this line
 
 	switch ( m_eState )
 	{
@@ -137,113 +173,192 @@ void Hub::DrawGui()
 
 void Hub::DrawDefault()
 {
-	ImGui::SetCursorPos( ImVec2{ m_Width * 0.5f - BUTTON_SIZE.x, 300.f } );
-	if ( ImGui::Button( "New Project", BUTTON_SIZE ) )
+	const float centerX = m_Width * 0.5f;
+
+	// Title
+	ImGui::SetCursorPosY( HUB_HEADER_HEIGHT + 40.f );
+
+	// center dynamically based on text size
+	ImGui::PushFont( ImGui::GetIO().Fonts->Fonts[ 1 ] ); // optional if using custom fonts
+
+	ImGui::SetWindowFontScale( 2.5f ); // increase size
+	const char* title = "VORTEK ENGINE";
+	float titleWidth = ImGui::CalcTextSize( title ).x;
+
+	ImGui::SetCursorPosX( centerX - titleWidth * 0.5f );
+	ImGui::Text( "%s", title );
+
+	ImGui::SetWindowFontScale( 1.0f );
+	ImGui::PopFont();
+
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	// Subtitle
+	ImGui::SetCursorPosX( centerX - 80.f );
+	ImGui::TextDisabled( "Recent Projects" );
+
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	// Project cards
+	const float cardWidth = 600.f;
+	const float cardHeight = 70.f;
+
+	for ( const auto& project : m_RecentProjects )
+	{
+		fs::path path( project.path );
+		std::string name = path.stem().string();
+
+		ImGui::SetCursorPosX( centerX - cardWidth * 0.5f );
+
+		ImGui::PushID( project.path.c_str() );
+
+		ImGui::PushStyleColor( ImGuiCol_ChildBg, IM_COL32( 36, 36, 36, 255 ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_ChildRounding, 8.f );
+
+		if ( ImGui::BeginChild( "ProjectCard", ImVec2( cardWidth, cardHeight ), true ) )
+		{
+			bool hovered = ImGui::IsWindowHovered();
+			bool clicked = hovered && ImGui::IsMouseClicked( 0 );
+
+			ImVec2 pos = ImGui::GetWindowPos();
+			ImVec2 size = ImGui::GetWindowSize();
+			ImVec2 end = ImVec2( pos.x + size.x, pos.y + size.y );
+
+			ImU32 color = hovered ? IM_COL32( 60, 60, 60, 255 ) : IM_COL32( 36, 36, 36, 255 );
+
+			ImGui::GetWindowDrawList()->AddRectFilled( pos, end, color, 8.f );
+
+			ImGui::SetCursorPos( ImVec2( 20, 12 ) );
+			ImGui::Text( "%s", name.c_str() );
+
+			ImGui::SetCursorPos( ImVec2( 20, 35 ) );
+			ImGui::TextDisabled( "%s", StringUtils::ConvertTo12HourFormat( project.lastOpened ).c_str() );
+
+			if ( clicked )
+			{
+				TryOpenProject( project.path );
+			}
+		}
+
+		ImGui::EndChild();
+
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor();
+
+		ImGui::Spacing();
+
+		ImGui::PopID();
+	}
+
+	ImGui::Spacing();
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	float totalWidth = ButtonStyles::PrimarySize.x + 15.f + ButtonStyles::SecondarySize.x;
+
+	float startX = centerX - totalWidth * 0.5f;
+
+	ImGui::SetCursorPosX( startX );
+
+	if ( PrimaryButton( ICON_FA_PLUS " Create New Project", ButtonStyles::PrimarySize ) )
 		m_eState = EHubState::NewProject;
 
-	ImGui::SameLine();
-	if ( ImGui::Button( "Open Project", BUTTON_SIZE ) )
-		m_eState = EHubState::OpenProject;
+	ImGui::SameLine( 0, 15.f );
 
-	ImGui::SetCursorPos( ImVec2{ m_Width - ( BUTTON_SIZE.x + 16.f ), m_Height - ( BUTTON_SIZE.y + 16.f ) } );
-	if ( ImGui::Button( "Close", BUTTON_SIZE ) )
-	{
-		m_eState = EHubState::Close;
-		m_bRunning = false;
-	}
+	if ( SecondaryButton( ICON_FA_FOLDER_OPEN " Open Project", ButtonStyles::SecondarySize ) )
+		m_eState = EHubState::OpenProject;
 }
 
 void Hub::DrawNewProject()
 {
-	ImGui::SetCursorPosY( 300.f );
-	ImGui::OffsetTextX( "New Project", 32.f );
-	ImGui::SameLine();
+	const float panelWidth = 600.f;
+	const float panelHeight = 300.f;
 
-	char projectNameBuffer[ 256 ]{};
-	char projectPathBuffer[ 256 ]{};
+	const float startX = m_Width * 0.5f - panelWidth * 0.5f;
+	const float startY = HUB_HEADER_HEIGHT + ( m_Height - HUB_HEADER_HEIGHT ) * 0.5f - panelHeight * 0.5f;
+
+	ImGui::SetCursorPos( ImVec2( startX, startY ) );
+
+	ImGui::PushStyleColor( ImGuiCol_ChildBg, IM_COL32( 32, 32, 32, 255 ) );
+	ImGui::PushStyleVar( ImGuiStyleVar_ChildRounding, 10.f );
+
+	ImGui::BeginChild( "CreateProjectPanel", ImVec2( panelWidth, panelHeight ), true );
+
+	ImGui::Text( "Create New Project" );
+
+	ImGui::Spacing();
+
+	char nameBuffer[ 256 ];
+	char pathBuffer[ 256 ];
 
 #ifdef _WIN32
-	strcpy_s( projectNameBuffer, m_sNewProjectName.c_str() );
-	strcpy_s( projectPathBuffer, m_sNewProjectPath.c_str() );
+	strcpy_s( nameBuffer, m_sNewProjectName.c_str() );
+	strcpy_s( pathBuffer, m_sNewProjectPath.c_str() );
 #else
-	strcpy( projectNameBuffer, m_sNewProjectName.c_str() );
-	strcpy( projectPathBuffer, m_sNewProjectPath.c_str() );
+	strcpy( nameBuffer, m_sNewProjectName.c_str() );
+	strcpy( pathBuffer, m_sNewProjectPath.c_str() );
 #endif
 
-	ImGui::SetCursorPosX( 128.f );
-	if ( ImGui::InputText( "##ProjectName", projectNameBuffer, sizeof( projectNameBuffer ) ) )
-		m_sNewProjectName = projectNameBuffer;
+	ImGui::Text( "Project Name" );
+	ImGui::InputText( "##Name", nameBuffer, sizeof( nameBuffer ) );
+	m_sNewProjectName = nameBuffer;
 
-	ImGui::OffsetTextX( "Location", 32.f );
-	ImGui::SameLine();
-	ImGui::SetCursorPosX( 128.f );
-	if ( ImGui::InputText( "##ProjectPath", projectPathBuffer, sizeof( projectPathBuffer ) ) )
-		m_sNewProjectPath = projectPathBuffer;
+	ImGui::Spacing();
+
+	ImGui::Text( "Location" );
+	ImGui::InputText( "##Path", pathBuffer, sizeof( pathBuffer ) );
+	m_sNewProjectPath = pathBuffer;
 
 	ImGui::SameLine();
+
 	if ( ImGui::Button( "Browse" ) )
 	{
-		VORTEK_FILESYSTEM::FileDialog fileDialog{};
-		const auto selectedPath = fileDialog.SelectFolderDialog( "Open", BASE_PATH );
-		if ( !selectedPath.empty() )
+		Vortek::Filesystem::FileDialog dialog;
+		auto path = dialog.SelectFolderDialog( "Select Folder", BASE_PATH );
+		if ( !path.empty() )
+			m_sNewProjectPath = path;
+	}
+
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	float totalWidth = 200.f + 15.f + 140.f;
+	float buttonStartX = panelWidth * 0.5f - totalWidth * 0.5f;
+
+	ImGui::SetCursorPosX( buttonStartX );
+
+	if ( PrimaryButton( "Create Project", { 200.f, 40.f } ) )
+	{
+		ProjectLoader loader;
+
+		if ( loader.CreateNewProject( m_sNewProjectName, m_sNewProjectPath ) )
 		{
-#ifdef _WIN32
-			strcpy_s( projectPathBuffer, selectedPath.c_str() );
-#else
-			strcpy( projectPathBuffer, selectedPath.c_str() );
-#endif
-			m_sNewProjectPath = selectedPath;
+			std::string full =
+				m_sNewProjectPath + "\\" + m_sNewProjectName + "\\VORTEK_ENGINE\\" + m_sNewProjectName + ".veprj";
+
+			SaveRecentProject( full );
+
+			m_bRunning = false;
+			m_eState = EHubState::CreateNew;
 		}
 	}
 
-	if ( !m_sNewProjectName.empty() && !m_sNewProjectPath.empty() )
-	{
-		fs::path projectPath{ m_sNewProjectPath };
+	ImGui::SameLine( 0, 15.f );
 
-		if ( fs::exists( projectPath ) )
-		{
-			if ( IsReservedPathOrFile( projectPath ) )
-			{
-				ImGui::TextColored( ImVec4{ 1.f, 0.f, 0.f, 1.f },
-									"Path [%s] is a reserved path. Please change paths.",
-									m_sNewProjectPath.c_str() );
-			}
-			else
-			{
-				ImGui::SetCursorPosX( 128.f );
-				if ( ImGui::Button( "Create", BUTTON_SIZE ) )
-				{
-					ProjectLoader loader{};
-					if ( !loader.CreateNewProject( m_sNewProjectName, m_sNewProjectPath ) )
-					{
-						// TODO: Show an error dialog/message here
-					}
-					else
-					{
-						std::string fullProjectPath =
-							m_sNewProjectPath + "\\" + m_sNewProjectName + "\\VORTEK_ENGINE\\" + m_sNewProjectName + ".veprj";
-						SaveRecentProject( fullProjectPath );
-
-						m_bRunning = false;
-						m_eState = EHubState::CreateNew;
-					}
-				}
-			}
-		}
-	}
-
-	ImGui::SetCursorPos( ImVec2{ m_Width - ( BUTTON_SIZE.x + 16.f ), m_Height - ( BUTTON_SIZE.y + 16.f ) } );
-	if ( ImGui::Button( "Cancel", BUTTON_SIZE ) )
-	{
+	if ( SecondaryButton( "Cancel", { 140.f, 40.f } ) )
 		m_eState = EHubState::Default;
-		m_sNewProjectName.clear();
-		m_sNewProjectPath = DEFAULT_PROJECT_PATH;
-	}
+
+	ImGui::EndChild();
+
+	ImGui::PopStyleVar();
+	ImGui::PopStyleColor();
 }
 
 void Hub::DrawOpenProject()
 {
-	if ( VORTEK_EDITOR::g_UseNewHubUI )
+	if ( Vortek::Editor::g_UseNewHubUI )
 	{
 		DrawNewOpenProject();
 	}
@@ -315,7 +430,7 @@ void Hub::DrawOldOpenProject()
 					// Remove from list
 					m_RecentProjects.erase( std::remove_if( m_RecentProjects.begin(),
 															m_RecentProjects.end(),
-															[ & ]( const VORTEK_EDITOR::RecentProject& p ) {
+															[ & ]( const Vortek::Editor::RecentProject& p ) {
 																return p.path == project.path;
 															} ),
 											m_RecentProjects.end() );
@@ -336,7 +451,8 @@ void Hub::DrawOldOpenProject()
 
 				ImGui::PopStyleColor( 3 );
 
-				ImGui::TextDisabled( "Last edited: %s", ConvertTo12HourFormat( project.lastOpened ).c_str() );
+				ImGui::TextDisabled( "Last edited: %s",
+									 StringUtils::ConvertTo12HourFormat( project.lastOpened ).c_str() );
 
 				fs::path fullPath( project.path );
 				std::string parentDir = fullPath.has_parent_path() ? fullPath.parent_path().filename().string() : "";
@@ -378,8 +494,8 @@ void Hub::DrawOldOpenProject()
 
 	if ( ImGui::Button( "Browse", BUTTON_SIZE ) )
 	{
-		VORTEK_FILESYSTEM::FileDialog fd;
-		const auto sFilepath = fd.OpenFileDialog( "Open Project", "", { "*.veprj" } );
+		Vortek::Filesystem::FileDialog fd;
+		const auto sFilepath = fd.OpenFileDialog( "Open", BASE_PATH, { "*.veprj" }, "Vortek Engine Project (*.veprj)" );
 
 		if ( !sFilepath.empty() )
 		{
@@ -407,34 +523,39 @@ void Hub::DrawNewOpenProject()
 	std::string searchQuery = g_searchBuffer;
 
 	// Header
-	ImGui::SetCursorPos( ImVec2{ 20.f, 20.f } );
+	ImGui::SetCursorPos( ImVec2{ 20.f, HUB_HEADER_HEIGHT - 0.f } );
 	ImGui::Text( "Projects" );
 
 	// Right-aligned controls: Search, Open..., New Project...
 	const float spacing = ImGui::GetStyle().ItemSpacing.x;
 	const float totalWidth = searchWidth + buttonWidth * 2 + spacing * 2;
 
-	ImGui::SetCursorPos( ImVec2{ m_Width - totalWidth - 20.f, 20.f } );
+	ImGui::SetCursorPos( ImVec2{ m_Width - totalWidth - 60.f, HUB_HEADER_HEIGHT - 0.f } );
 	ImGui::PushItemWidth( searchWidth );
 	ImGui::InputTextWithHint( "##Search", "Search projects...", g_searchBuffer, IM_ARRAYSIZE( g_searchBuffer ) );
 	ImGui::PopItemWidth();
 
 	ImGui::SameLine();
-	if ( ImGui::Button( "Open...", ImVec2{ buttonWidth, buttonHeight } ) )
+
+	if ( SecondaryButton( "Open...", { 110.f, 30.f } ) )
 	{
-		VORTEK_FILESYSTEM::FileDialog fileDialog;
-		const auto selectedPath = fileDialog.OpenFileDialog( "Open Project", "", { "*.veprj" } );
+		Vortek::Filesystem::FileDialog fd;
+		auto selectedPath = fd.OpenFileDialog( "Open", BASE_PATH, { "*.veprj", "*.s2dprj" });
 		if ( !selectedPath.empty() )
 			TryOpenProject( selectedPath );
 	}
 
 	ImGui::SameLine();
-	if ( ImGui::Button( "New Project...", ImVec2{ buttonWidth, buttonHeight } ) )
+
+	if ( PrimaryButton( "New Project...", { 140.f, 30.f } ) )
 		m_eState = EHubState::NewProject;
 
 	// Project list
-	ImGui::SetCursorPos( ImVec2{ 20.f, headerHeight + 10.f } );
-	ImGui::BeginChild( "ProjectList", ImVec2{ m_Width - 40.f, m_Height - headerHeight - 80.f }, true );
+	ImGui::SetCursorPos( ImVec2{ 20.f, HUB_HEADER_HEIGHT + 60.f } );
+
+	const float cancelHeight = BUTTON_SIZE.y + 20.f;
+
+	ImGui::BeginChild( "ProjectList", ImVec2{ m_Width - 40.f, m_Height - headerHeight - 80.f - cancelHeight }, true );
 
 	ImGui::Columns( 4, "project_columns", false );
 	ImGui::SetColumnWidth( 0, 350.f );
@@ -493,7 +614,7 @@ void Hub::DrawNewOpenProject()
 			// Column 1: Last Modified
 			ImGui::SetCursorPosY( rowStartY );
 			ImGui::BeginGroup();
-			ImGui::Text( "%s", ConvertTo12HourFormat( project.lastOpened ).c_str() );
+			ImGui::Text( "%s", StringUtils::ConvertTo12HourFormat( project.lastOpened ).c_str() );
 			ImGui::EndGroup();
 			ImGui::NextColumn();
 
@@ -536,9 +657,12 @@ void Hub::DrawNewOpenProject()
 
 	ImGui::EndChild();
 
-	// Cancel button bottom-right
-	ImGui::SetCursorPos( ImVec2{ m_Width - BUTTON_SIZE.x - 20.f, m_Height - BUTTON_SIZE.y - 20.f } );
-	if ( ImGui::Button( "Cancel", BUTTON_SIZE ) )
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	ImGui::SetCursorPosX( ImGui::GetWindowContentRegionMax().x - BUTTON_SIZE.x - 20.f );
+
+	if ( SecondaryButton( "Cancel", BUTTON_SIZE ) )
 	{
 		m_eState = EHubState::Default;
 		m_sPrevProjectName.clear();
@@ -639,7 +763,7 @@ void Hub::SaveRecentProject( const std::string& path )
 	// Remove old entry if it exists
 	m_RecentProjects.erase( std::remove_if( m_RecentProjects.begin(),
 											m_RecentProjects.end(),
-											[ & ]( const VORTEK_EDITOR::RecentProject& p ) { return p.path == path; } ),
+											[ & ]( const Vortek::Editor::RecentProject& p ) { return p.path == path; } ),
 							m_RecentProjects.end() );
 
 	// Insert with current time as lastOpened
@@ -657,4 +781,27 @@ void Hub::SaveRecentProject( const std::string& path )
 		file << entry.path << "|" << entry.lastOpened << "\n";
 }
 
-} // namespace VORTEK_EDITOR
+void Hub::DrawCloseButton()
+{
+	const float size = 32.f;
+	const float padding = 10.f;
+
+	ImGui::SetCursorPos( ImVec2( m_Width - size - padding, HUB_HEADER_HEIGHT * 0.5f - size * 0.5f ) );
+
+	ImGui::PushStyleColor( ImGuiCol_Button, IM_COL32( 60, 60, 60, 255 ) );
+	ImGui::PushStyleColor( ImGuiCol_ButtonHovered, IM_COL32( 200, 60, 60, 255 ) );
+	ImGui::PushStyleColor( ImGuiCol_ButtonActive, IM_COL32( 160, 40, 40, 255 ) );
+
+	if ( ImGui::Button( ICON_FA_TIMES, ImVec2( size, size ) ) )
+	{
+		m_eState = EHubState::Close;
+		m_bRunning = false;
+	}
+
+	ImGui::PopStyleColor( 3 );
+
+	if ( ImGui::IsItemHovered() )
+		ImGui::SetTooltip( "Close Hub" );
+}
+
+} // namespace Vortek::Editor

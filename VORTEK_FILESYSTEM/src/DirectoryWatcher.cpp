@@ -11,7 +11,7 @@
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 
 struct DirectoryWatcher::Impl
@@ -101,15 +101,15 @@ void DirectoryWatcher::Impl::RunWindows()
 
 	// clang-format off
 
-		HANDLE hDir = CreateFileW(
-			rootPath.c_str(),
-			FILE_LIST_DIRECTORY,
-			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-			nullptr,
-			OPEN_EXISTING,
-			FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-			nullptr
-		);
+	HANDLE hDir = CreateFileW(
+		rootPath.c_str(),
+		FILE_LIST_DIRECTORY,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+		nullptr
+	);
 
 	// clang-format on
 
@@ -144,16 +144,16 @@ void DirectoryWatcher::Impl::RunWindows()
 		ResetEvent( hEvent );
 
 		// clang-format off
-			BOOL result = ReadDirectoryChangesW(
-				hDir,
-				buffer,
-				bufferSize,
-				TRUE,
-				FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
-				&bytesReturned,
-				&overlapped,
-				nullptr
-			);
+		BOOL result = ReadDirectoryChangesW(
+			hDir,
+			buffer,
+			bufferSize,
+			TRUE,
+			FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
+			&bytesReturned,
+			&overlapped,
+			nullptr
+		);
 		// clang-format on
 
 		if ( !result && GetLastError() != ERROR_IO_PENDING )
@@ -214,12 +214,12 @@ void DirectoryWatcher::Impl::RunWindows()
 		}
 	}
 
-	if ( hEvent )
+	if (hEvent)
 	{
 		CloseHandle( hEvent );
 	}
 
-	if ( hDir )
+	if (hDir)
 	{
 		CloseHandle( hDir );
 	}
@@ -233,4 +233,4 @@ void DirectoryWatcher::Impl::RunLinux()
 
 #endif
 
-} // namespace VORTEK_FILESYSTEM
+} // namespace Vortek::Filesystem

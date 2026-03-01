@@ -1,4 +1,4 @@
-#include "TiledMapImporter.h"
+#include "editor/loaders/TiledMapImporter.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
 #include "Core/Resources/AssetManager.h"
@@ -12,12 +12,12 @@
 
 #include <tinyxml2.h>
 
-using namespace VORTEK_CORE;
-using namespace VORTEK_CORE::ECS;
-using namespace VORTEK_PHYSICS;
+using namespace Vortek::Core;
+using namespace Vortek::Core::ECS;
+using namespace Vortek::Physics;
 using namespace tinyxml2;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 bool TiledMapImporter::ImportTilemapFromTiled( EditorSceneManager* pSceneManager, const std::string sTiledMapFile )
@@ -51,7 +51,7 @@ bool TiledMapImporter::ImportFromTMXFile( EditorSceneManager* pSceneManager, con
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& assetManager = mainRegistry.GetAssetManager();
 
-	SceneObject newScene{ fs::path{ sTiledMapFile }.stem().string(), VORTEK_CORE::EMapType::Grid };
+	SceneObject newScene{ fs::path{ sTiledMapFile }.stem().string(), Vortek::Core::EMapType::Grid };
 	auto& canvas = newScene.GetCanvas();
 
 	// Get the Root Element
@@ -116,9 +116,10 @@ bool TiledMapImporter::ImportFromTMXFile( EditorSceneManager* pSceneManager, con
 			.tileHeight = pTileset->Attribute( "tileheight" ) ? std::atoi( pTileset->Attribute( "tileheight" ) ) : 16,
 			.firstGID = pTileset->Attribute( "firstgid" ) ? std::atoi( pTileset->Attribute( "firstgid" ) ) : 1,
 			.tileCount = pTileset->Attribute( "tilecount" ) ? std::atoi( pTileset->Attribute( "tilecount" ) ) : 1,
-			.tiles = std::move( tiles ) };
+			.tiles = std::move( tiles )
+		};
 
-		if ( newTileset.sName.empty() || newTileset.columns <= 0 )
+		if (newTileset.sName.empty() || newTileset.columns <= 0)
 		{
 			VORTEK_ERROR( "Failed to load tileset" );
 			return false;
@@ -133,13 +134,13 @@ bool TiledMapImporter::ImportFromTMXFile( EditorSceneManager* pSceneManager, con
 
 	XMLElement* pLayer = pRootElement->FirstChildElement( "layer" );
 	int LAYER = 0;
-	while ( pLayer )
+	while (pLayer)
 	{
 		const int ROWS = std::atoi( pLayer->Attribute( "height" ) ) - 1;
 		const int COLS = std::atoi( pLayer->Attribute( "width" ) );
 		const std::string sLayerName = pLayer->Attribute( "name" );
 
-		newScene.AddLayer( VORTEK_UTIL::SpriteLayerParams{
+		newScene.AddLayer( Vortek::Utilities::SpriteLayerParams{
 			.sLayerName = sLayerName,
 			.bVisible = true,
 			.layer = LAYER,
@@ -153,26 +154,26 @@ bool TiledMapImporter::ImportFromTMXFile( EditorSceneManager* pSceneManager, con
 		std::string value;
 
 		// Parse the data
-		while ( std::getline( ss, value, ',' ) )
+		while (std::getline(ss, value, ','))
 		{
-			if ( !value.empty() )
+			if (!value.empty())
 			{
 				tileIDs.push_back( std::stoi( value ) );
 			}
 		}
 
-		for ( int row = 0; row < ROWS; row++ )
+		for (int row = 0; row < ROWS; row++)
 		{
-			for ( int col = 1; col < COLS; col++ )
+			for (int col = 1; col < COLS; col++)
 			{
 				int id = tileIDs[ row * COLS + col ];
 				// If the ID is zero, we can skip, there is no tile there.
-				if ( id == 0 )
+				if (id == 0)
 					continue;
 
 				if ( auto* pTileset = GetTileset( tilesets, id ) )
 				{
-					Entity newTile{ newScene.GetRegistry(), "", "" };
+					Entity newTile{ newScene.GetRegistryPtr(), "", "" };
 					auto& transform = newTile.AddComponent<TransformComponent>();
 					transform.position = glm::vec2{ ( col - 1 ) * pTileset->tileWidth, row * pTileset->tileHeight };
 
@@ -187,7 +188,7 @@ bool TiledMapImporter::ImportFromTMXFile( EditorSceneManager* pSceneManager, con
 						if ( coreGlobals.IsPhysicsEnabled() )
 						{
 							PhysicsAttributes physAttr{};
-							physAttr.eType = VORTEK_PHYSICS::RigidBodyType::STATIC;
+							physAttr.eType = Vortek::Physics::RigidBodyType::STATIC;
 							physAttr.density = 1000.f;
 							physAttr.friction = 0.f;
 							physAttr.restitution = 0.f;
@@ -196,7 +197,7 @@ bool TiledMapImporter::ImportFromTMXFile( EditorSceneManager* pSceneManager, con
 							physAttr.boxSize = glm::vec2{ boxCollider.width, boxCollider.height };
 							physAttr.bBoxShape = true;
 
-							VORTEK_PHYSICS::ObjectData objectData{};
+							Vortek::Physics::ObjectData objectData{};
 							objectData.tag = pObject->sName;
 							objectData.group = pObject->sType;
 							objectData.entityID = static_cast<uint32_t>( newTile.GetEntity() );
@@ -226,7 +227,7 @@ bool TiledMapImporter::ImportFromTMXFile( EditorSceneManager* pSceneManager, con
 					sprite.start_y = startY;
 					sprite.layer = LAYER;
 
-					VORTEK_CORE::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
+					Vortek::Core::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
 
 					newTile.AddComponent<TileComponent>(
 						TileComponent{ .id = static_cast<uint32_t>( newTile.GetEntity() ) } );
@@ -243,8 +244,7 @@ bool TiledMapImporter::ImportFromTMXFile( EditorSceneManager* pSceneManager, con
 	return pSceneManager->AddSceneObject( newScene.GetName(), newScene.GetSceneDataPath() );
 }
 
-bool TiledMapImporter::ImportFromLuaFile( EditorSceneManager* pSceneManager,
-										  const std::string sTiledMapFile )
+bool TiledMapImporter::ImportFromLuaFile( EditorSceneManager* pSceneManager, const std::string sTiledMapFile )
 {
 	auto& coreGlobals = CORE_GLOBALS();
 	auto& mainRegistry = MAIN_REGISTRY();
@@ -269,7 +269,7 @@ bool TiledMapImporter::ImportFromLuaFile( EditorSceneManager* pSceneManager,
 		return false;
 	}
 
-	SceneObject newScene{ fs::path{ sTiledMapFile }.stem().string(), VORTEK_CORE::EMapType::Grid };
+	SceneObject newScene{ fs::path{ sTiledMapFile }.stem().string(), Vortek::Core::EMapType::Grid };
 	auto& canvas = newScene.GetCanvas();
 
 	canvas.tileWidth = map[ "tilewidth" ].get_or( 16 );
@@ -347,7 +347,7 @@ bool TiledMapImporter::ImportFromLuaFile( EditorSceneManager* pSceneManager,
 			const std::string sLayerName = layer[ "name" ].get<std::string>();
 			bool bVisible = layer[ "visible" ].get<bool>();
 
-			newScene.AddLayer( VORTEK_UTIL::SpriteLayerParams{
+			newScene.AddLayer( Vortek::Utilities::SpriteLayerParams{
 				.sLayerName = sLayerName,
 				.bVisible = bVisible,
 				.layer = LAYER,
@@ -363,9 +363,9 @@ bool TiledMapImporter::ImportFromLuaFile( EditorSceneManager* pSceneManager,
 					if ( id == 0 )
 						continue;
 
-					if ( auto* pTileset = GetTileset( tilesets, id ) )
+					if ( auto* pTileset = GetTileset(tilesets, id ) )
 					{
-						Entity newTile{ newScene.GetRegistry(), "", "" };
+						Entity newTile{ newScene.GetRegistryPtr(), "", "" };
 						auto& transform = newTile.AddComponent<TransformComponent>();
 						transform.position = glm::vec2{ ( col - 1 ) * pTileset->tileWidth, row * pTileset->tileHeight };
 
@@ -380,7 +380,7 @@ bool TiledMapImporter::ImportFromLuaFile( EditorSceneManager* pSceneManager,
 							if ( coreGlobals.IsPhysicsEnabled() )
 							{
 								PhysicsAttributes physAttr{};
-								physAttr.eType = VORTEK_PHYSICS::RigidBodyType::STATIC;
+								physAttr.eType = Vortek::Physics::RigidBodyType::STATIC;
 								physAttr.density = 1000.f;
 								physAttr.friction = 0.f;
 								physAttr.restitution = 0.f;
@@ -389,7 +389,7 @@ bool TiledMapImporter::ImportFromLuaFile( EditorSceneManager* pSceneManager,
 								physAttr.boxSize = glm::vec2{ boxCollider.width, boxCollider.height };
 								physAttr.bBoxShape = true;
 
-								VORTEK_PHYSICS::ObjectData objectData{};
+								Vortek::Physics::ObjectData objectData{};
 								objectData.tag = pObject->sName;
 								objectData.group = pObject->sType;
 								objectData.entityID = static_cast<uint32_t>( newTile.GetEntity() );
@@ -419,7 +419,7 @@ bool TiledMapImporter::ImportFromLuaFile( EditorSceneManager* pSceneManager,
 						sprite.start_y = startY;
 						sprite.layer = LAYER;
 
-						VORTEK_CORE::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
+						Vortek::Core::GenerateUVs( sprite, pTexture->GetWidth(), pTexture->GetHeight() );
 
 						newTile.AddComponent<TileComponent>(
 							TileComponent{ .id = static_cast<uint32_t>( newTile.GetEntity() ) } );
@@ -477,4 +477,4 @@ TiledMapImporter::TileObject* TiledMapImporter::Tileset::GetObjectFromId( int id
 	return nullptr;
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

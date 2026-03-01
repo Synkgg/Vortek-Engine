@@ -1,19 +1,19 @@
-#include "AssetPackager.h"
+#include "editor/packaging/AssetPackager.h"
 #include "VortekUtilities/VortekUtilities.h"
 #include "VortekUtilities/HelperUtilities.h"
 #include "VortekUtilities/ThreadPool.h"
 
 #include "VortekFilesystem/Serializers/LuaSerializer.h"
-#include "ScriptCompiler.h"
+#include "editor/packaging/ScriptCompiler.h"
 #include "Logger/Logger.h"
 #include <libzippp/libzippp.h>
 
-using namespace VORTEK_FILESYSTEM;
+using namespace Vortek::Filesystem;
 namespace fs = std::filesystem;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
-AssetPackager::AssetPackager( const AssetPackagerParams& params, std::shared_ptr<VORTEK_UTIL::ThreadPool> pThreadPool )
+AssetPackager::AssetPackager( const AssetPackagerParams& params, std::shared_ptr<Vortek::Utilities::ThreadPool> pThreadPool )
 	: m_Params{ params }
 	, m_pThreadPool{ pThreadPool }
 {
@@ -45,7 +45,8 @@ void AssetPackager::PackageAssets( const rapidjson::Value& assets )
 	}
 }
 
-void AssetPackager::ConvertAssetToLuaTable( VORTEK_FILESYSTEM::LuaSerializer& luaSerializer, const AssetConversionData& conversionData )
+void AssetPackager::ConvertAssetToLuaTable( Vortek::Filesystem::LuaSerializer& luaSerializer,
+											const AssetConversionData& conversionData )
 {
 	std::fstream in{ conversionData.sInAssetFile, std::ios::in | std::ios::binary };
 	if ( !in.is_open() )
@@ -63,14 +64,14 @@ void AssetPackager::ConvertAssetToLuaTable( VORTEK_FILESYSTEM::LuaSerializer& lu
 			.AddKeyValuePair( "assetName", conversionData.sAssetName, true, false, false, true )
 			.AddKeyValuePair( "assetExt", assetPath.extension().string(), true, false, false, true )
 			.AddKeyValuePair(
-				"assetType", VORTEK_UTIL::AssetTypeToStr( conversionData.eType ), true, false, false, true );
+				"assetType", Vortek::Utilities::AssetTypeToStr( conversionData.eType ), true, false, false, true );
 
-		if ( conversionData.eType == VORTEK_UTIL::AssetType::FONT )
+		if ( conversionData.eType == Vortek::Utilities::AssetType::FONT )
 		{
 			luaSerializer.AddKeyValuePair( "fontSize",
 										   conversionData.optFontSize ? *conversionData.optFontSize : 32.f );
 		}
-		else if ( conversionData.eType == VORTEK_UTIL::AssetType::TEXTURE )
+		else if ( conversionData.eType == Vortek::Utilities::AssetType::TEXTURE )
 		{
 			luaSerializer.AddKeyValuePair( "bPixelArt",
 										   conversionData.optPixelArt ? *conversionData.optPixelArt : true );
@@ -134,20 +135,19 @@ void AssetPackager::CreateLuaAssetFiles( const std::string& sProjectPath, const 
 
 	std::vector<std::future<AssetPackageStatus>> assetFutures;
 	assetFutures.emplace_back( m_pThreadPool->Enqueue( [ & ] {
-		return SerializeAssetsByType(
-			assets, tempAssetPath, "textures", sContentPath, VORTEK_UTIL::AssetType::TEXTURE );
+		return SerializeAssetsByType( assets, tempAssetPath, "textures", sContentPath, Vortek::Utilities::AssetType::TEXTURE );
 	} ) );
 
 	assetFutures.emplace_back( m_pThreadPool->Enqueue( [ & ] {
-		return SerializeAssetsByType( assets, tempAssetPath, "soundfx", sContentPath, VORTEK_UTIL::AssetType::SOUNDFX );
+		return SerializeAssetsByType( assets, tempAssetPath, "soundfx", sContentPath, Vortek::Utilities::AssetType::SOUNDFX );
 	} ) );
 
 	assetFutures.emplace_back( m_pThreadPool->Enqueue( [ & ] {
-		return SerializeAssetsByType( assets, tempAssetPath, "music", sContentPath, VORTEK_UTIL::AssetType::MUSIC );
+		return SerializeAssetsByType( assets, tempAssetPath, "music", sContentPath, Vortek::Utilities::AssetType::MUSIC );
 	} ) );
 
 	assetFutures.emplace_back( m_pThreadPool->Enqueue( [ & ] {
-		return SerializeAssetsByType( assets, tempAssetPath, "fonts", sContentPath, VORTEK_UTIL::AssetType::FONT );
+		return SerializeAssetsByType( assets, tempAssetPath, "fonts", sContentPath, Vortek::Utilities::AssetType::FONT );
 	} ) );
 
 	bool bHasError{ false };
@@ -291,7 +291,7 @@ AssetPackager::AssetPackageStatus AssetPackager::SerializeAssetsByType( const ra
 																		const std::filesystem::path& tempAssetsPath,
 																		const std::string& sAssetTypeName,
 																		const std::string& sContentPath,
-																		VORTEK_UTIL::AssetType eAssetType )
+																		Vortek::Utilities::AssetType eAssetType )
 {
 	const std::string sAssetFile{ sAssetTypeName + ".veasset" };
 	fs::path assetPath = tempAssetsPath / sAssetFile;
@@ -326,19 +326,20 @@ AssetPackager::AssetPackageStatus AssetPackager::SerializeAssetsByType( const ra
 			for ( const auto& jsonValue : assetArray.GetArray() )
 			{
 				std::string sPath{ sContentPath + PATH_SEPARATOR + jsonValue[ "path" ].GetString() };
+
 				AssetConversionData conversionData{
 					.sInAssetFile = sPath, .sAssetName = jsonValue[ "name" ].GetString(), .eType = eAssetType };
 
-				if ( eAssetType == VORTEK_UTIL::AssetType::FONT && jsonValue.HasMember( "fontSize" ) )
+				if (eAssetType == Vortek::Utilities::AssetType::FONT && jsonValue.HasMember("fontSize"))
 				{
 					conversionData.optFontSize = jsonValue[ "fontSize" ].GetFloat();
 				}
-				else if ( eAssetType == VORTEK_UTIL::AssetType::TEXTURE && jsonValue.HasMember( "bPixelArt" ) )
+				else if (eAssetType == Vortek::Utilities::AssetType::TEXTURE && jsonValue.HasMember("bPixelArt"))
 				{
 					conversionData.optPixelArt = jsonValue[ "bPixelArt" ].GetBool();
 				}
 
-				ConvertAssetToLuaTable( *pLuaSerializer, conversionData );
+				ConvertAssetToLuaTable( *pLuaSerializer, conversionData);
 			}
 		}
 		catch ( const std::exception& ex )
@@ -347,9 +348,9 @@ AssetPackager::AssetPackageStatus AssetPackager::SerializeAssetsByType( const ra
 			return { .sError = sError, .bSuccess = false };
 		}
 
-		pLuaSerializer->EndTable(); // Assets
+		pLuaSerializer->EndTable(); //Assets
 	}
 
 	return { .bSuccess = true };
 }
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

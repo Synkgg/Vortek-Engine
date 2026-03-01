@@ -2,7 +2,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 /*
  * @brief Simple wrapper for SDL C-style types.
@@ -17,20 +17,20 @@ struct SDL_Destroyer
 	void operator()( Mix_Music* music ) const;
 	void operator()( SDL_Cursor* cursor ) const;
 };
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities
 
 // Useful Aliases
 using Controller = std::shared_ptr<SDL_GameController>;
 using Cursor = std::shared_ptr<SDL_Cursor>;
-using WindowPtr = std::unique_ptr<SDL_Window, VORTEK_UTIL::SDL_Destroyer>;
-using SoundFxPtr = std::unique_ptr<Mix_Chunk, VORTEK_UTIL::SDL_Destroyer>;
-using MusicPtr = std::unique_ptr<Mix_Music, VORTEK_UTIL::SDL_Destroyer>;
+using WindowPtr = std::unique_ptr<SDL_Window, Vortek::Utilities::SDL_Destroyer>;
+using SoundFxPtr = std::unique_ptr<Mix_Chunk, Vortek::Utilities::SDL_Destroyer>;
+using MusicPtr = std::unique_ptr<Mix_Music, Vortek::Utilities::SDL_Destroyer>;
 
 /**
  * @brief Creates a std::shared_ptr from a raw SDL pointer with a custom deleter.
  *
  * This utility function wraps a raw SDL pointer in a std::shared_ptr using the
- * VORTEK_UTIL::SDL_Destroyer as the deleter. This ensures the SDL resource is
+ * Vortek::Utilities::SDL_Destroyer as the deleter. This ensures the SDL resource is
  * properly released when the shared pointer goes out of scope.
  *
  * @tparam RPtr      The return pointer type, typically deduced as std::shared_ptr<TSDLType>.
@@ -41,5 +41,5 @@ using MusicPtr = std::unique_ptr<Mix_Music, VORTEK_UTIL::SDL_Destroyer>;
 template <typename RPtr, typename TSDLType>
 inline RPtr MakeSharedFromSDLType( TSDLType* pSDLType )
 {
-	return std::shared_ptr<TSDLType>( pSDLType, VORTEK_UTIL::SDL_Destroyer{} );
+	return std::shared_ptr<TSDLType>( pSDLType, Vortek::Utilities::SDL_Destroyer{} );
 }

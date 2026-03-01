@@ -1,4 +1,4 @@
-#include "ContentDisplay.h"
+#include "editor/displays/ContentDisplay.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "VortekUtilities/VortekUtilities.h"
@@ -10,6 +10,8 @@
 #include "editor/utilities/fonts/IconsFontAwesome5.h"
 #include "Logger/Logger.h"
 
+#include "Editor/displays/ScriptEditorDisplay.h"
+
 #include "editor/events/EditorEventTypes.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "Core/Events/EventDispatcher.h"
@@ -19,19 +21,19 @@
 
 #include <Rendering/Essentials/Texture.h>
 #include <imgui.h>
-#include <imgui_cpp/imgui_stdlib.h>
+#include <imgui_stdlib.h>
 
-using namespace VORTEK_EDITOR::Events;
-using namespace VORTEK_FILESYSTEM;
+using namespace Vortek::Editor::Events;
+using namespace Vortek::Filesystem;
 
 namespace fs = std::filesystem;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 ContentDisplay::ContentDisplay()
-	: m_pFileDispatcher{ std::make_unique<VORTEK_CORE::Events::EventDispatcher>() }
-	, m_CurrentDir{ *MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>()->TryGetFolderPath(
-		  VORTEK_CORE::EProjectFolderType::Content ) }
+	: m_pFileDispatcher{ std::make_unique<Vortek::Core::Events::EventDispatcher>() }
+	, m_CurrentDir{ *MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>()->TryGetFolderPath(
+		  Vortek::Core::EProjectFolderType::Content ) }
 	, m_sFilepathToAction{}
 	, m_Selected{ -1 }
 	, m_eFileAction{ Events::EFileAction::NoAction }
@@ -142,10 +144,62 @@ void ContentDisplay::Draw()
 
 					if ( ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked( 0 ) )
 					{
-						VORTEK_FILESYSTEM::FileProcessor fp{};
-						if ( !fp.OpenApplicationFromFile( path.string(), {} ) )
+						auto ext = path.extension().string();
+						if ( ext == ".lua" || ext == ".json" )
 						{
-							VORTEK_ERROR( "Failed to open file {}", path.string() );
+							bool opened = false;
+
+							// Get the DisplayHolder shared_ptr from the registry (this is what you added in
+							// CreateDisplays)
+							if ( auto pDisplayHolder = MAIN_REGISTRY().GetContext<std::shared_ptr<DisplayHolder>>() )
+							{
+								// Iterate through the displays (they're stored as unique_ptr<IDisplay>)
+								for ( const auto& pDisplay : pDisplayHolder->displays )
+								{
+									if ( !pDisplay )
+										continue;
+
+									// Try to dynamic_cast to ScriptEditorDisplay
+									if ( auto pScriptEditor =
+											 dynamic_cast<Vortek::Editor::ScriptEditorDisplay*>( pDisplay.get() ) )
+									{
+										// Open the script safely
+										pScriptEditor->OpenScript( path.string() );
+										opened = true;
+										break;
+									}
+								}
+							}
+							else
+							{
+								VORTEK_ERROR(
+									"DisplayHolder not found in MAIN_REGISTRY(); cannot open script in editor." );
+							}
+
+							if ( !opened )
+							{
+								// Fallback to external open if the script editor instance wasn't found
+								Vortek::Filesystem::FileProcessor fp{};
+								if ( !fp.OpenApplicationFromFile( path.string(), {} ) )
+								{
+									VORTEK_ERROR( "Failed to open file {}", path.string() );
+								}
+							}
+
+							// Attempt to make the Script Editor visible (see next section on EditorState)
+							if ( auto state = MAIN_REGISTRY().GetContext<EditorStatePtr>() )
+							{
+								if ( !state->IsDisplayOpen( EDisplay::ScriptEditor ) )
+									state->ToggleDisplay( EDisplay::ScriptEditor );
+							}
+						}
+						else
+						{
+							Vortek::Filesystem::FileProcessor fp{};
+							if ( !fp.OpenApplicationFromFile( path.string(), {} ) )
+							{
+								VORTEK_ERROR( "Failed to open file {}", path.string() );
+							}
 						}
 					}
 					else if ( ImGui::IsItemHovered() && ImGui::IsMouseClicked( 0 ) )
@@ -182,7 +236,7 @@ void ContentDisplay::Draw()
 						}
 					}
 
-					if ( ImGui::Selectable( "Rename" ) )
+					if ( ImGui::Selectable( ICON_FA_PEN " Rename" ) )
 					{
 						// TODO: Rename file
 					}
@@ -191,11 +245,42 @@ void ContentDisplay::Draw()
 
 					if ( ImGui::Selectable( ICON_FA_FILE_ALT " Open File Location" ) )
 					{
-						VORTEK_FILESYSTEM::FileProcessor fp{};
+						Vortek::Filesystem::FileProcessor fp{};
 						if ( !fp.OpenFileLocation( path.string() ) )
 						{
 							VORTEK_ERROR( "Failed to open file location [{}]", path.string() );
 						}
+					}
+
+					if ( ImGui::Selectable( ICON_FA_EDIT " Open in Script Editor" ) )
+					{
+						bool opened = false;
+						if ( auto pDisplayHolder = MAIN_REGISTRY().GetContext<std::shared_ptr<DisplayHolder>>() )
+						{
+							for ( const auto& pDisplay : pDisplayHolder->displays )
+							{
+								if ( !pDisplay )
+									continue;
+								if ( auto pScriptEditor =
+										 dynamic_cast<Vortek::Editor::ScriptEditorDisplay*>( pDisplay.get() ) )
+								{
+									pScriptEditor->OpenScript( path.string() );
+									opened = true;
+									break;
+								}
+							}
+						}
+						else
+						{
+							VORTEK_ERROR( "DisplayHolder not found in MAIN_REGISTRY(); cannot open script in editor." );
+						}
+
+						if ( !opened )
+						{
+							VORTEK_ERROR( "No ScriptEditorDisplay instance found in DisplayHolder." );
+						}
+
+						// Try to open the display in UI state (see EditorState suggestions below)
 					}
 
 					bItemPop = true;
@@ -224,7 +309,8 @@ void ContentDisplay::Draw()
 				{
 					if ( ImGui::Selectable( ICON_FA_PASTE " Paste" ) )
 					{
-						m_pFileDispatcher->EnqueueEvent( FileEvent{ .eAction = EFileAction::Paste } );
+						m_pFileDispatcher->EnqueueEvent(
+							FileEvent{ .eAction = EFileAction::Paste, .sFilepath = m_sFilepathToAction } );
 					}
 				}
 				else
@@ -234,7 +320,9 @@ void ContentDisplay::Draw()
 					ImGui::EndDisabled();
 				}
 
-				if ( ImGui::Selectable( ICON_FA_FOLDER " New Folder" ) )
+				ImGui::SeparatorText( "Folder" );
+
+				if ( ImGui::Selectable( ICON_FA_FOLDER_PLUS " New Folder" ) )
 				{
 					m_sFilepathToAction = m_CurrentDir.string();
 					m_eCreateAction = Events::EContentCreateAction::Folder;
@@ -294,8 +382,8 @@ void ContentDisplay::DrawToolbar()
 	ImGui::ItemToolTip( "Create Folder" );
 	ImGui::SameLine( 0.f, 16.f );
 
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
-	auto optContentPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::Content );
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
+	auto optContentPath = pProjectInfo->TryGetFolderPath( Vortek::Core::EProjectFolderType::Content );
 	VORTEK_ASSERT( optContentPath && "Content path has not be setup correctly in project info." );
 
 	const auto& savedPath = optContentPath->string();
@@ -419,12 +507,12 @@ void ContentDisplay::MoveFolderOrFile( const std::filesystem::path& movedPath, c
 	}
 }
 
-void ContentDisplay::HandleFileEvent( const VORTEK_EDITOR::Events::FileEvent& fileEvent )
+void ContentDisplay::HandleFileEvent( const Vortek::Editor::Events::FileEvent& fileEvent )
 {
 	if ( fileEvent.sFilepath.empty() || fileEvent.eAction == EFileAction::NoAction )
 		return;
 
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 	if ( !pProjectInfo )
 		return;
 
@@ -497,7 +585,7 @@ void ContentDisplay::HandleFileEvent( const VORTEK_EDITOR::Events::FileEvent& fi
 	}
 }
 
-void ContentDisplay::HandleCreateEvent( const VORTEK_EDITOR::Events::ContentCreateEvent& createEvent )
+void ContentDisplay::HandleCreateEvent( const Vortek::Editor::Events::ContentCreateEvent& createEvent )
 {
 	if ( createEvent.eAction == EContentCreateAction::NoAction )
 		return;
@@ -677,7 +765,7 @@ void ContentDisplay::OpenCreateLuaClassPopup()
 			}
 			else
 			{
-				auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+				auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 				std::string sCopyrightNotice{};
 				if ( pProjectInfo )
 				{
@@ -769,7 +857,7 @@ void ContentDisplay::OpenCreateLuaStateClassPopup()
 			}
 			else
 			{
-				auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+				auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 				std::string sCopyrightNotice{};
 				if ( pProjectInfo )
 				{
@@ -988,4 +1076,4 @@ void ContentDisplay::OpenCreateEmptyLuaFilePopup()
 	}
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

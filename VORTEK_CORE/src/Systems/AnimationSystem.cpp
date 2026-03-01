@@ -9,15 +9,14 @@
 
 #include <SDL.h>
 
-using namespace VORTEK_CORE::ECS;
-using namespace VORTEK_RENDERING;
+using namespace Vortek::Core::ECS;
+using namespace Vortek::Rendering;
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 
-void AnimationSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera )
+void AnimationSystem::Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera )
 {
-
 	auto view = registry.GetRegistry().view<AnimationComponent, SpriteComponent, TransformComponent>();
 	if ( view.size_hint() < 1 )
 		return;
@@ -31,7 +30,7 @@ void AnimationSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDE
 		// We don't want to check if entities with UIComponents are out of the camera.
 		// Since they use a different camera.
 		if ( !registry.GetRegistry().all_of<UIComponent>( entity ) &&
-			 !VORTEK_CORE::EntityInView( transform, sprite.width, sprite.height, camera ) )
+			 !Vortek::Core::EntityInView( transform, sprite.width, sprite.height, camera ) )
 			continue;
 
 		if ( animation.numFrames <= 0 )
@@ -47,18 +46,18 @@ void AnimationSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDE
 
 		if ( animation.bVertical )
 		{
-			sprite.uvs.v = animation.currentFrame * sprite.uvs.uv_height;
-			sprite.uvs.u = animation.frameOffset * sprite.uvs.uv_width;
+			sprite.uvs.v = (animation.currentFrame + sprite.start_y) * sprite.uvs.uv_height;
+			sprite.uvs.u = sprite.start_x * sprite.uvs.uv_width;
 		}
 		else
 		{
-			sprite.uvs.u =
-				( animation.currentFrame * sprite.uvs.uv_width ) + ( animation.frameOffset * sprite.uvs.uv_width );
+			sprite.uvs.u = ( ( animation.currentFrame + sprite.start_x ) * sprite.uvs.uv_width );
+			sprite.uvs.v = sprite.start_y * sprite.uvs.uv_height;
 		}
 	}
 }
 
-void AnimationSystem::CreateAnimationSystemLuaBind( sol::state& lua, VORTEK_CORE::ECS::Registry& registry )
+void AnimationSystem::CreateAnimationSystemLuaBind( sol::state& lua, Vortek::Core::ECS::Registry& registry )
 {
 	auto& pCamera = registry.GetContext<std::shared_ptr<Camera2D>>();
 
@@ -71,4 +70,4 @@ void AnimationSystem::CreateAnimationSystemLuaBind( sol::state& lua, VORTEK_CORE
 		"update",
 		[ & ]( AnimationSystem& system, Registry& reg ) { system.Update( reg, *pCamera ); } );
 }
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

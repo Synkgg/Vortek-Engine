@@ -8,15 +8,15 @@
 #include <Rendering/Essentials/Texture.h>
 #include "Logger/Logger.h"
 
-using namespace VORTEK_CORE::Utils;
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::Utils;
+using namespace Vortek::Core::ECS;
 using namespace entt::literals;
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
-Character::Character( VORTEK_CORE::ECS::Registry& registry, const CharacterParams& params )
-	: Entity{ registry, params.sName, params.sGroup }
+Character::Character( Vortek::Core::ECS::Registry& registry, const CharacterParams& params )
+	: Entity{ &registry, params.sName, params.sGroup }
 {
 	AddComponent<TransformComponent>( TransformComponent{} );
 
@@ -73,19 +73,20 @@ Character::Character( VORTEK_CORE::ECS::Registry& registry, const CharacterParam
 	}
 }
 
-Character::Character( VORTEK_CORE::ECS::Registry& registry, entt::entity entity )
-	: Entity{ registry, entity }
+Character::Character( Vortek::Core::ECS::Registry& registry, entt::entity entity )
+	: Entity{ &registry, entity }
 {
 	// TODO: verify that it has all default components
 }
 
-Character::Character( const VORTEK_CORE::ECS::Entity& entity )
+Character::Character( const Vortek::Core::ECS::Entity& entity )
 	: Entity{ entity }
 {
 }
 
 Character::~Character()
 {
+
 }
 
 StateMachine& Character::GetStateMachine()
@@ -97,22 +98,22 @@ StateMachine& Character::GetStateMachine()
 	return *m_pStateMachine;
 }
 
-VORTEK_CORE::ECS::TransformComponent& Character::GetTransformComponent()
+Vortek::Core::ECS::TransformComponent& Character::GetTransformComponent()
 {
 	return GetComponent<TransformComponent>();
 }
 
-VORTEK_CORE::ECS::SpriteComponent& Character::GetSpriteComponent()
+Vortek::Core::ECS::SpriteComponent& Character::GetSpriteComponent()
 {
 	return GetComponent<SpriteComponent>();
 }
 
-VORTEK_CORE::ECS::AnimationComponent& Character::GetAnimationComponent()
+Vortek::Core::ECS::AnimationComponent& Character::GetAnimationComponent()
 {
 	return GetComponent<AnimationComponent>();
 }
 
-void Character::CreateCharacterLuaBind( sol::state& lua, VORTEK_CORE::ECS::Registry& registry )
+void Character::CreateCharacterLuaBind( sol::state& lua, Vortek::Core::ECS::Registry& registry )
 {
 	lua.new_usertype<CharacterParams>(
 		"CharacterParams",
@@ -184,29 +185,25 @@ void Character::CreateCharacterLuaBind( sol::state& lua, VORTEK_CORE::ECS::Regis
 			if ( !comp.valid() )
 				return sol::lua_nil_t{};
 
-			const auto component =
-				InvokeMetaFunction( GetIdType( comp ), "add_component"_hs, static_cast<Entity&>( character ), comp, s );
+			const auto component = InvokeMetaFunction( GetIdType( comp ), "add_component"_hs, static_cast<Entity&>(character), comp, s );
 
 			return component ? component.cast<sol::reference>() : sol::lua_nil_t{};
 		},
 		"hasComponent",
 		[]( Character& character, const sol::table& comp ) {
-			const auto has_comp =
-				InvokeMetaFunction( GetIdType( comp ), "has_component"_hs, static_cast<Entity&>( character ) );
+			const auto has_comp = InvokeMetaFunction( GetIdType( comp ), "has_component"_hs, static_cast<Entity&>(character) );
 
 			return has_comp ? has_comp.cast<bool>() : false;
 		},
 		"getComponent",
 		[]( Character& character, const sol::table& comp, sol::this_state s ) {
-			const auto component =
-				InvokeMetaFunction( GetIdType( comp ), "get_component"_hs, static_cast<Entity&>( character ), s );
+			const auto component = InvokeMetaFunction( GetIdType( comp ), "get_component"_hs, static_cast<Entity&>(character), s );
 
 			return component ? component.cast<sol::reference>() : sol::lua_nil_t{};
 		},
 		"removeComponent",
 		[]( Character& character, const sol::table& comp ) {
-			const auto component =
-				InvokeMetaFunction( GetIdType( comp ), "remove_component"_hs, static_cast<Entity&>( character ) );
+			const auto component = InvokeMetaFunction( GetIdType( comp ), "remove_component"_hs, static_cast<Entity&>(character) );
 
 			return component ? component.cast<sol::reference>() : sol::lua_nil_t{};
 		},
@@ -227,7 +224,7 @@ void Character::CreateCharacterLuaBind( sol::state& lua, VORTEK_CORE::ECS::Regis
 		"group",
 		&Character::GetGroup,
 		"kill",
-		&Character::Kill,
+		&Character::Destroy,
 		"addChild",
 		[]( Character& character, Entity& child ) { character.AddChild( child.GetEntity() ); },
 		"updateTransform",
@@ -240,4 +237,4 @@ void Character::CreateCharacterLuaBind( sol::state& lua, VORTEK_CORE::ECS::Regis
 	);
 }
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

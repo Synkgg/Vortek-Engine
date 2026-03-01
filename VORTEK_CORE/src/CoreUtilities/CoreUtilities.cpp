@@ -2,19 +2,19 @@
 #include "Core/ECS/Components/AllComponents.h"
 #include "Core/Scene/Scene.h"
 
-#include "VORTEKUtilities/MathUtilities.h"
+#include "VortekUtilities/MathUtilities.h"
 #include "Core/Resources/AssetManager.h"
 #include "Core/ECS/Registry.h"
 
 #include <Rendering/Essentials/Font.h>
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 bool EntityInView( const TransformComponent& transform, float width, float height,
-				   const VORTEK_RENDERING::Camera2D& camera )
+				   const Vortek::Rendering::Camera2D& camera )
 {
 	const glm::vec2 cameraPos = camera.GetPosition() - camera.GetScreenOffset();
 	const int cameraWidth = camera.GetWidth();
@@ -56,7 +56,7 @@ glm::mat4 RSTModel( const TransformComponent& transform, float width, float heig
 	return model;
 }
 
-void GenerateUVs( VORTEK_CORE::ECS::SpriteComponent& sprite, int textureWidth, int textureHeight )
+void GenerateUVs( Vortek::Core::ECS::SpriteComponent& sprite, int textureWidth, int textureHeight )
 {
 	sprite.uvs.uv_width = sprite.width / textureWidth;
 	sprite.uvs.uv_height = sprite.height / textureHeight;
@@ -65,7 +65,7 @@ void GenerateUVs( VORTEK_CORE::ECS::SpriteComponent& sprite, int textureWidth, i
 	sprite.uvs.v = sprite.start_y * sprite.uvs.uv_height;
 }
 
-void GenerateUVsExt( VORTEK_CORE::ECS::SpriteComponent& sprite, int textureWidth, int textureHeight, float u, float v )
+void GenerateUVsExt( Vortek::Core::ECS::SpriteComponent& sprite, int textureWidth, int textureHeight, float u, float v )
 {
 	sprite.uvs.uv_width = sprite.width / textureWidth;
 	sprite.uvs.uv_height = sprite.height / textureHeight;
@@ -101,8 +101,8 @@ std::tuple<int, int> ConvertWorldPosToIsoCoords( const glm::vec2& position, cons
 	return std::make_tuple( cellX, cellY );
 }
 
-std::tuple<float, float> GetTextBlockSize( const VORTEK_CORE::ECS::TextComponent& textComp,
-										   const VORTEK_CORE::ECS::TransformComponent& transform,
+std::tuple<float, float> GetTextBlockSize( const Vortek::Core::ECS::TextComponent& textComp,
+										   const Vortek::Core::ECS::TransformComponent& transform,
 										   VORTEK_RESOURCES::AssetManager& assetManager )
 {
 	const auto& pFont = assetManager.GetFont( textComp.sFontName );
@@ -122,8 +122,8 @@ std::tuple<float, float> GetTextBlockSize( const VORTEK_CORE::ECS::TextComponent
 		}
 
 		const auto& paddingInfo = pFont->AveragePaddingInfo();
-		return std::make_tuple( std::abs( ( position - temp_pos ).x - ( paddingInfo.paddingX * 0.5f ) ),
-								1 * fontSize + ( paddingInfo.paddingY * 0.5f ) );
+		return std::make_tuple( std::abs( (( position - temp_pos ).x - ( paddingInfo.paddingX * 0.5f )) * transform.scale.x ),
+			( 1 * fontSize + ( paddingInfo.paddingY * 0.5f ) ) * transform.scale.y );
 	}
 
 	// Calculate Text boxSize
@@ -203,7 +203,7 @@ std::tuple<float, float> GetTextBlockSize( const VORTEK_CORE::ECS::TextComponent
 	return std::make_tuple( wrap - paddingInfo.paddingX * 0.5f, height + paddingInfo.paddingY * 0.5f );
 }
 
-void UpdateDirtyEntities( VORTEK_CORE::ECS::Registry& registry )
+void UpdateDirtyEntities( Vortek::Core::ECS::Registry& registry )
 {
 	auto& reg = registry.GetRegistry();
 	auto view = reg.view<ECS::TransformComponent>();
@@ -223,4 +223,4 @@ void UpdateDirtyEntities( VORTEK_CORE::ECS::Registry& registry )
 	}
 }
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

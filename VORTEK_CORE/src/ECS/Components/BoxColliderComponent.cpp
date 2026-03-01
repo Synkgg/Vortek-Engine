@@ -1,7 +1,7 @@
 #include "Core/ECS/Components/BoxColliderComponent.h"
 #include <entt/entt.hpp>
 
-std::string VORTEK_CORE::ECS::BoxColliderComponent::to_string() const
+std::string Vortek::Core::ECS::BoxColliderComponent::to_string() const
 {
 	std::stringstream ss;
 	ss << "==== Box Collider Component ==== \n"
@@ -13,7 +13,7 @@ std::string VORTEK_CORE::ECS::BoxColliderComponent::to_string() const
 	return ss.str();
 }
 
-void VORTEK_CORE::ECS::BoxColliderComponent::CreateLuaBoxColliderBind( sol::state& lua )
+void Vortek::Core::ECS::BoxColliderComponent::CreateLuaBoxColliderBind( sol::state& lua )
 {
 	lua.new_usertype<BoxColliderComponent>( "BoxCollider",
 											"type_id",

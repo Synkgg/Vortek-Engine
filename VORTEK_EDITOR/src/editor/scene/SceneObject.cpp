@@ -1,4 +1,4 @@
-#include "SceneObject.h"
+#include "editor/scene/SceneObject.h"
 
 #include "Core/ECS/Components/AllComponents.h"
 #include "Core/ECS/MetaUtilities.h"
@@ -12,6 +12,7 @@
 
 #include "VortekUtilities/VortekUtilities.h"
 #include "VortekFilesystem/Serializers/JSONSerializer.h"
+#include "VortekFilesystem/Serializers/LuaSerializer.h"
 
 #include "editor/scene/SceneManager.h"
 
@@ -20,21 +21,21 @@
 
 namespace fs = std::filesystem;
 
-using namespace VORTEK_FILESYSTEM;
-using namespace VORTEK_CORE;
-using namespace VORTEK_CORE::ECS;
-using namespace VORTEK_CORE::Loaders;
+using namespace Vortek::Filesystem;
+using namespace Vortek::Core;
+using namespace Vortek::Core::ECS;
+using namespace Vortek::Core::Loaders;
 using namespace entt::literals;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
-SceneObject::SceneObject( const std::string& sceneName, VORTEK_CORE::EMapType eType )
+SceneObject::SceneObject( const std::string& sceneName, Vortek::Core::EMapType eType )
 	: Scene( sceneName, eType )
 	, m_RuntimeRegistry{}
 	, m_pRuntimeData{ nullptr }
 {
-	ADD_EVENT_HANDLER( VORTEK_EDITOR::Events::NameChangeEvent, &SceneObject::OnEntityNameChanges, *this );
+	ADD_EVENT_HANDLER( Vortek::Editor::Events::NameChangeEvent, &SceneObject::OnEntityNameChanges, *this );
 }
 
 SceneObject::SceneObject( const std::string& sceneName, const std::string& sceneData )
@@ -61,7 +62,7 @@ SceneObject::SceneObject( const std::string& sceneName, const std::string& scene
 		VORTEK_WARN( "Object file [{}] does not exist.", m_sObjectPath );
 	}
 
-	ADD_EVENT_HANDLER( VORTEK_EDITOR::Events::NameChangeEvent, &SceneObject::OnEntityNameChanges, *this );
+	ADD_EVENT_HANDLER( Vortek::Editor::Events::NameChangeEvent, &SceneObject::OnEntityNameChanges, *this );
 }
 
 void SceneObject::CopySceneToRuntime()
@@ -88,8 +89,8 @@ void SceneObject::CopySceneToRuntime()
 			if ( !storage.contains( entityToCopy ) )
 				continue;
 
-			VORTEK_CORE::Utils::InvokeMetaFunction(
-				id, "copy_component"_hs, Entity{ m_Registry, entityToCopy }, Entity{ m_RuntimeRegistry, newEntity } );
+			Vortek::Core::Utils::InvokeMetaFunction(
+				id, "copy_component"_hs, Entity{ &m_Registry, entityToCopy }, Entity{ &m_RuntimeRegistry, newEntity } );
 		}
 	}
 
@@ -114,7 +115,9 @@ void SceneObject::CopySceneToRuntime( SceneObject& sceneToCopy )
 	auto& registry = sceneToCopy.GetRegistry();
 	auto& registryToCopy = registry.GetRegistry();
 
-	for ( auto entityToCopy : registryToCopy.view<entt::entity>( entt::exclude<ScriptComponent, UneditableComponent> ) )
+	m_RuntimeRegistry.DestroyEntities();
+
+	for ( auto entityToCopy : registryToCopy.view<entt::entity>( entt::exclude<UneditableComponent> ) )
 	{
 		entt::entity newEntity = m_RuntimeRegistry.CreateEntity();
 
@@ -124,8 +127,8 @@ void SceneObject::CopySceneToRuntime( SceneObject& sceneToCopy )
 			if ( !storage.contains( entityToCopy ) )
 				continue;
 
-			VORTEK_CORE::Utils::InvokeMetaFunction(
-				id, "copy_component"_hs, Entity{ registry, entityToCopy }, Entity{ m_RuntimeRegistry, newEntity } );
+			Vortek::Core::Utils::InvokeMetaFunction(
+				id, "copy_component"_hs, Entity{ &registry, entityToCopy }, Entity{ &m_RuntimeRegistry, newEntity } );
 		}
 	}
 
@@ -136,7 +139,7 @@ void SceneObject::CopySceneToRuntime( SceneObject& sceneToCopy )
 	}
 }
 
-void SceneObject::CopyPlayerStartToRuntimeRegistry( VORTEK_CORE::ECS::Registry& runtimeRegistry )
+void SceneObject::CopyPlayerStartToRuntimeRegistry( Vortek::Core::ECS::Registry& runtimeRegistry )
 {
 	if ( !m_bUsePlayerStart )
 	{
@@ -173,7 +176,7 @@ void SceneObject::AddNewLayer()
 		}
 	}
 
-	const VORTEK_UTIL::SpriteLayerParams spriteLayerParams{ .sLayerName = fmt::format( "NewLayer_{}", currentLayer ),
+	const Vortek::Utilities::SpriteLayerParams spriteLayerParams{ .sLayerName = fmt::format( "NewLayer_{}", currentLayer ),
 														   .layer = static_cast<int>( currentLayer ) };
 
 	m_LayerParams.emplace_back( spriteLayerParams );
@@ -205,7 +208,7 @@ bool SceneObject::DeleteLayer( int layer )
 	auto view = m_Registry.GetRegistry().view<TileComponent, SpriteComponent>();
 	for ( auto entity : view )
 	{
-		Entity ent{ m_Registry, entity };
+		Entity ent{ &m_Registry, entity };
 		auto& sprite = ent.GetComponent<SpriteComponent>();
 		if ( sprite.layer == layer )
 		{
@@ -237,7 +240,7 @@ bool SceneObject::DeleteLayer( int layer )
 				removedTile.physics = *physics;
 			}
 
-			ent.Kill();
+			ent.Destroy();
 			removedTiles.push_back( removedTile );
 		}
 		else if ( sprite.layer > layer ) // Drop the layer down if greater.
@@ -256,7 +259,7 @@ bool SceneObject::DeleteLayer( int layer )
 
 bool SceneObject::AddGameObject()
 {
-	Entity newObject{ m_Registry, "", "" };
+	Entity newObject{ &m_Registry, "", "" };
 	newObject.AddComponent<TransformComponent>();
 	std::string sTag{ "GameObject" };
 
@@ -307,36 +310,31 @@ bool SceneObject::DuplicateGameObject( entt::entity entity )
 	if ( objItr == m_mapTagToEntity.end() )
 	{
 		VORTEK_ERROR( "Failed to duplicate game object with id [{}]. Does not exist or was not mapped correctly.",
-					  static_cast<uint32_t>( entity ) );
+					 static_cast<uint32_t>( entity ) );
 		return false;
 	}
 
-	// Create the new entity in the registry
-	auto& registry = m_Registry.GetRegistry();
-	auto newEntity = registry.create();
+	auto newestEntity = RelationshipUtils::DuplicateRecursive(m_Registry.GetRegistry(), entity);
 
-	// Copy the components of the entity to the new entity
-	for ( auto&& [ id, storage ] : registry.storage() )
-	{
-		if ( !storage.contains( entity ) )
-			continue;
+	auto checkTagName = [ & ]( entt::entity entity, Registry* reg ) {
+		Entity ent{ reg, entity };
+		const std::string& sTag{ ent.GetName() };
+		if ( m_mapTagToEntity.contains( sTag ) )
+		{
+			size_t tagNum{ 1 };
+			while ( m_mapTagToEntity.contains( fmt::format( "{}_{}", sTag, tagNum ) ) )
+			{
+				++tagNum;
+			}
 
-		VORTEK_CORE::Utils::InvokeMetaFunction(
-			id, "copy_component"_hs, Entity{ m_Registry, entity }, Entity{ m_Registry, newEntity } );
-	}
+			ent.ChangeName( fmt::format( "{}_{}", sTag, tagNum ) );
+		}
 
-	// Now we need to set the tag for the entity
-	size_t tagNum{ 1 };
+		m_mapTagToEntity.emplace( ent.GetName(), entity );
+	};
 
-	while ( CheckTagName( fmt::format( "{}_{}", objItr->first, tagNum ) ) )
-	{
-		++tagNum;
-	}
-
-	Entity newEnt{ m_Registry, newEntity };
-	newEnt.ChangeName( fmt::format( "{}_{}", objItr->first, tagNum ) );
-
-	m_mapTagToEntity.emplace( newEnt.GetName(), newEntity );
+	RelationshipUtils::ApplyFunctionToHierarchy(
+		m_Registry.GetRegistry(), newestEntity, checkTagName, &m_Registry );
 
 	return true;
 }
@@ -351,7 +349,7 @@ bool SceneObject::DeleteGameObjectByTag( const std::string& sTag )
 	}
 
 	std::vector<std::string> removedEntities;
-	Entity ent{ m_Registry, objItr->second };
+	Entity ent{ &m_Registry, objItr->second };
 
 	RelationshipUtils::RemoveAndDelete( ent, removedEntities );
 
@@ -375,12 +373,12 @@ bool SceneObject::DeleteGameObjectById( entt::entity entity )
 	if ( objItr == m_mapTagToEntity.end() )
 	{
 		VORTEK_ERROR( "Failed to delete game object with id [{}]. Does not exist or was not mapped correctly.",
-					  static_cast<uint32_t>( entity ) );
+					 static_cast<uint32_t>( entity ) );
 		return false;
 	}
 
 	std::vector<std::string> removedEntities;
-	Entity ent{ m_Registry, objItr->second };
+	Entity ent{ &m_Registry, objItr->second };
 
 	RelationshipUtils::RemoveAndDelete( ent, removedEntities );
 
@@ -400,7 +398,7 @@ bool SceneObject::LoadScene()
 	auto view = m_Registry.GetRegistry().view<entt::entity>( entt::exclude<TileComponent> );
 	for ( auto entity : view )
 	{
-		Entity ent{ m_Registry, entity };
+		Entity ent{ &m_Registry, entity };
 		AddGameObjectByTag( ent.GetName(), entity );
 	}
 
@@ -414,9 +412,8 @@ bool SceneObject::UnloadScene( bool bSaveScene )
 	return bSuccess;
 }
 
-std::pair<std::string, std::string> SceneObject::ExportSceneToLua( const std::string& sSceneName,
-																   const std::string& sExportPath,
-																   VORTEK_CORE::ECS::Registry& registry )
+SceneExportFiles SceneObject::ExportSceneToLua( const std::string& sSceneName, const std::string& sExportPath,
+												Vortek::Core::ECS::Registry& registry )
 {
 	// Get the scene data and load the scene into a separate registry
 	if ( !fs::exists( m_sSceneDataPath ) )
@@ -491,11 +488,11 @@ std::pair<std::string, std::string> SceneObject::ExportSceneToLua( const std::st
 		std::string sMapType = sceneData[ "mapType" ].GetString();
 		if ( sMapType == "grid" )
 		{
-			m_eMapType = VORTEK_CORE::EMapType::Grid;
+			m_eMapType = Vortek::Core::EMapType::Grid;
 		}
 		else if ( sMapType == "iso" )
 		{
-			m_eMapType = VORTEK_CORE::EMapType::IsoGrid;
+			m_eMapType = Vortek::Core::EMapType::IsoGrid;
 		}
 	}
 
@@ -510,6 +507,11 @@ std::pair<std::string, std::string> SceneObject::ExportSceneToLua( const std::st
 	{
 		VORTEK_ERROR( "Failed to load game object map [{}]", m_sObjectPath );
 		return {};
+	}
+
+	if ( IsPlayerStartEnabled() )
+	{
+		CopyPlayerStartToRuntimeRegistry( registry );
 	}
 
 	fs::path exportPath{ sExportPath };
@@ -537,7 +539,40 @@ std::pair<std::string, std::string> SceneObject::ExportSceneToLua( const std::st
 		return {};
 	}
 
-	return std::make_pair( tilemapLua.string(), objectLua.string() );
+	// Export Scene Data
+	std::unique_ptr<Vortek::Filesystem::LuaSerializer> pSerializer{ nullptr };
+
+	fs::path sceneDataPath{ exportPath };
+	sceneDataPath /= sSceneName + "_data.lua";
+
+	try
+	{
+		pSerializer = std::make_unique<LuaSerializer>( sceneDataPath.string() );
+	}
+	catch ( const std::exception& ex )
+	{
+		VORTEK_ERROR( "Failed to save tilemap [{}] - [{}]", sceneDataPath.string(), ex.what() );
+		return {};
+	}
+
+	if ( m_sDefaultMusic.empty() && sceneData.HasMember( "defaultMusic" ) )
+	{
+		m_sDefaultMusic = sceneData[ "defaultMusic" ].GetString();
+	}
+
+	pSerializer->StartNewTable( sSceneName + "_data" )
+		.AddKeyValuePair( "default_music", m_sDefaultMusic, true, false, false, true )
+		.AddKeyValuePair( "scene_name", m_sSceneName, true, false, false, true )
+		.StartNewTable( "canvas" )
+		.AddKeyValuePair( "width", m_Canvas.width )
+		.AddKeyValuePair( "height", m_Canvas.height )
+		.AddKeyValuePair( "tileWidth", m_Canvas.tileWidth )
+		.AddKeyValuePair( "tileHeight", m_Canvas.tileHeight, true, true )
+		.EndTable()	 // canvas
+		.EndTable(); // _data
+	pSerializer->FinishStream();
+
+	return { tilemapLua.string(), objectLua.string(), sceneDataPath.string() };
 }
 
 bool SceneObject::CheckTagName( const std::string& sTagName )
@@ -545,7 +580,7 @@ bool SceneObject::CheckTagName( const std::string& sTagName )
 	return m_mapTagToEntity.contains( sTagName );
 }
 
-void SceneObject::OnEntityNameChanges( VORTEK_EDITOR::Events::NameChangeEvent& nameChange )
+void SceneObject::OnEntityNameChanges( Vortek::Editor::Events::NameChangeEvent& nameChange )
 {
 	if ( nameChange.sNewName.empty() || nameChange.sOldName.empty() || !nameChange.pEntity )
 		return;
@@ -565,11 +600,11 @@ void SceneObject::OnEntityNameChanges( VORTEK_EDITOR::Events::NameChangeEvent& n
 	if ( nameChange.pEntity->GetEntity() != objItr->second )
 		return;
 
-	if ( !VORTEK_UTIL::KeyChange( m_mapTagToEntity, nameChange.sOldName, nameChange.sNewName ) )
+	if ( !Vortek::Utilities::KeyChange( m_mapTagToEntity, nameChange.sOldName, nameChange.sNewName ) )
 	{
 		VORTEK_ERROR( "Failed to change entity name." );
 		return;
 	}
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

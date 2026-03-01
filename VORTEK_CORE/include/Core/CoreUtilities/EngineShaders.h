@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VORTEK_CORE::Shaders
+namespace Vortek::Core::Shaders
 {
 static const char* basicShaderVert = R"(
 #version 450 core
@@ -72,7 +72,7 @@ void main()
 	// length calculates the length of the given vector
 	float distance = 1 - length(fragUVs);
 
-	// fwidth � return the sum of the absolute value of derivatives in x and y
+	// fwidth — return the sum of the absolute value of derivatives in x and y
 	float wd = fwidth(distance);
 
 	// smoothstep will perform an interpolation between the two values
@@ -157,7 +157,7 @@ void main()
 }
 )";
 
-static const char* pickingShaderVert = R"(
+	static const char* pickingShaderVert = R"(
 #version 450 
 
 layout(location = 0) in vec2 vertexPosition;
@@ -202,4 +202,5 @@ void main()
 }
 )";
 
-} // namespace VORTEK_CORE::Shaders
+}
+

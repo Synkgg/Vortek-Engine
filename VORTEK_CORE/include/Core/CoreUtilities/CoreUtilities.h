@@ -7,7 +7,7 @@ namespace VORTEK_RESOURCES
 class AssetManager;
 }
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 namespace ECS
@@ -28,8 +28,8 @@ class Registry;
  * @param camera The camera used for visibility checking.
  * @return True if the entity is at least partially visible, false if fully out of view.
  */
-bool EntityInView( const VORTEK_CORE::ECS::TransformComponent& transform, float width, float height,
-				   const VORTEK_RENDERING::Camera2D& camera );
+bool EntityInView( const Vortek::Core::ECS::TransformComponent& transform, float width, float height,
+				   const Vortek::Rendering::Camera2D& camera );
 
 /**
  * @brief Constructs an RST (Rotation, Scale, Translation) transformation matrix.
@@ -42,7 +42,7 @@ bool EntityInView( const VORTEK_CORE::ECS::TransformComponent& transform, float 
  * @param height The object's height, used for pivot adjustments.
  * @return The computed transformation matrix.
  */
-glm::mat4 RSTModel( const VORTEK_CORE::ECS::TransformComponent& transform, float width, float height );
+glm::mat4 RSTModel( const Vortek::Core::ECS::TransformComponent& transform, float width, float height );
 
 /**
  * @brief Generates UV coordinates for a sprite based on its dimensions and texture size.
@@ -54,9 +54,9 @@ glm::mat4 RSTModel( const VORTEK_CORE::ECS::TransformComponent& transform, float
  * @param textureWidth The width of the texture.
  * @param textureHeight The height of the texture.
  */
-void GenerateUVs( VORTEK_CORE::ECS::SpriteComponent& sprite, int textureWidth, int textureHeight );
+void GenerateUVs( Vortek::Core::ECS::SpriteComponent& sprite, int textureWidth, int textureHeight );
 
-void GenerateUVsExt( VORTEK_CORE::ECS::SpriteComponent& sprite, int textureWidth, int textureHeight, float u, float v );
+void GenerateUVsExt( Vortek::Core::ECS::SpriteComponent& sprite, int textureWidth, int textureHeight, float u, float v );
 
 /**
  * @brief Converts world coordinates to isometric grid coordinates.
@@ -81,15 +81,15 @@ std::tuple<int, int> ConvertWorldPosToIsoCoords( const glm::vec2& position, cons
  * @param assetManager Asset manager used to retrieve the font.
  * @return A tuple (width, height) representing the text block size in pixels.
  */
-std::tuple<float, float> GetTextBlockSize( const VORTEK_CORE::ECS::TextComponent& textComp,
-										   const VORTEK_CORE::ECS::TransformComponent& transform,
+std::tuple<float, float> GetTextBlockSize( const Vortek::Core::ECS::TextComponent& textComp,
+										   const Vortek::Core::ECS::TransformComponent& transform,
 										   VORTEK_RESOURCES::AssetManager& assetManager );
 
 /**
  * @brief Resets the dirty flags on all necessary components in the registry.
  * Marks updated entities as clean by clearing their `bDirty` flags.
  */
-void UpdateDirtyEntities( VORTEK_CORE::ECS::Registry& registry );
+void UpdateDirtyEntities( Vortek::Core::ECS::Registry& registry );
 
 /* Target time per frame. Used to help clamp delta time. */
 constexpr double TARGET_FRAME_TIME = 1.0 / 60.0;
@@ -98,4 +98,4 @@ constexpr float TARGET_FRAME_TIME_F = 1.0f / 60.0f;
 /* Used to prevent specific loops from looping forever. */
 constexpr int SANITY_LOOP_CHECK = 100;
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

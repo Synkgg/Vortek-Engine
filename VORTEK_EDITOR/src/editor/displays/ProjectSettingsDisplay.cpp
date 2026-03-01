@@ -1,4 +1,4 @@
-#include "ProjectSettingsDisplay.h"
+#include "editor/displays/ProjectSettingsDisplay.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "Core/ECS/MainRegistry.h"
@@ -15,10 +15,10 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
-using namespace VORTEK_PHYSICS;
-using namespace VORTEK_FILESYSTEM;
+using namespace Vortek::Physics;
+using namespace Vortek::Filesystem;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 ProjectSettingsDisplay::ProjectSettingsDisplay()
 	: m_SettingsCategory{}
@@ -124,21 +124,22 @@ void ProjectSettingsDisplay::CreateProjectSettings()
 {
 	auto& coreGlobals = CORE_GLOBALS();
 	auto& mainRegistry = MAIN_REGISTRY();
-	auto& pProjectInfo = mainRegistry.GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = mainRegistry.GetContext<Vortek::Core::ProjectInfoPtr>();
 	VORTEK_ASSERT( pProjectInfo && "Project Info was not setup correctly." );
 
 	SettingCategory projectSettings{ .sName = "Project" };
 	projectSettings.subCategories.emplace_back( CreateGeneralSettings( coreGlobals, *pProjectInfo, mainRegistry ) );
 	projectSettings.subCategories.emplace_back( CreatePhysicsSettings( coreGlobals, *pProjectInfo, mainRegistry ) );
 	projectSettings.subCategories.emplace_back( CreateGraphicsSettings( coreGlobals, *pProjectInfo, mainRegistry ) );
+	projectSettings.subCategories.emplace_back( CreateAudioSettings( coreGlobals, *pProjectInfo, mainRegistry ) );
 
 	m_SettingsCategory = projectSettings;
 }
 
 // clang-format off
 ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreateGeneralSettings(
-	VORTEK_CORE::CoreEngineData& coreGlobals, VORTEK_CORE::ProjectInfo& projectInfo,
-	VORTEK_CORE::ECS::MainRegistry& mainRegistry )
+	Vortek::Core::CoreEngineData& coreGlobals, Vortek::Core::ProjectInfo& projectInfo,
+	Vortek::Core::ECS::MainRegistry& mainRegistry )
 {
 	return SettingCategory{
 		.sName = "General",
@@ -196,12 +197,12 @@ ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreateGeneralSet
 										"##iconpath" ) )
 					{
 						auto optContentPath =
-							projectInfo.TryGetFolderPath( VORTEK_CORE::EProjectFolderType::Content );
+							projectInfo.TryGetFolderPath( Vortek::Core::EProjectFolderType::Content );
 						VORTEK_ASSERT( optContentPath && "Content folder not set correctly in project info." );
 						FileDialog fd{};
 
 						std::string sOpenIcoPath = fd.OpenFileDialog(
-							"Open Icon File", optContentPath->string(), { "*.ico" }, "Ico Files" );
+							"Open Icon File", optContentPath->string(), { "*.ico" }, "Ico Files (*.ico)" );
 
 						if ( !sOpenIcoPath.empty() )
 						{
@@ -288,8 +289,8 @@ ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreateGeneralSet
 }
 
 ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreatePhysicsSettings(
-	VORTEK_CORE::CoreEngineData& coreGlobals, VORTEK_CORE::ProjectInfo& projectInfo,
-	VORTEK_CORE::ECS::MainRegistry& mainRegistry )
+	Vortek::Core::CoreEngineData& coreGlobals, Vortek::Core::ProjectInfo& projectInfo,
+	Vortek::Core::ECS::MainRegistry& mainRegistry )
 {
 	return SettingCategory{
 		.sName = "Physics",
@@ -335,12 +336,17 @@ ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreatePhysicsSet
 					static float gravity{ coreGlobals.GetGravity() };
 					static int currentIndex{ 0 };
 					auto filters = GetFilterStrings();
+
+					std::vector<const char*> filterCStrs{};
+					filterCStrs.reserve( filters.size() );
+					for ( const auto& filter : filters )
+						filterCStrs.push_back( filter.c_str() );
+
 					ImGui::InlineLabel( "Collision Categories" );
 					if ( ImGui::ListBox( "##collisionCategories",
-										&currentIndex,
-										vector_getter,
-										static_cast<void*>( &filters ),
-										static_cast<int>( filters.size() ) ) )
+										 &currentIndex,
+										 filterCStrs.data(),
+										 static_cast<int>( filterCStrs.size() ) ) )
 					{
 					}
 				}
@@ -350,13 +356,15 @@ ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreatePhysicsSet
 }
 
 ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreateGraphicsSettings(
-	VORTEK_CORE::CoreEngineData& coreGlobals, VORTEK_CORE::ProjectInfo& projectInfo,
-	VORTEK_CORE::ECS::MainRegistry& mainRegistry )
+	Vortek::Core::CoreEngineData& coreGlobals, Vortek::Core::ProjectInfo& projectInfo,
+	Vortek::Core::ECS::MainRegistry& mainRegistry )
 {
 	return SettingCategory{ "Graphics",
 							{
 								{ "Resolution",
 								  [&]() {
+									  ImGui::SeparatorText("Graphics Settings");
+
 									  int width{ coreGlobals.WindowWidth() };
 									  int height{ coreGlobals.WindowHeight() };
 
@@ -375,11 +383,120 @@ ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreateGraphicsSe
 }
 
 ProjectSettingsDisplay::SettingCategory ProjectSettingsDisplay::CreateAudioSettings(
-	VORTEK_CORE::CoreEngineData& coreGlobals, VORTEK_CORE::ProjectInfo& projectInfo,
-	VORTEK_CORE::ECS::MainRegistry& mainRegistry )
+	Vortek::Core::CoreEngineData& coreGlobals, Vortek::Core::ProjectInfo& projectInfo,
+	Vortek::Core::ECS::MainRegistry& mainRegistry )
 {
-	return SettingCategory();
+	return SettingCategory{
+		"Audio",
+		{},
+		{
+			{
+				"Global Overrides",
+				{
+					{
+						"Overrides",
+						[&]
+						{
+							ImGui::SeparatorText("Global Sound Overrides");
+							ImGui::InlineLabel("Enable");
+							ImGui::Checkbox("##enable_override", &projectInfo.GetAudioConfig().bGlobalOverrideEnabled);
+							ImGui::InlineLabel("Volume");
+							if (ImGui::InputInt("##override_volume", &projectInfo.GetAudioConfig().globalVolumeOverride))
+							{
+								projectInfo.GetAudioConfig().globalVolumeOverride =
+									std::clamp(projectInfo.GetAudioConfig().globalVolumeOverride, 0, 100);
+							}
+						}
+					}
+				},
+				{} 
+			},
+			{
+				"Music Overrides",
+				{
+					{
+						"Music Overrides",
+						[&]
+						{
+							ImGui::SeparatorText("Music Channel Overrides");
+							ImGui::InlineLabel("Enable");
+							ImGui::ItemToolTip("Enables music channel override. If enabled, the volume set here will override other settings.");
+							ImGui::Checkbox("##enable_music_override", &projectInfo.GetAudioConfig().bMusicVolumeOverrideEnabled);
+							ImGui::InlineLabel("Volume");
+							ImGui::ItemToolTip("Music channel volume override.");
+							if (ImGui::InputInt("##override_music_volume", &projectInfo.GetAudioConfig().musicVolumeOverride))
+							{
+								projectInfo.GetAudioConfig().musicVolumeOverride=
+									std::clamp(projectInfo.GetAudioConfig().musicVolumeOverride, 0, 100);
+							}
+						}
+					}
+				},
+				{}
+			},
+			{
+				"Sound fx Overrides",
+				{
+					{
+						"SoundFx Overrides",
+						[&]
+						{
+							ImGui::SeparatorText("Sound Fx Channel Settings");
+							int allocatedChannels{ projectInfo.GetAudioConfig().GetAllocatedChannelCount() };
+							ImGui::InlineLabel("Channels");
+							ImGui::ItemToolTip("The number of allocated channels. Min 8 channels. Max 64 channels.");
+							if (ImGui::InputInt("##channels_allocated", &allocatedChannels))
+							{
+								int newChannelCount{allocatedChannels - projectInfo.GetAudioConfig().GetAllocatedChannelCount() };
+								if (newChannelCount != 0)
+								{
+									if (!projectInfo.GetAudioConfig().UpdateSoundChannels(newChannelCount))
+									{
+										VORTEK_ERROR("Failed to update sound channels.");
+									}
+								}
+							}
+
+							if (ImGui::BeginTable("ChannelTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+							{
+								ImGui::TableSetupColumn("Channel");
+								ImGui::TableSetupColumn("Enabled");
+								ImGui::TableSetupColumn("Volume");
+								ImGui::TableHeadersRow();
+
+								for (const auto& [channelId, state] : projectInfo.GetAudioConfig().GetSoundChannelMap())
+								{
+									bool bEnabled{ state.first };
+									int volume{ state.second };
+
+									ImGui::TableNextRow();
+
+									ImGui::TableSetColumnIndex(0);
+									ImGui::Text("%d", channelId);
+
+									ImGui::TableSetColumnIndex(1);
+									if (ImGui::Checkbox(("##enabled_" + std::to_string(channelId)).c_str(), &bEnabled))
+									{
+										projectInfo.GetAudioConfig().EnableChannelOverride(channelId, bEnabled);
+									}
+
+									ImGui::TableSetColumnIndex(2);
+									if (ImGui::SliderInt(("##volume_" + std::to_string(channelId)).c_str(), &volume, 0, 100))
+									{
+										projectInfo.GetAudioConfig().SetChannelVolume(channelId, volume);
+									}
+								}
+
+								ImGui::EndTable();
+							}
+						}
+					}
+				},
+				{}
+			}
+		}
+	};
 }
 
 // clang-format on
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

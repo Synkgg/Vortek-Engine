@@ -1,12 +1,12 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_PHYSICS
+namespace Vortek::Physics
 {
 struct UserData;
 }
 
-namespace VORTEK_CORE::Scripting
+namespace Vortek::Core::Scripting
 {
 
 struct UserDataBinder
@@ -21,10 +21,10 @@ template <typename DATA>
 auto create_user_data( const sol::table& data, sol::this_state s );
 
 template <typename DATA>
-auto set_user_data( VORTEK_PHYSICS::UserData* pUserData, const sol::table& data, sol::this_state s );
+auto set_user_data( Vortek::Physics::UserData* pUserData, const sol::table& data, sol::this_state s );
 
 template <typename DATA>
-auto get_user_data( VORTEK_PHYSICS::UserData& userData, sol::this_state s );
+auto get_user_data( Vortek::Physics::UserData& userData, sol::this_state s );
 
-} // namespace VORTEK_CORE::Scripting
+} // namespace Vortek::Core::Scripting
 #include "UserDataBindings.inl"

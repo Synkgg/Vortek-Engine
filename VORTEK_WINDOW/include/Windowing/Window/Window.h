@@ -1,7 +1,7 @@
 #pragma once
-#include <VORTEKUtilities/SDL_Wrappers.h>
+#include <VortekUtilities/SDL_Wrappers.h>
 
-namespace VORTEK_WINDOWING
+namespace Vortek::Windowing
 {
 class Window
 {
@@ -27,7 +27,10 @@ class Window
 
 	void SetWindowName( const std::string& name );
 
-	private:
+  private:
+	void CreateNewWindow( Uint32 flags );
+
+  private:
 	WindowPtr m_pWindow;
 	SDL_GLContext m_GLContext;
 	std::string m_sTitle;
@@ -36,8 +39,5 @@ class Window
 	int m_XPos;
 	int m_YPos;
 	Uint32 m_WindowFlags;
-
-  private:
-	void CreateNewWindow( Uint32 flags );
 };
-} // namespace VORTEK_WINDOWING
+} // namespace Vortek::Windowing

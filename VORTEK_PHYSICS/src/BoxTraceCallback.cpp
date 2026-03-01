@@ -1,6 +1,6 @@
 #include "Physics/BoxTraceCallback.h"
 
-namespace VORTEK_PHYSICS
+namespace Vortek::Physics
 {
 bool BoxTraceCallback::ReportFixture( b2Fixture* pFixture )
 {
@@ -8,4 +8,4 @@ bool BoxTraceCallback::ReportFixture( b2Fixture* pFixture )
 
 	return true;
 }
-} // namespace VORTEK_PHYSICS
+} // namespace Vortek::Physics

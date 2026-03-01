@@ -1,30 +1,29 @@
 #pragma once
-#include <memory>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Camera2D;
 class RectBatchRenderer;
 class CircleBatchRenderer;
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 class Registry;
 }
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 class RenderShapeSystem
 {
   private:
-	std::unique_ptr<VORTEK_RENDERING::RectBatchRenderer> m_pRectRenderer;
-	std::unique_ptr<VORTEK_RENDERING::CircleBatchRenderer> m_pCircleRenderer;
+	std::unique_ptr<Vortek::Rendering::RectBatchRenderer> m_pRectRenderer;
+	std::unique_ptr<Vortek::Rendering::CircleBatchRenderer> m_pCircleRenderer;
 
   public:
 	RenderShapeSystem();
 	~RenderShapeSystem() = default;
 
-	void Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera );
+	void Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera );
 };
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

@@ -1,7 +1,7 @@
 #include "VortekFilesystem/Dialogs/FileDialog.h"
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 
 std::string FileDialog::OpenFileDialog( const std::string& sTitle, const std::string& sDefaultPath,
@@ -37,4 +37,4 @@ std::string FileDialog::SelectFolderDialog( const std::string& sTitle, const std
 
 	return std::string{ folder };
 }
-} // namespace VORTEK_FILESYSTEM
+} // namespace Vortek::Filesystem

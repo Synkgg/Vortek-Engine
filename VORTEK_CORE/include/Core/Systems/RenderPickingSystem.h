@@ -1,27 +1,27 @@
 #pragma once
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Camera2D;
 class PickingBatchRenderer;
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 class Registry;
 }
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 class RenderPickingSystem
 {
   private:
-	std::unique_ptr<VORTEK_RENDERING::PickingBatchRenderer> m_pBatchRenderer;
+	std::unique_ptr<Vortek::Rendering::PickingBatchRenderer> m_pBatchRenderer;
 
   public:
 	RenderPickingSystem();
 	~RenderPickingSystem();
 
-	void Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera );
+	void Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera );
 };
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

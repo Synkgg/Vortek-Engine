@@ -1,23 +1,22 @@
 #pragma once
 #include <SDL.h>
 
-namespace VORTEK_WINDOWING
+namespace Vortek::Windowing
 {
 class Window;
 }
 
-namespace VORTEK_EDITOR::Events
+namespace Vortek::Editor::Events
 {
 struct CloseEditorEvent;
 }
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 class Application
 {
   public:
 	static Application& GetInstance();
-
 	void Run();
 
   private:
@@ -39,7 +38,7 @@ class Application
 
 	void RegisterEditorMetaFunctions();
 
-	void OnCloseEditor( VORTEK_EDITOR::Events::CloseEditorEvent& close );
+	void OnCloseEditor( Vortek::Editor::Events::CloseEditorEvent& close );
 
 	Application();
 	~Application() = default;
@@ -47,10 +46,10 @@ class Application
 	Application& operator=( const Application& ) = delete;
 
   private:
-	std::unique_ptr<VORTEK_WINDOWING::Window> m_pWindow;
+	std::unique_ptr<Vortek::Windowing::Window> m_pWindow;
 	std::unique_ptr<class Hub> m_pHub;
 
 	SDL_Event m_Event;
 	bool m_bIsRunning;
 };
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

@@ -6,10 +6,10 @@
 #include <Sounds/SoundPlayer/SoundFxPlayer.h>
 #include <Logger/Logger.h>
 
-using namespace VORTEK_SOUNDS;
+using namespace Vortek::Sounds;
 using namespace VORTEK_RESOURCES;
 
-void VORTEK_CORE::Scripting::SoundBinder::CreateSoundBind( sol::state& lua )
+void Vortek::Core::Scripting::SoundBinder::CreateSoundBind( sol::state& lua )
 {
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& musicPlayer = mainRegistry.GetMusicPlayer();
@@ -47,7 +47,9 @@ void VORTEK_CORE::Scripting::SoundBinder::CreateSoundBind( sol::state& lua )
 		"setVolume",
 		[ & ]( int volume ) { musicPlayer.SetVolume( volume ); },
 		"isPlaying",
-		[ & ]() { return musicPlayer.IsPlaying(); } );
+		[ & ]() { return musicPlayer.IsPlaying(); },
+		"isPaused",
+		[ & ]() { return musicPlayer.IsPaused(); } );
 
 	// Create the SoundFxPlayer Bindings
 	auto& soundFxPlayer = mainRegistry.GetSoundPlayer();
@@ -82,7 +84,5 @@ void VORTEK_CORE::Scripting::SoundBinder::CreateSoundBind( sol::state& lua )
 		"setVolume",
 		[ & ]( int channel, int volume ) { soundFxPlayer.SetVolume( channel, volume ); },
 		"isPlaying",
-		[ & ]() { return musicPlayer.IsPlaying(); },
-		"isPaused",
-		[ & ]() { return musicPlayer.IsPaused(); } );
+		[ & ]( int channel ) { return soundFxPlayer.IsPlaying( channel ); } );
 }

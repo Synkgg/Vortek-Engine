@@ -1,4 +1,4 @@
-#include "ProjectLoader.h"
+#include "editor/loaders/ProjectLoader.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "Core/CoreUtilities/CoreEngineData.h"
@@ -23,34 +23,34 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
-using namespace VORTEK_FILESYSTEM;
+using namespace Vortek::Filesystem;
 
 // clang-format off
-static const std::map<VORTEK_CORE::EProjectFolderType, std::string> mapProjectDirs = {
-		{ VORTEK_CORE::EProjectFolderType::Content,		"content" },
-		{ VORTEK_CORE::EProjectFolderType::Scripts,		"content/scripts" },
+static const std::map<Vortek::Core::EProjectFolderType, std::string> mapProjectDirs = {
+		{ Vortek::Core::EProjectFolderType::Content,		"content" },
+		{ Vortek::Core::EProjectFolderType::Scripts,		"content/scripts" },
 		// Asset Folders
-		{ VORTEK_CORE::EProjectFolderType::Assets,		"content/assets" },
-		{ VORTEK_CORE::EProjectFolderType::SoundFx,		"content/assets/soundfx" },
-		{ VORTEK_CORE::EProjectFolderType::Music,		"content/assets/music" },
-		{ VORTEK_CORE::EProjectFolderType::Textures,	"content/assets/textures" },
-		{ VORTEK_CORE::EProjectFolderType::Shaders,		"content/assets/shaders" },
-		{ VORTEK_CORE::EProjectFolderType::Fonts,		"content/assets/fonts" },
-		{ VORTEK_CORE::EProjectFolderType::Prefabs,		"content/assets/prefabs" },
-		{ VORTEK_CORE::EProjectFolderType::Scenes,		"content/assets/scenes" },
+		{ Vortek::Core::EProjectFolderType::Assets,		"content/assets" },
+		{ Vortek::Core::EProjectFolderType::SoundFx,		"content/assets/soundfx" },
+		{ Vortek::Core::EProjectFolderType::Music,		"content/assets/music" },
+		{ Vortek::Core::EProjectFolderType::Textures,		"content/assets/textures" },
+		{ Vortek::Core::EProjectFolderType::Shaders,		"content/assets/shaders" },
+		{ Vortek::Core::EProjectFolderType::Fonts,		"content/assets/fonts" },
+		{ Vortek::Core::EProjectFolderType::Prefabs,		"content/assets/prefabs" },
+		{ Vortek::Core::EProjectFolderType::Scenes,		"content/assets/scenes" },
 		// Config Folders
-		{ VORTEK_CORE::EProjectFolderType::Config,		"config"},
-		{ VORTEK_CORE::EProjectFolderType::GameConfig,	"config/game"},
-		{ VORTEK_CORE::EProjectFolderType::EditorConfig, "config/editor"},
+		{ Vortek::Core::EProjectFolderType::Config,		"config"},
+		{ Vortek::Core::EProjectFolderType::GameConfig,	"config/game"},
+		{ Vortek::Core::EProjectFolderType::EditorConfig, "config/editor"},
 	};
 // clang-format on
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 bool ProjectLoader::CreateNewProject( const std::string& sProjectName, const std::string& sFilepath )
 {
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 	VORTEK_ASSERT( pProjectInfo && "Project Info must exist." );
 
 	// Create the game filepath
@@ -120,7 +120,7 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 	}
 
 	auto& mainRegistry = MAIN_REGISTRY();
-	auto& pProjectInfo = mainRegistry.GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = mainRegistry.GetContext<Vortek::Core::ProjectInfoPtr>();
 	VORTEK_ASSERT( pProjectInfo && "Project Info must be valid!" );
 
 	// We need the project filepath saved!
@@ -150,7 +150,10 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 		fs::path fullPath{ projectPath / subDir };
 		if ( !fs::exists( fullPath, ec ) )
 		{
-			VORTEK_ERROR( "Failed to load project: Failed to setup project folders. [{}] - {}", ec.message() );
+			VORTEK_ERROR( "Failed to load project: Failed to setup project folders. [{}] - {}",
+				fullPath.string(), ec.message()
+			);
+
 			return false;
 		}
 
@@ -162,7 +165,7 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 	}
 
 	// Setup Project Files
-	if ( auto optScriptPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::Scripts ) )
+	if ( auto optScriptPath = pProjectInfo->TryGetFolderPath( Vortek::Core::EProjectFolderType::Scripts ) )
 	{
 		fs::path mainScriptPath = *optScriptPath / "main.lua";
 		if ( !fs::exists( mainScriptPath ) )
@@ -173,7 +176,7 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 	}
 
 	// Setup Project Files
-	if ( auto optGameConfigPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::GameConfig ) )
+	if ( auto optGameConfigPath = pProjectInfo->TryGetFolderPath( Vortek::Core::EProjectFolderType::GameConfig ) )
 	{
 		fs::path scriptListPath = *optGameConfigPath / "script_list.lua";
 		if ( !fs::exists( scriptListPath ) )
@@ -187,7 +190,7 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 	// Get the project path before we adjust it to the content path
 	CORE_GLOBALS().SetProjectPath( projectPath.string() );
 
-	auto optContentFolderPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::Content );
+	auto optContentFolderPath = pProjectInfo->TryGetFolderPath( Vortek::Core::EProjectFolderType::Content );
 	VORTEK_ASSERT( optContentFolderPath && "Content folder not set correctly in project info." );
 
 	// Check to see if there is a main lua path
@@ -220,7 +223,7 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 		}
 	}
 
-	auto optGameConfigPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::GameConfig );
+	auto optGameConfigPath = pProjectInfo->TryGetFolderPath( Vortek::Core::EProjectFolderType::GameConfig );
 	VORTEK_ASSERT( optGameConfigPath && "Game Config folder path has not been setup correctly in project info." );
 
 	fs::path scriptListPath = *optGameConfigPath / "script_list.lua";
@@ -414,7 +417,7 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 			std::string sJsonPrefabPath = jsonPrefab[ "path" ].GetString();
 			fs::path prefabPath = *optContentFolderPath / sJsonPrefabPath;
 
-			if ( auto pPrefab = VORTEK_CORE::PrefabCreator::CreatePrefab( prefabPath.string() ) )
+			if ( auto pPrefab = Vortek::Core::PrefabCreator::CreatePrefab( prefabPath.string() ) )
 			{
 				if ( !assetManager.AddPrefab( sName, std::move( pPrefab ) ) )
 				{
@@ -455,6 +458,43 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 		coreGlobals.SetPositionIterations( physics[ "positionIterations" ].GetInt() );
 	}
 
+	if (projectData.HasMember("audio_config"))
+	{
+		auto& audioConfig = pProjectInfo->GetAudioConfig();
+		const rapidjson::Value& jsonAudioConfig = projectData[ "audio_config" ];
+		audioConfig.bGlobalOverrideEnabled = jsonAudioConfig[ "bGlobalEnabled" ].GetBool();
+		audioConfig.globalVolumeOverride = jsonAudioConfig[ "globalVolume" ].GetInt();
+		audioConfig.bMusicVolumeOverrideEnabled = jsonAudioConfig[ "bMusicOverrideEnabled" ].GetBool();
+		audioConfig.musicVolumeOverride = jsonAudioConfig[ "musicVolume" ].GetInt();
+		int allocatedChannels = jsonAudioConfig[ "allocatedChannels" ].GetInt();
+		int channelDelta = allocatedChannels - audioConfig.GetAllocatedChannelCount();
+		if (channelDelta > 0)
+		{
+			audioConfig.UpdateSoundChannels(channelDelta);
+		}
+
+		if (jsonAudioConfig.HasMember("sound_channel_data") && jsonAudioConfig["sound_channel_data"].IsArray())
+		{
+			const rapidjson::Value& jsonChannelDataArray = jsonAudioConfig[ "sound_channel_data" ];
+			for (const auto& channelData : jsonChannelDataArray.GetArray())
+			{
+				int channelID = channelData[ "channelID" ].GetInt();
+				bool bEnabled = channelData[ "bEnabled" ].GetBool();
+				int volume = channelData[ "volume" ].GetInt();
+
+				if (!audioConfig.EnableChannelOverride(channelID, bEnabled))
+				{
+					VORTEK_ERROR( "Failed to enable sound channel override. Channel [{}] is invalid.", channelID );
+				}
+
+				if (!audioConfig.SetChannelVolume(channelID, volume))
+				{
+					VORTEK_ERROR( "Failed to set sound channel volume override. Channel [{}] is invalid.", channelID );
+				}
+			}
+		}
+	}
+
 	auto& pEditorState = mainRegistry.GetContext<EditorStatePtr>();
 	if ( !pEditorState->Load( *pProjectInfo ) )
 	{
@@ -465,7 +505,7 @@ bool ProjectLoader::LoadProject( const std::string& sFilepath )
 	return true;
 }
 
-bool ProjectLoader::SaveLoadedProject( const VORTEK_CORE::ProjectInfo& projectInfo )
+bool ProjectLoader::SaveLoadedProject( const Vortek::Core::ProjectInfo& projectInfo )
 {
 	auto optProjectFilePath = projectInfo.GetProjectFilePath();
 	VORTEK_ASSERT( optProjectFilePath && "Project file path not set correctly." );
@@ -540,7 +580,7 @@ bool ProjectLoader::SaveLoadedProject( const VORTEK_CORE::ProjectInfo& projectIn
 		pSerializer->StartNewObject()
 			.AddKeyValuePair( "name", sName )
 			.AddKeyValuePair( "path", sTexturePath )
-			.AddKeyValuePair( "bPixelArt", pTexture->GetType() == VORTEK_RENDERING::Texture::TextureType::PIXEL )
+			.AddKeyValuePair( "bPixelArt", pTexture->GetType() == Vortek::Rendering::Texture::TextureType::PIXEL )
 			.AddKeyValuePair( "bTilemap", pTexture->IsTileset() )
 			.EndObject();
 	}
@@ -613,7 +653,32 @@ bool ProjectLoader::SaveLoadedProject( const VORTEK_CORE::ProjectInfo& projectIn
 		.AddKeyValuePair( "gravity", coreGlobals.GetGravity() )
 		.AddKeyValuePair( "velocityIterations", coreGlobals.GetVelocityIterations() )
 		.AddKeyValuePair( "positionIterations", coreGlobals.GetPositionIterations() )
-		.EndObject();		  // Physics
+		.EndObject(); // Physics
+
+	const auto& audioConfig = projectInfo.GetAudioConfig();
+
+	pSerializer->StartNewObject( "audio_config" )
+		.AddKeyValuePair( "bGlobalEnabled", audioConfig.bGlobalOverrideEnabled )
+		.AddKeyValuePair( "globalVolume", audioConfig.globalVolumeOverride )
+		.AddKeyValuePair( "bMusicOverrideEnabled", audioConfig.bMusicVolumeOverrideEnabled )
+		.AddKeyValuePair( "musicVolume", audioConfig.musicVolumeOverride )
+		.AddKeyValuePair( "allocatedChannels", audioConfig.GetAllocatedChannelCount() );
+
+	pSerializer->StartNewArray( "sound_channel_data" );
+
+	for ( const auto& [ channelID, state ] : audioConfig.GetSoundChannelMap() )
+	{
+		pSerializer->StartNewObject()
+			.AddKeyValuePair( "channelID", channelID )
+			.AddKeyValuePair( "bEnabled", state.first )
+			.AddKeyValuePair( "volume", state.second )
+			.EndObject();
+	}
+
+	pSerializer
+		->EndArray()  // Sound Channel Data
+		.EndObject(); // Audio Config
+
 	pSerializer->EndObject(); // Project Data
 
 	return pSerializer->EndDocument();
@@ -654,7 +719,7 @@ bool ProjectLoader::CreateProjectFile( const std::string& sProjectName, const st
 	}
 
 	// We want to grab the project file path
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 	pProjectInfo->SetProjectFilePath( fs::path{ sProjectFile } );
 
 	auto optMainLuaScript = pProjectInfo->GetMainLuaScriptPath();
@@ -703,7 +768,7 @@ bool ProjectLoader::CreateMainLuaScript( const std::string& sProjectName, const 
 	VORTEK_ASSERT( pLuaSerializer );
 
 	// Save the main lua file path
-	MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>()->SetMainLuaScriptPath( mainLuaFilePath );
+	MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>()->SetMainLuaScriptPath( mainLuaFilePath );
 
 	pLuaSerializer->AddBlockComment( "\tMain Lua script. This is needed to run all scripts in the editor"
 									 "\n\tGENERATED BY THE ENGINE ON PROJECT CREATION. DON'T CHANGE UNLESS "
@@ -729,9 +794,9 @@ bool ProjectLoader::CreateMainLuaScript( const std::string& sProjectName, const 
 
 bool ProjectLoader::CreateScriptListFile()
 {
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 
-	auto optPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::GameConfig );
+	auto optPath = pProjectInfo->TryGetFolderPath( Vortek::Core::EProjectFolderType::GameConfig );
 	if ( !optPath )
 	{
 		VORTEK_ERROR( "Failed to create script list file. Game Config path does not exist." );
@@ -758,4 +823,4 @@ bool ProjectLoader::CreateScriptListFile()
 	return true;
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

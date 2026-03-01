@@ -2,15 +2,46 @@
 #include "Core/ECS/Entity.h"
 #include "Core/ECS/MetaUtilities.h"
 #include "Core/ECS/ECSUtils.h"
+#include "Core/ECS/Components/PersistentComponent.h"
 
-using namespace VORTEK_CORE::Utils;
+using namespace Vortek::Core::Utils;
 
-VORTEK_CORE::ECS::Registry::Registry()
+Vortek::Core::ECS::Registry::Registry()
 	: m_pRegistry{ std::make_shared<entt::registry>() }
 {
 }
 
-void VORTEK_CORE::ECS::Registry::CreateLuaRegistryBind( sol::state& lua, Registry& registry )
+void Vortek::Core::ECS::Registry::ClearRegistry()
+{
+	auto view = m_pRegistry->view<entt::entity>( entt::exclude<Vortek::Core::ECS::PersistentComponent> );
+	for ( auto entity : view )
+	{
+		m_pRegistry->destroy( entity );
+	}
+}
+
+void Vortek::Core::ECS::Registry::AddToPendingDestruction( entt::entity entity )
+{
+	m_EntitiesPendingDestruction.push_back( entity );
+}
+
+void Vortek::Core::ECS::Registry::ClearPendingEntities()
+{
+	if ( m_EntitiesPendingDestruction.empty() )
+		return;
+
+	for ( auto entity : m_EntitiesPendingDestruction )
+	{
+		if ( m_pRegistry->valid( entity ) )
+		{
+			m_pRegistry->destroy( entity );
+		}
+	}
+
+	m_EntitiesPendingDestruction.clear();
+}
+
+void Vortek::Core::ECS::Registry::CreateLuaRegistryBind( sol::state& lua, Registry& registry )
 {
 	lua.new_enum<ERegistryType>( "RegistryType",
 								 {
@@ -31,7 +62,7 @@ void VORTEK_CORE::ECS::Registry::CreateLuaRegistryBind( sol::state& lua, Registr
 
 				for ( auto entity : view )
 				{
-					Entity ent{ registry, entity };
+					Entity ent{ &registry, entity };
 					callback( ent );
 				}
 			},
@@ -41,36 +72,37 @@ void VORTEK_CORE::ECS::Registry::CreateLuaRegistryBind( sol::state& lua, Registr
 
 				for ( auto entity : view )
 				{
-					Entity ent{ reg, entity };
+					Entity ent{ &reg, entity };
 					callback( ent );
 				}
 			} ),
 		"exclude",
-		sol::overload(
-			[ & ]( entt::runtime_view& view, const sol::variadic_args& va ) {
-				for ( const auto& type : va )
-				{
-					if ( !type.as<sol::table>().valid() )
-						continue;
+		[ &registry ]( entt::runtime_view& view, const sol::variadic_args& va ) {
+			Registry* pRegistry = &registry;
+			auto it = va.begin();
 
-					const auto excluded_view =
-						InvokeMetaFunction( GetIdType( type ), "exclude_component_from_view"_hs, &registry, view );
+			// Check to see if the first argument is a registry
+			if ( it != va.end() && it->is<Registry>() )
+			{
+				pRegistry = &it->as<Registry&>();
+				++it; // Skip past the registry
+			}
 
-					view = excluded_view ? excluded_view.cast<entt::runtime_view>() : view;
-				}
-			},
-			[ & ]( entt::runtime_view& view, Registry& reg, const sol::variadic_args& va ) {
-				for ( const auto& type : va )
-				{
-					if ( !type.as<sol::table>().valid() )
-						continue;
+			for ( ; it != va.end(); ++it)
+			{
+				sol::object obj = *it;
+				if ( !obj.is<sol::table>())
+					continue;
 
-					const auto excluded_view =
-						InvokeMetaFunction( GetIdType( type ), "exclude_component_from_view"_hs, &reg, view );
+				sol::table type = obj.as<sol::table>();
+				if ( !type.valid() )
+					continue;
 
-					view = excluded_view ? excluded_view.cast<entt::runtime_view>() : view;
-				}
-			} ) );
+				InvokeMetaFunction( GetIdType( type ), "exclude_component_from_view"_hs, &registry, &view );
+			}
+
+			return view;
+		} );
 
 	lua.new_usertype<Registry>(
 		"Registry",
@@ -97,14 +129,14 @@ void VORTEK_CORE::ECS::Registry::CreateLuaRegistryBind( sol::state& lua, Registr
 		},
 		"findEntityByTag",
 		[ & ]( Registry& reg, const std::string& sTag, sol::this_state s ) {
-			auto entity = VORTEK_CORE::ECS::FindEntityByTag( reg, sTag );
+			auto entity = Vortek::Core::ECS::FindEntityByTag( reg, sTag );
 
-			return entity == entt::null ? sol::lua_nil_t{} : sol::make_reference( s, Entity{ reg, entity } );
+			return entity == entt::null ? sol::lua_nil_t{} : sol::make_reference( s, Entity{ &reg, entity } );
 		},
 		"createEntity",
-		sol::overload( []( Registry& reg ) { return Entity{ reg, "", "" }; },
+		sol::overload( []( Registry& reg ) { return Entity{ &reg, "", "" }; },
 					   []( Registry& reg, const std::string& sName, const std::string sGroup ) {
-						   return Entity{ reg, sName, sGroup };
+						   return Entity{ &reg, sName, sGroup };
 					   } ),
 		"clear",
 		[ & ]( Registry& reg ) { reg.GetRegistry().clear(); } );

@@ -1,30 +1,29 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 class Registry;
 }
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Camera2D;
 class SpriteBatchRenderer;
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 class RenderSystem
 {
-  private:
-	std::unique_ptr<VORTEK_RENDERING::SpriteBatchRenderer> m_pBatchRenderer;
-
   public:
 	RenderSystem();
 	~RenderSystem();
 
-	void Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera );
+	void Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera );
+	static void CreateRenderSystemLuaBind( sol::state& lua, Vortek::Core::ECS::Registry& registry );
 
-	static void CreateRenderSystemLuaBind( sol::state& lua, VORTEK_CORE::ECS::Registry& registry );
+  private:
+	std::unique_ptr<Vortek::Rendering::SpriteBatchRenderer> m_pBatchRenderer;
 };
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

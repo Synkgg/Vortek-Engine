@@ -1,4 +1,4 @@
-#include "EditorRenderSystem.h"
+#include "editor/systems/EditorRenderSystem.h"
 #include "Core/Resources/AssetManager.h"
 #include "Core/ECS/Components/AllComponents.h"
 #include "Core/ECS/MainRegistry.h"
@@ -14,12 +14,12 @@
 
 #include <ranges>
 
-using namespace VORTEK_CORE;
-using namespace VORTEK_CORE::ECS;
-using namespace VORTEK_RENDERING;
+using namespace Vortek::Core;
+using namespace Vortek::Core::ECS;
+using namespace Vortek::Rendering;
 using namespace VORTEK_RESOURCES;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 EditorRenderSystem::EditorRenderSystem()
 	: m_pBatchRenderer{ std::make_unique<SpriteBatchRenderer>() }
@@ -28,8 +28,8 @@ EditorRenderSystem::EditorRenderSystem()
 
 EditorRenderSystem::~EditorRenderSystem() = default;
 
-void EditorRenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera,
-								 const std::vector<VORTEK_UTIL::SpriteLayerParams>& layerFilters )
+void EditorRenderSystem::Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera,
+								 const std::vector<Vortek::Utilities::SpriteLayerParams>& layerFilters )
 {
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& assetManager = mainRegistry.GetAssetManager();
@@ -83,7 +83,7 @@ void EditorRenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RE
 		const auto& transform = spriteView.get<TransformComponent>( entity );
 		const auto& sprite = spriteView.get<SpriteComponent>( entity );
 
-		if ( !VORTEK_CORE::EntityInView( transform, sprite.width, sprite.height, camera ) )
+		if ( !Vortek::Core::EntityInView( transform, sprite.width, sprite.height, camera ) )
 			continue;
 
 		if ( sprite.sTextureName.empty() || sprite.bHidden )
@@ -99,7 +99,7 @@ void EditorRenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RE
 		glm::vec4 spriteRect{ transform.position.x, transform.position.y, sprite.width, sprite.height };
 		glm::vec4 uvRect{ sprite.uvs.u, sprite.uvs.v, sprite.uvs.uv_width, sprite.uvs.uv_height };
 
-		glm::mat4 model = VORTEK_CORE::RSTModel( transform, sprite.width, sprite.height );
+		glm::mat4 model = Vortek::Core::RSTModel( transform, sprite.width, sprite.height );
 
 		if ( sprite.bIsoMetric )
 		{
@@ -124,4 +124,4 @@ void EditorRenderSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RE
 	spriteShader->Disable();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

@@ -1,6 +1,6 @@
-#include "SceneManager.h"
-#include "SceneObject.h"
-#include "VORTEKUtilities/VORTEKUtilities.h"
+#include "editor/scene/SceneManager.h"
+#include "editor/scene/SceneObject.h"
+#include "VortekUtilities/VortekUtilities.h"
 #include "editor/tools/ToolManager.h"
 #include "editor/tools/TileTool.h"
 #include "editor/tools/gizmos/Gizmo.h"
@@ -15,9 +15,9 @@
 
 #include "Logger/Logger.h"
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 EditorSceneManager& EditorSceneManager::GetInstance()
 {
@@ -25,7 +25,7 @@ EditorSceneManager& EditorSceneManager::GetInstance()
 	return instance;
 }
 
-bool EditorSceneManager::AddScene( const std::string& sSceneName, VORTEK_CORE::EMapType eType )
+bool EditorSceneManager::AddScene( const std::string& sSceneName, Vortek::Core::EMapType eType )
 {
 	if ( m_mapScenes.contains( sSceneName ) )
 	{
@@ -48,6 +48,7 @@ bool EditorSceneManager::AddSceneObject( const std::string& sSceneName, const st
 
 	auto [ itr, bSuccess ] =
 		m_mapScenes.emplace( sSceneName, std::move( std::make_shared<SceneObject>( sSceneName, sSceneData ) ) );
+
 	return bSuccess;
 }
 
@@ -64,8 +65,8 @@ bool EditorSceneManager::DeleteScene( const std::string& sSceneName )
 	if ( sceneItr->second->IsLoaded() )
 	{
 		VORTEK_ERROR( "Failed to delete scene [{}] - Loaded scenes cannot be delete. Please unload the scene if you "
-					  "want to delete it.",
-					  sSceneName );
+					 "want to delete it.",
+					 sSceneName );
 		return false;
 	}
 
@@ -94,7 +95,7 @@ bool EditorSceneManager::DeleteScene( const std::string& sSceneName )
 
 	if ( m_mapScenes.erase( sSceneName ) > 0 )
 	{
-		auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+		auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 		VORTEK_ASSERT( pProjectInfo && "Project Info must exist!" );
 		// Save entire project
 		ProjectLoader pl{};
@@ -102,12 +103,10 @@ bool EditorSceneManager::DeleteScene( const std::string& sSceneName )
 		{
 			auto optProjectFilePath = pProjectInfo->GetProjectFilePath();
 			VORTEK_ASSERT( optProjectFilePath && "Project file path not set correctly in project info." );
-
-			VORTEK_ERROR(
-				"Failed to save project [{}] at file [{}] after deleting scene. Please ensure the scene files "
-				"have been removed.",
-				pProjectInfo->GetProjectName(),
-				optProjectFilePath->string() );
+			VORTEK_ERROR( "Failed to save project [{}] at file [{}] after deleting scene. Please ensure the scene files "
+						 "have been removed.",
+						 pProjectInfo->GetProjectName(),
+						 optProjectFilePath->string() );
 
 			return false;
 		}
@@ -136,10 +135,10 @@ CommandManager& EditorSceneManager::GetCommandManager()
 	return *m_pCommandManager;
 }
 
-VORTEK_CORE::Events::EventDispatcher& EditorSceneManager::GetDispatcher()
+Vortek::Core::Events::EventDispatcher& EditorSceneManager::GetDispatcher()
 {
 	if ( !m_pSceneDispatcher )
-		m_pSceneDispatcher = std::make_unique<VORTEK_CORE::Events::EventDispatcher>();
+		m_pSceneDispatcher = std::make_unique<Vortek::Core::Events::EventDispatcher>();
 
 	VORTEK_ASSERT( m_pSceneDispatcher && "Event Dispatcher must be valid" );
 
@@ -194,13 +193,19 @@ void EditorSceneManager::UpdateScenes()
 {
 	if ( auto pCurrentScene = GetCurrentSceneObject() )
 	{
-		VORTEK_CORE::UpdateDirtyEntities( pCurrentScene->GetRegistry() );
-		VORTEK_CORE::UpdateDirtyEntities( pCurrentScene->GetRuntimeRegistry() );
+		Vortek::Core::UpdateDirtyEntities( pCurrentScene->GetRegistry() );
+		Vortek::Core::UpdateDirtyEntities( pCurrentScene->GetRuntimeRegistry() );
 	}
 }
 
+std::string EditorSceneManager::GetSceneFilepath( const std::string& sSceneName )
+{
+	auto itr = m_mapScenes.find( sSceneName );
+	return itr != m_mapScenes.end() ? itr->second->GetFilepath() : std::string{};
+}
+
 EditorSceneManager::EditorSceneManager()
-	: VORTEK_CORE::SceneManager()
+	: Vortek::Core::SceneManager()
 {
 }
 
@@ -209,84 +214,83 @@ void EditorSceneManager::CreateSceneManagerLuaBind( sol::state& lua )
 	auto& sceneManager = SCENE_MANAGER();
 
 	// clang-format off
-		lua.new_usertype<EditorSceneManager>(
-			"SceneManager",
-			sol::no_constructor,
-			"changeScene",
-			[&](const std::string& sSceneName) {
-				auto pCurrentScene = sceneManager.GetCurrentSceneObject();
-				if (!pCurrentScene)
-				{
-					VORTEK_ERROR("Failed to change to scene [{}] - Current scene is invalid.", sSceneName);
-					return false;
-				}
-
-				auto* pRuntimeData = pCurrentScene->GetRuntimeData();
-				VORTEK_ASSERT(pRuntimeData && "Runtime Data was not initialized.");
-				if (pRuntimeData->sSceneName == sSceneName)
-				{
-					VORTEK_ERROR("Failed to load scene [{}] - Scene has already been loaded.", sSceneName);
-					return false;
-				}
-
-				auto pScene = sceneManager.GetScene(sSceneName);
-				if (!pScene)
-				{
-					VORTEK_ERROR("Failed to change to scene [{}] - Scene [{}] is invalid.", sSceneName, sSceneName);
-					return false;
-				}
-
-				pCurrentScene->GetRuntimeRegistry().DestroyEntities<ScriptComponent>();
-				if (!pScene->IsLoaded())
-				{
-					pScene->LoadScene();
-				}
-
-				auto pSceneObject = dynamic_cast<SceneObject*>(pScene);
-				VORTEK_ASSERT(pSceneObject && "Scene Must be a valid Scene Object If run in the editor!");
-				if (!pSceneObject)
-				{
-					VORTEK_ERROR("Failed to load scene [{}] - Scene is not a valid SceneObject.", sSceneName);
-
-					return pScene->UnloadScene(false);
-				}
-
-				pCurrentScene->CopySceneToRuntime(*pSceneObject);
-
-				return pScene->UnloadScene(false);
-			},
-			"getCanvas", // Returns the canvas of the current scene or an empty canvas object.
-			[&] {
-				if (auto pCurrentScene = sceneManager.GetCurrentSceneObject())
-				{
-					auto* pRuntimeData = pCurrentScene->GetRuntimeData();
-					return pRuntimeData ? pRuntimeData->canvas : VORTEK_CORE::Canvas{};
-				}
-
-				return VORTEK_CORE::Canvas{};
-			},
-			"getDefaultMusic",
-			[&] {
-				if (auto pCurrentScene = sceneManager.GetCurrentSceneObject())
-				{
-					auto* pRuntimeData = pCurrentScene->GetRuntimeData();
-					return pRuntimeData ? pRuntimeData->sDefaultMusic : "";
-				}
-
-				return std::string{};
-			},
-			"getCurrentSceneName", [&]
+	lua.new_usertype<EditorSceneManager>(
+		"SceneManager",
+		sol::no_constructor,
+		"changeScene",
+		[ & ]( const std::string& sSceneName ) {
+			auto pCurrentScene = sceneManager.GetCurrentSceneObject();
+			if ( !pCurrentScene )
 			{
-				if (auto pCurrentScene = sceneManager.GetCurrentSceneObject())
-				{
-					auto* pRuntimeData = pCurrentScene->GetRuntimeData();
-					return pRuntimeData ? pRuntimeData->sSceneName : "";
-				}
-
-				return std::string{};
+				VORTEK_ERROR( "Failed to change to scene [{}] - Current scene is invalid.", sSceneName );
+				return false;
 			}
-		);
+
+			auto* pRuntimeData = pCurrentScene->GetRuntimeData();
+			VORTEK_ASSERT(pRuntimeData && "Runtime Data was not initialized.");
+			if ( pRuntimeData->sSceneName == sSceneName )
+			{
+				VORTEK_ERROR( "Failed to load scene [{}] - Scene has already been loaded.", sSceneName );
+				return false;
+			}
+
+			auto pScene = sceneManager.GetScene( sSceneName );
+			if ( !pScene )
+			{
+				VORTEK_ERROR( "Failed to change to scene [{}] - Scene [{}] is invalid.", sSceneName, sSceneName );
+				return false;
+			}
+
+			if ( !pScene->IsLoaded() )
+			{
+				pScene->LoadScene();
+			}
+
+			auto pSceneObject = dynamic_cast<SceneObject*>( pScene );
+			VORTEK_ASSERT( pSceneObject && "Scene Must be a valid Scene Object If run in the editor!" );
+			if ( !pSceneObject )
+			{
+				VORTEK_ERROR( "Failed to load scene [{}] - Scene is not a valid SceneObject.", sSceneName );
+
+				return pScene->UnloadScene( false );
+			}
+
+			pCurrentScene->CopySceneToRuntime( *pSceneObject );
+
+			return pScene->UnloadScene( false );
+		},
+		"getCanvas", // Returns the canvas of the current scene or an empty canvas object.
+		[ & ] {
+			if ( auto pCurrentScene = sceneManager.GetCurrentSceneObject() )
+			{
+				auto* pRuntimeData = pCurrentScene->GetRuntimeData();
+				return pRuntimeData ? pRuntimeData->canvas : Vortek::Core::Canvas{};
+			}
+
+			return Vortek::Core::Canvas{};
+		},
+		"getDefaultMusic",
+		[ & ] {
+			if ( auto pCurrentScene = sceneManager.GetCurrentSceneObject() )
+			{
+				auto* pRuntimeData = pCurrentScene->GetRuntimeData();
+				return pRuntimeData ? pRuntimeData->sDefaultMusic : "";
+			}
+
+			return std::string{  };
+		},
+		"getCurrentSceneName", [ & ]
+		{
+			if (auto pCurrentScene = sceneManager.GetCurrentSceneObject())
+			{
+				auto* pRuntimeData = pCurrentScene->GetRuntimeData();
+				return pRuntimeData ? pRuntimeData->sSceneName : "";
+			}
+
+			return std::string{ };
+		}
+	);
 	// clang-format on
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

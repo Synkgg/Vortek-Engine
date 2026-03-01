@@ -1,9 +1,9 @@
 #include "Core/Events/EventDispatcher.h"
 #include "Core/ECS/MetaUtilities.h"
 
-using namespace VORTEK_CORE::Utils;
+using namespace Vortek::Core::Utils;
 
-namespace VORTEK_CORE::Events
+namespace Vortek::Core::Events
 {
 enum class EDispatcherType
 {
@@ -39,13 +39,14 @@ void EventDispatcher::CreateEventDispatcherLuaBind( sol::state& lua, EventDispat
 	lua.new_enum<EDispatcherType>( "DispatcherType",
 								   {
 									   { "Lua", EDispatcherType::LUA_DISPATCHER },
-									   { "VORTEK", EDispatcherType::VORTEK_DISPATCHER },
+									   { "Vortek", EDispatcherType::VORTEK_DISPATCHER },
 								   } );
 
 	lua.new_usertype<EventDispatcher>(
 		"EventDispatcher",
-		sol::meta_function::construct,
-		sol::factories( [ & ]( EDispatcherType eType, sol::this_state s ) {
+		sol::call_constructor,
+		sol::factories( [ & ]( EDispatcherType eType, sol::this_state s )
+			{
 			if ( eType == EDispatcherType::LUA_DISPATCHER )
 				return EventDispatcher{};
 			else
@@ -54,7 +55,6 @@ void EventDispatcher::CreateEventDispatcherLuaBind( sol::state& lua, EventDispat
 		"addHandler",
 		[]( EventDispatcher& eventDispatcher, const sol::table& handler, const sol::object& type ) {
 			const auto handle = InvokeMetaFunction( GetIdType( type ), "add_handler"_hs, eventDispatcher, handler );
-			VORTEK_LOG( "TYPE: {}", handle.type().info().name() );
 		},
 		"removeHandler",
 		[]( EventDispatcher& eventDispatcher, const sol::table& handler, const sol::object& type ) {
@@ -78,8 +78,11 @@ void EventDispatcher::CreateEventDispatcherLuaBind( sol::state& lua, EventDispat
 			const auto ev = InvokeMetaFunction( GetIdType( event ), "update_event"_hs, eventDispatcher );
 		},
 		"update",
-		[]( EventDispatcher& eventDispatcher ) { eventDispatcher.UpdateAll(); },
+		[]( EventDispatcher& eventDispatcher )
+		{
+			eventDispatcher.UpdateAll();
+		},
 		"clearQueue",
 		[]( EventDispatcher& eventDispatcher ) { eventDispatcher.ClearQueue(); } );
 }
-} // namespace VORTEK_CORE::Events
+} // namespace Vortek::Core::Events

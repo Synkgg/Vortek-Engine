@@ -4,28 +4,28 @@
 
 using Cursor = std::shared_ptr<struct SDL_Cursor>;
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 enum class AssetType;
 }
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 class Prefab;
 }
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Texture;
 class Shader;
 class Font;
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering
 
-namespace VORTEK_SOUNDS
+namespace Vortek::Sounds
 {
 class Music;
 class SoundFX;
-} // namespace VORTEK_SOUNDS
+} // namespace Vortek::Sounds
 
 namespace VORTEK_RESOURCES
 {
@@ -67,7 +67,7 @@ class AssetManager
 	 * @param An std::string for the texture name to lookup.
 	 * @return Returns the desired texture if it exists, else returns nullptr
 	 */
-	std::shared_ptr<VORTEK_RENDERING::Texture> GetTexture( const std::string& textureName );
+	std::shared_ptr<Vortek::Rendering::Texture> GetTexture( const std::string& textureName );
 
 	/*
 	 * @brief Get the names of all the textures that are flagged as tilesets.
@@ -100,7 +100,7 @@ class AssetManager
 	 * @param An std::string for the font name to lookup.
 	 * @return Returns the desired font if it exists, else returns nullptr
 	 */
-	std::shared_ptr<VORTEK_RENDERING::Font> GetFont( const std::string& fontName );
+	std::shared_ptr<Vortek::Rendering::Font> GetFont( const std::string& fontName );
 
 	/*
 	 * @brief Checks to see if the Shader exists, and if not, creates and loads the Shader into the
@@ -127,7 +127,7 @@ class AssetManager
 	 * @param An std::string for the shader name to lookup.
 	 * @return Returns the desired shader if it exists, else returns nullptr
 	 */
-	std::shared_ptr<VORTEK_RENDERING::Shader> GetShader( const std::string& shaderName );
+	std::shared_ptr<Vortek::Rendering::Shader> GetShader( const std::string& shaderName );
 
 	/*
 	 * @brief Checks to see if the Music exists, and if not, creates and loads the Music into the
@@ -153,7 +153,7 @@ class AssetManager
 	 * @param An std::string for the music name to lookup.
 	 * @return Returns an std::shared_ptr<Music> if it exists, else returns nullptr
 	 */
-	std::shared_ptr<VORTEK_SOUNDS::Music> GetMusic( const std::string& musicName );
+	std::shared_ptr<Vortek::Sounds::Music> GetMusic( const std::string& musicName );
 
 	/*
 	 * @brief Detects the audio format of an in-memory data buffer.
@@ -182,16 +182,18 @@ class AssetManager
 	 */
 	bool AddSoundFxFromMemory( const std::string& soundFxName, const unsigned char* soundFxData, size_t dataSize );
 
+	std::string GetAssetFilepath( const std::string& sAssetName, Vortek::Utilities::AssetType eAssetType );
+
 	/*
 	 * @brief Checks to see if the soundFx exists based on the name and returns shared_ptr<SoundFX>.
 	 * @param An std::string for the SoundFx name to lookup.
 	 * @return Returns an std::shared_ptr<SoundFx> if it exists, else returns nullptr
 	 */
-	std::shared_ptr<VORTEK_SOUNDS::SoundFX> GetSoundFx( const std::string& soundFxName );
+	std::shared_ptr<Vortek::Sounds::SoundFX> GetSoundFx( const std::string& soundFxName );
 
-	bool AddPrefab( const std::string& sPrefabName, std::shared_ptr<VORTEK_CORE::Prefab> pPrefab );
+	bool AddPrefab( const std::string& sPrefabName, std::shared_ptr<Vortek::Core::Prefab> pPrefab );
 
-	std::shared_ptr<VORTEK_CORE::Prefab> GetPrefab( const std::string& sPrefabName );
+	std::shared_ptr<Vortek::Core::Prefab> GetPrefab( const std::string& sPrefabName );
 
 #ifdef IN_VORTEK_EDITOR
 	bool AddCursor( const std::string& sCursorName, const std::string& sCursorPath );
@@ -200,29 +202,29 @@ class AssetManager
 	SDL_Cursor* GetCursor( const std::string& sCursorName );
 #endif
 
-	inline const std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Texture>>& GetAllTextures() const
+	inline const std::map<std::string, std::shared_ptr<Vortek::Rendering::Texture>>& GetAllTextures() const
 	{
 		return m_mapTextures;
 	}
 
-	inline const std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::SoundFX>>& GetAllSoundFx() const
+	inline const std::map<std::string, std::shared_ptr<Vortek::Sounds::SoundFX>>& GetAllSoundFx() const
 	{
 		return m_mapSoundFx;
 	}
 
-	inline const std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Shader>>& GetAllShaders() const
+	inline const std::map<std::string, std::shared_ptr<Vortek::Rendering::Shader>>& GetAllShaders() const
 	{
 		return m_mapShader;
 	}
 
-	inline const std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Font>>& GetAllFonts() const
+	inline const std::map<std::string, std::shared_ptr<Vortek::Rendering::Font>>& GetAllFonts() const
 	{
 		return m_mapFonts;
 	}
 
-	inline const std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::Music>>& GetAllMusic() const { return m_mapMusic; }
+	inline const std::map<std::string, std::shared_ptr<Vortek::Sounds::Music>>& GetAllMusic() const { return m_mapMusic; }
 
-	inline const std::map<std::string, std::shared_ptr<VORTEK_CORE::Prefab>>& GetAllPrefabs() const
+	inline const std::map<std::string, std::shared_ptr<Vortek::Core::Prefab>>& GetAllPrefabs() const
 	{
 		return m_mapPrefabs;
 	}
@@ -232,7 +234,7 @@ class AssetManager
 	 * @param Takes in an enum for the desired AssetType.
 	 * @return Returns an std::vector of strings of the asset names.
 	 */
-	std::vector<std::string> GetAssetKeyNames( VORTEK_UTIL::AssetType eAssetType ) const;
+	std::vector<std::string> GetAssetKeyNames( Vortek::Utilities::AssetType eAssetType ) const;
 
 	/*
 	 * @brief Try to change the name of the asset based on the asset type.
@@ -241,7 +243,7 @@ class AssetManager
 	 * @param An enum of the asset type.
 	 * @return Returns true if the name was changed successfully, false otherwise.
 	 */
-	bool ChangeAssetName( const std::string& sOldName, const std::string& sNewName, VORTEK_UTIL::AssetType eAssetType );
+	bool ChangeAssetName( const std::string& sOldName, const std::string& sNewName, Vortek::Utilities::AssetType eAssetType );
 
 	/*
 	 * @brief Checks to see if the asset exists.
@@ -249,7 +251,7 @@ class AssetManager
 	 * @param an enum of the asset type to check.
 	 * @return Returns true if the asset exists, false otherwise.
 	 */
-	bool CheckHasAsset( const std::string& sNameCheck, VORTEK_UTIL::AssetType eAssetType );
+	bool CheckHasAsset( const std::string& sNameCheck, Vortek::Utilities::AssetType eAssetType );
 
 	/*
 	 * @brief Checks to see if the asset exists based on it's name and type. Then deletes the asset.
@@ -257,7 +259,7 @@ class AssetManager
 	 * @param an enum of the asset type to check.
 	 * @return Returns true if the asset was deleted successfully, false otherwise.
 	 */
-	bool DeleteAsset( const std::string& sAssetName, VORTEK_UTIL::AssetType eAssetType );
+	bool DeleteAsset( const std::string& sAssetName, Vortek::Utilities::AssetType eAssetType );
 
 	/**
 	 * @brief Searches for an asset by file path across textures, music, and sound effects
@@ -289,7 +291,7 @@ class AssetManager
 		std::string sAssetName{};
 		std::string sFilepath{};
 		std::filesystem::file_time_type lastWrite;
-		VORTEK_UTIL::AssetType eType{};
+		Vortek::Utilities::AssetType eType{};
 		bool bDirty{ false };
 	};
 
@@ -302,13 +304,13 @@ class AssetManager
 	void ReloadShader( const std::string& sShaderName );
 
   private:
-	std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Texture>> m_mapTextures{};
-	std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Shader>> m_mapShader{};
-	std::map<std::string, std::shared_ptr<VORTEK_RENDERING::Font>> m_mapFonts{};
+	std::map<std::string, std::shared_ptr<Vortek::Rendering::Texture>> m_mapTextures{};
+	std::map<std::string, std::shared_ptr<Vortek::Rendering::Shader>> m_mapShader{};
+	std::map<std::string, std::shared_ptr<Vortek::Rendering::Font>> m_mapFonts{};
 
-	std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::Music>> m_mapMusic{};
-	std::map<std::string, std::shared_ptr<VORTEK_SOUNDS::SoundFX>> m_mapSoundFx{};
-	std::map<std::string, std::shared_ptr<VORTEK_CORE::Prefab>> m_mapPrefabs{};
+	std::map<std::string, std::shared_ptr<Vortek::Sounds::Music>> m_mapMusic{};
+	std::map<std::string, std::shared_ptr<Vortek::Sounds::SoundFX>> m_mapSoundFx{};
+	std::map<std::string, std::shared_ptr<Vortek::Core::Prefab>> m_mapPrefabs{};
 
 #ifdef IN_VORTEK_EDITOR
 	std::map<std::string, Cursor> m_mapCursors;

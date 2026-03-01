@@ -2,7 +2,7 @@
 #include "Sounds/Essentials/Music.h"
 #include <Logger/Logger.h>
 
-namespace VORTEK_SOUNDS
+namespace Vortek::Sounds
 {
 
 MusicPlayer::MusicPlayer()
@@ -82,4 +82,4 @@ bool MusicPlayer::IsPaused()
 	return Mix_PausedMusic();
 }
 
-} // namespace VORTEK_SOUNDS
+} // namespace Vortek::Sounds

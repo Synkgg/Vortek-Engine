@@ -1,7 +1,7 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 
 enum class UIObjectType
@@ -13,6 +13,7 @@ enum class UIObjectType
 	NO_TYPE
 };
 
+
 struct UIComponent
 {
 	UIObjectType eType{ UIObjectType::NO_TYPE };
@@ -20,4 +21,5 @@ struct UIComponent
 	static void CreateLuaBind( sol::state& lua );
 };
 
-} // namespace VORTEK_CORE::ECS
+
+} // namespace Vortek::Core::ECS

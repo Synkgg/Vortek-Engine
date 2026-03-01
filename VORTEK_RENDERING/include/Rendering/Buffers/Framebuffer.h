@@ -4,7 +4,7 @@
 
 #include "Rendering/Essentials/Texture.h"
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 class Framebuffer
@@ -40,4 +40,4 @@ class Framebuffer
 	bool m_bUseRbo;
 };
 
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

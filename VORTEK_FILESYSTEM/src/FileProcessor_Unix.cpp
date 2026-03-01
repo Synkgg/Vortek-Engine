@@ -1,4 +1,4 @@
-#include "VORTEKFilesystem/Process/FileProcessor.h"
+#include "VortekFilesystem/Process/FileProcessor.h"
 #include "VortekUtilities/VortekUtilities.h"
 
 #include "Logger/Logger.h"
@@ -6,9 +6,9 @@
 #include <unistd.h>
 #include <errno.h>
 
-using namespace VORTEK_UTIL;
+using namespace Vortek::Utilities;
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 bool FileProcessor::OpenApplicationFromFile( const std::string& sFilename, std::vector<const char*> params )
 {
@@ -48,10 +48,10 @@ bool FileProcessor::OpenApplicationFromFile( const std::string& sFilename, std::
 	return bSuccess;
 }
 
-bool FileProcessor::OpenFileLocation( const std::string& sFilename )
+bool FileProcessor::OpenFileLocation(const std::string& sFilename)
 {
-	VORKTEK_ERROR( "Not Implemented" );
+	VORTEK_ERROR( "Not Implemented" );
 	return false;
 }
 
-} // namespace VORTEK_FILESYSTEM
+} // namespace Vortek::Filesystem

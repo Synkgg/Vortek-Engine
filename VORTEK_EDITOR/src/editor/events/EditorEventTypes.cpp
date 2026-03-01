@@ -1,22 +1,22 @@
-#include "EditorEventTypes.h"
+#include "editor/events/EditorEventTypes.h"
 
-namespace VORTEK_EDITOR::Events
+namespace Vortek::Editor::Events
 {
 
 // clang-format off
-	static std::map<EComponentType, std::string> g_mapComponentToStr
-	{
-		{ EComponentType::Transform, "TransformComponent" },
-		{ EComponentType::Sprite, "SpriteComponent" },
-		{ EComponentType::Animation, "AnimationComponent" },
-		{ EComponentType::Text, "TextComponent" },
-		{ EComponentType::UI, "UIComponent" },
-		{ EComponentType::Physics, "PhysicsComponent" },
-		{ EComponentType::RigidBody, "RigidBodyComponent" },
-		{ EComponentType::BoxCollider, "BoxColliderComponent" },
-		{ EComponentType::CircleCollider, "CircleColliderComponent" },
-		{ EComponentType::Tile, "TileComponent" }
-	};
+static std::map<EComponentType, std::string> g_mapComponentToStr
+{
+	{ EComponentType::Transform, "TransformComponent" },
+	{ EComponentType::Sprite, "SpriteComponent" },
+	{ EComponentType::Animation, "AnimationComponent" },
+	{ EComponentType::Text, "TextComponent" },
+	{ EComponentType::UI, "UIComponent" },
+	{ EComponentType::Physics, "PhysicsComponent" },
+	{ EComponentType::RigidBody, "RigidBodyComponent" },
+	{ EComponentType::BoxCollider, "BoxColliderComponent" },
+	{ EComponentType::CircleCollider, "CircleColliderComponent" },
+	{ EComponentType::Tile, "TileComponent" }
+};
 // clang-format on
 
 EComponentType GetComponentTypeFromStr( const std::string& componentStr )
@@ -38,4 +38,4 @@ std::string GetComponentStrFromType( EComponentType eType )
 	return itr->second;
 }
 
-} // namespace VORTEK_EDITOR::Events
+} // namespace Vortek::Editor::Events

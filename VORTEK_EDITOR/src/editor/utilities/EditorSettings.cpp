@@ -1,11 +1,11 @@
-#include "EditorSettings.h"
+#include "editor/utilities/EditorSettings.h"
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <fstream>
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 void SaveEditorConfig( int selectedTheme, bool useNewHub )

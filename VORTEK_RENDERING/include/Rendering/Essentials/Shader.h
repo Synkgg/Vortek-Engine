@@ -4,7 +4,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 class Shader
 {
@@ -44,4 +44,4 @@ class Shader
 
 	std::unordered_map<std::string, GLuint> m_UniformLocationMap;
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

@@ -1,6 +1,7 @@
 #define SDL_MAIN_HANDLED 1
 #include "Runtime.h"
 
+
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -15,7 +16,7 @@ int main()
 	ShowWindow( GetConsoleWindow(), SW_SHOW );
 #endif // NDEBUG
 #endif // _WIN32
-	VORTEK_ENGINE::RuntimeApp app{};
+	Vortek::Engine::RuntimeApp app{};
 	app.Run();
 
 	return 0;

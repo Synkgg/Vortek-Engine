@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 enum class OpenGLDebuggerSeverity : short
 {
@@ -61,4 +61,4 @@ class OpenGLDebugger final
 	OpenGLDebugger& operator=( OpenGLDebugger&& ) = delete;
 	~OpenGLDebugger() = delete;
 };
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

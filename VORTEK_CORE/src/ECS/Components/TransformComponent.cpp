@@ -1,7 +1,7 @@
 #include "Core/ECS/Components/TransformComponent.h"
 #include <entt/entt.hpp>
 
-std::string VORTEK_CORE::ECS::TransformComponent::to_string()
+std::string Vortek::Core::ECS::TransformComponent::to_string()
 {
 	std::stringstream ss;
 	ss << "==== Transform Component ==== \n"
@@ -14,7 +14,7 @@ std::string VORTEK_CORE::ECS::TransformComponent::to_string()
 	return ss.str();
 }
 
-void VORTEK_CORE::ECS::TransformComponent::CreateLuaTransformBind( sol::state& lua )
+void Vortek::Core::ECS::TransformComponent::CreateLuaTransformBind( sol::state& lua )
 {
 	lua.new_usertype<TransformComponent>(
 		"Transform",
@@ -33,6 +33,8 @@ void VORTEK_CORE::ECS::TransformComponent::CreateLuaTransformBind( sol::state& l
 		&TransformComponent::position,
 		"localPosition",
 		&TransformComponent::localPosition,
+		"localRotation",
+		&TransformComponent::localRotation,
 		"scale",
 		&TransformComponent::scale,
 		"rotation",

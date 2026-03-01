@@ -1,0 +1,73 @@
+#pragma once
+#include <SDL.h>
+
+namespace Vortek::Windowing
+{
+class Window;
+}
+
+namespace Vortek::Editor
+{
+
+enum class EHubState
+{
+	Default,
+	NewProject,
+	CreateNew,
+	OpenProject,
+	Close,
+	NoState
+};
+
+struct RecentProject
+{
+	std::string path;
+	std::string lastOpened;
+};
+
+class Hub
+{
+  public:
+	Hub( Vortek::Windowing::Window& window );
+	~Hub();
+	bool Run();
+
+private:
+	bool Initialize();
+	void DrawGui();
+
+	void DrawDefault();
+	void DrawNewProject();
+	void DrawOpenProject();
+
+	void DrawOldOpenProject(); // ← the "classic" UI
+	void DrawNewOpenProject(); // ← your new UI
+
+	void ProcessEvents();
+	void Update();
+	void Render();
+
+	bool TryOpenProject( const std::string& path );
+
+	void LoadRecentProjects();
+	void SaveRecentProject( const std::string& path );
+
+	void DrawCloseButton();
+
+  private:
+	Vortek::Windowing::Window& m_Window;
+	bool m_bRunning;
+	bool m_bLoadError;
+	SDL_Event m_Event;
+	EHubState m_eState;
+
+	float m_Width;
+	float m_Height;
+
+	std::string m_sNewProjectName;
+	std::string m_sNewProjectPath;
+	std::string m_sPrevProjectPath;
+	std::string m_sPrevProjectName;
+
+};
+} // namespace Vortek::Editor

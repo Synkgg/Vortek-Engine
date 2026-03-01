@@ -2,9 +2,10 @@
 #include <vector>
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 struct State;
+
 class StateStack
 {
   public:
@@ -26,4 +27,4 @@ class StateStack
 	std::vector<State> m_States{};
 	std::unique_ptr<State> m_pStateHolder{ nullptr };
 };
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

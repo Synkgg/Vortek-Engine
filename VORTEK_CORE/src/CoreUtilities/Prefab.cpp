@@ -1,6 +1,7 @@
 #include "Core/CoreUtilities/Prefab.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/ECS/Entity.h"
+#include "Core/ECS/ECSUtils.h"
 #include "Core/ECS/Components/ComponentSerializer.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
 #include "Core/CoreUtilities/CoreUtilities.h"
@@ -8,15 +9,15 @@
 
 #include "Core/Resources/AssetManager.h"
 
-#include "VortekFileSystem/Serializers/JSONSerializer.h"
-#include "VORTEKUtilities/VORTEKUtilities.h"
-#include "VORTEKUtilities/HelperUtilities.h"
+#include "VortekFilesystem/Serializers/JSONSerializer.h"
+#include "VortekUtilities/VortekUtilities.h"
+#include "VortekUtilities/HelperUtilities.h"
 
 #include <Rendering/Essentials/Texture.h>
 
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
-#include <format>
+#include <fmt/format.h>
 
 #include <filesystem>
 
@@ -24,10 +25,12 @@ namespace fs = std::filesystem;
 
 #include "Logger/Logger.h"
 
-using namespace VORTEK_FILESYSTEM;
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Filesystem;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_CORE
+using namespace Vortek::Utilities::StringUtils;
+
+namespace Vortek::Core
 {
 
 Prefab::Prefab()
@@ -53,10 +56,10 @@ Prefab::Prefab( EPrefabType eType, const PrefabbedEntity& prefabbed )
 	m_sName = prefabbed.id->name + "_pfab";
 	m_Entity.id->name = m_sName;
 
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
 	VORTEK_ASSERT( pProjectInfo && "Project Info must exist!" );
 
-	auto optPrefabPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::Prefabs );
+	auto optPrefabPath = pProjectInfo->TryGetFolderPath( Vortek::Core::EProjectFolderType::Prefabs );
 	VORTEK_ASSERT( optPrefabPath && "Prefab folder path not set correctly." );
 
 	fs::path prefabPath = *optPrefabPath / fs::path{ m_sName + ".json" };
@@ -64,7 +67,7 @@ Prefab::Prefab( EPrefabType eType, const PrefabbedEntity& prefabbed )
 	if ( fs::exists( prefabPath ) )
 	{
 		VORTEK_ERROR( "Failed to create prefab. [{}] Already exists!", m_sName );
-		throw std::runtime_error( std::format( "Failed to create prefab. [{}] Already exists!", m_sName ).c_str() );
+		throw std::runtime_error( fmt::format( "Failed to create prefab. [{}] Already exists!", m_sName ).c_str() );
 	}
 
 	m_sPrefabPath = prefabPath.string();
@@ -82,7 +85,7 @@ Prefab::Prefab( const std::string& sPrefabPath )
 	if ( !Load( sPrefabPath ) )
 	{
 		VORTEK_ERROR( "Failed to load prefab from path [{}]", sPrefabPath );
-		throw std::runtime_error( std::format( "Failed to load prefab from path [{}]", sPrefabPath ).c_str() );
+		throw std::runtime_error( fmt::format( "Failed to load prefab from path [{}]", sPrefabPath ).c_str() );
 	}
 }
 
@@ -186,9 +189,9 @@ bool Prefab::Load( const std::string& sPrefabPath )
 	if ( doc.HasParseError() || !doc.IsObject() )
 	{
 		VORTEK_ERROR( "Failed to load prefab: File: [{}] is not valid JSON. - {} - {}",
-					  sPrefabPath,
-					  rapidjson::GetParseError_En( doc.GetParseError() ),
-					  doc.GetErrorOffset() );
+					 sPrefabPath,
+					 rapidjson::GetParseError_En( doc.GetParseError() ),
+					 doc.GetErrorOffset() );
 		return false;
 	}
 
@@ -358,7 +361,7 @@ bool Prefab::Save()
 	return true;
 }
 
-std::shared_ptr<Prefab> PrefabCreator::CreatePrefab( EPrefabType eType, VORTEK_CORE::ECS::Entity& entityToPrefab )
+std::shared_ptr<Prefab> PrefabCreator::CreatePrefab( EPrefabType eType, Vortek::Core::ECS::Entity& entityToPrefab )
 {
 	PrefabbedEntity prefabbed{};
 
@@ -447,11 +450,27 @@ std::shared_ptr<Prefab> PrefabCreator::CreatePrefab( const std::string& sPrefabP
 	return nullptr;
 }
 
-std::shared_ptr<VORTEK_CORE::ECS::Entity> PrefabCreator::AddPrefabToScene( const Prefab& prefab,
-																		   VORTEK_CORE::ECS::Registry& registry )
+std::shared_ptr<Vortek::Core::ECS::Entity> PrefabCreator::AddPrefabToScene( const Prefab& prefab,
+																		  Vortek::Core::ECS::Registry& registry )
 {
 	const auto& prefabbed = prefab.GetPrefabbedEntity();
-	auto newEnt = std::make_shared<VORTEK_CORE::ECS::Entity>( registry, prefabbed.id->name, prefabbed.id->group );
+
+	// Remove the _pfab from the prefabbed id
+	std::string sTag{ RemoveSuffixCopy( prefabbed.id->name, "_pfab" ) };
+	std::string sCheckTag{ sTag };
+	int current{ 0 };
+
+	entt::entity hasEntity = FindEntityByTag( registry, sTag );
+	while (hasEntity != entt::null)
+	{
+		sCheckTag = sTag + std::to_string( current );
+		hasEntity = FindEntityByTag( registry, sTag );
+		++current;
+	}
+
+	sTag = sCheckTag;
+
+	auto newEnt = std::make_shared<Vortek::Core::ECS::Entity>( &registry, sTag, prefabbed.id->group );
 
 	newEnt->AddComponent<TransformComponent>( prefabbed.transform );
 	if ( prefabbed.sprite )
@@ -520,4 +539,4 @@ bool PrefabCreator::DeletePrefab( Prefab& prefabToDelete )
 	return true;
 }
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

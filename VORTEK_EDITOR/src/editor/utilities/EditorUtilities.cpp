@@ -1,4 +1,4 @@
-#include "EditorUtilities.h"
+#include "editor/utilities/EditorUtilities.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/Resources/AssetManager.h"
 #include "Core/CoreUtilities/ProjectInfo.h"
@@ -28,7 +28,7 @@ static const std::unordered_set<std::string> g_setReservedSystemDirs
 #endif
 // clang-format on
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 EFileType GetFileType( const std::string& sPath )
 {
@@ -67,7 +67,7 @@ std::vector<std::string> SplitStr( const std::string& str, char delimiter )
 	return tokens;
 }
 
-VORTEK_RENDERING::Texture* GetIconTexture( const std::string& sPath )
+Vortek::Rendering::Texture* GetIconTexture( const std::string& sPath )
 {
 	auto& assetManager = ASSET_MANAGER();
 	switch ( GetFileType( sPath ) )
@@ -88,9 +88,9 @@ bool IsReservedPathOrFile( const std::filesystem::path& path )
 								[ & ]( const auto& dir ) { return lowerPath.starts_with( dir ); } );
 }
 
-bool IsDefaultProjectPathOrFile( const std::filesystem::path& path, const VORTEK_CORE::ProjectInfo& projectInfo )
+bool IsDefaultProjectPathOrFile( const std::filesystem::path& path, const Vortek::Core::ProjectInfo& projectInfo )
 {
-	if ( fs::is_directory( path ) )
+	if ( fs::is_directory(path) )
 	{
 		bool bIsProjectPath = std::ranges::any_of( projectInfo.GetProjectPaths(),
 												   [ & ]( const auto& pair ) { return pair.second == path; } );
@@ -99,7 +99,7 @@ bool IsDefaultProjectPathOrFile( const std::filesystem::path& path, const VORTEK
 			return true;
 	}
 
-	if ( fs::is_regular_file( path ) )
+	if ( fs::is_regular_file(path) )
 	{
 		auto optMainLuaScript = projectInfo.GetMainLuaScriptPath();
 		if ( optMainLuaScript && *optMainLuaScript == path )
@@ -113,4 +113,4 @@ bool IsDefaultProjectPathOrFile( const std::filesystem::path& path, const VORTEK
 	return false;
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

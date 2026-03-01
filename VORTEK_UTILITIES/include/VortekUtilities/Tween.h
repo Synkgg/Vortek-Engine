@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 
 enum class EEasingFunc
@@ -52,4 +52,4 @@ class Tween
 	bool m_bFinished;
 };
 
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities

@@ -1,4 +1,4 @@
-#include "AbstractTool.h"
+#include "editor/tools/AbstractTool.h"
 #include "Logger/Logger.h"
 #include "Core/Scripting/InputManager.h"
 #include "Core/ECS/Registry.h"
@@ -7,9 +7,9 @@
 #include "editor/scene/SceneObject.h"
 #include "Windowing/Inputs/Mouse.h"
 
-using namespace VORTEK_CORE;
+using namespace Vortek::Core;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 void AbstractTool::UpdateMouseWorldCoords()
@@ -21,7 +21,7 @@ void AbstractTool::UpdateMouseWorldCoords()
 	m_MouseWorldCoords = m_pCamera->ScreenCoordsToWorld( m_MouseScreenCoords );
 }
 
-void AbstractTool::CheckOutOfBounds( const VORTEK_CORE::Canvas& canvas )
+void AbstractTool::CheckOutOfBounds( const Vortek::Core::Canvas& canvas )
 {
 	if ( !m_pCurrentScene )
 	{
@@ -94,13 +94,13 @@ AbstractTool::AbstractTool()
 {
 }
 
-void AbstractTool::Update( VORTEK_CORE::Canvas& canvas )
+void AbstractTool::Update( Vortek::Core::Canvas& canvas )
 {
 	UpdateMouseWorldCoords();
 	CheckOutOfBounds( canvas );
 }
 
-bool AbstractTool::SetupTool( SceneObject* pSceneObject, VORTEK_RENDERING::Camera2D* pCamera )
+bool AbstractTool::SetupTool( SceneObject* pSceneObject, Vortek::Rendering::Camera2D* pCamera )
 {
 	if ( !pSceneObject )
 	{
@@ -128,4 +128,4 @@ bool AbstractTool::SetupTool( SceneObject* pSceneObject, VORTEK_RENDERING::Camer
 	return true;
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

@@ -3,10 +3,10 @@
 #include <Physics/UserData.h>
 #include "Core/ECS/MetaUtilities.h"
 
-using namespace VORTEK_CORE::Utils;
-using namespace VORTEK_PHYSICS;
+using namespace Vortek::Core::Utils;
+using namespace Vortek::Physics;
 
-void VORTEK_CORE::Scripting::UserDataBinder::CreateLuaUserData( sol::state& lua )
+void Vortek::Core::Scripting::UserDataBinder::CreateLuaUserData( sol::state& lua )
 {
 	using namespace entt::literals;
 

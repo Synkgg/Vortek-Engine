@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VORTEK_WINDOWING::Inputs
+namespace Vortek::Windowing::Inputs
 {
 struct Button
 {
@@ -11,4 +11,4 @@ struct Button
 	void Update( bool bPressed );
 	void Reset();
 };
-} // namespace VORTEK_WINDOWING::Inputs
+} // namespace Vortek::Windowing::Inputs

@@ -5,7 +5,7 @@
 #include <SOIL2/SOIL2.h>
 #include <fstream>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 bool TextureLoader::LoadTexture( const std::string& filepath, GLuint& id, int& width, int& height, bool blended )
@@ -20,7 +20,7 @@ bool TextureLoader::LoadTexture( const std::string& filepath, GLuint& id, int& w
 											SOIL_LOAD_AUTO	  // force_channels		-- Force the channels count
 	);
 	// clang-format on
-
+	
 	// Check to see if the image is successful
 	if ( !image )
 	{
@@ -129,19 +129,19 @@ bool TextureLoader::LoadIconTexture( const std::string& filepath, GLuint& id, in
 	std::vector<uint8_t> fileData( fileSize );
 	file.read( reinterpret_cast<char*>( fileData.data() ), fileSize );
 
-	ICONDIR* iconDir = reinterpret_cast<ICONDIR*>( fileData.data() );
+	ICONDIR* iconDir = reinterpret_cast<ICONDIR*>(fileData.data());
 	if ( iconDir->type != 1 || iconDir->count == 0 )
 	{
 		VORTEK_ERROR( "Failed to load Icon Texture [{}]: Invalid ICO format.", filepath );
 		return false;
 	}
 
-	ICONDIRENTRY* entry = reinterpret_cast<ICONDIRENTRY*>( fileData.data() + sizeof( ICONDIR ) );
-
+	ICONDIRENTRY* entry = reinterpret_cast<ICONDIRENTRY*>( fileData.data() + sizeof(ICONDIR) );
+	
 	size_t offset = entry->imageOffset;
 	size_t size = entry->bytesInRes;
 
-	if ( offset + size > fileData.size() )
+	if (offset + size > fileData.size())
 	{
 		VORTEK_ERROR( "Corrupted ICO Image." );
 		return false;
@@ -153,10 +153,9 @@ bool TextureLoader::LoadIconTexture( const std::string& filepath, GLuint& id, in
 	{
 		width = 0;
 		height = 0;
-
-		id = SOIL_load_OGL_texture_from_memory(
-			imageData, static_cast<int>( size ), SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, NULL );
-		if ( id == 0 )
+		
+		id = SOIL_load_OGL_texture_from_memory( imageData, static_cast<int>(size), SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, NULL );
+		if (id == 0)
 		{
 			VORTEK_ERROR( "Failed to load icon. Failed to decode PNG inside of ICO." );
 			return false;
@@ -172,7 +171,7 @@ bool TextureLoader::LoadIconTexture( const std::string& filepath, GLuint& id, in
 	}
 	else
 	{
-		BITMAPINFOHEADER* bmpHeader = reinterpret_cast<BITMAPINFOHEADER*>( imageData );
+		BITMAPINFOHEADER* bmpHeader = reinterpret_cast<BITMAPINFOHEADER*>(imageData);
 
 		if ( bmpHeader->bitCount != 32 )
 		{
@@ -185,7 +184,7 @@ bool TextureLoader::LoadIconTexture( const std::string& filepath, GLuint& id, in
 
 		size_t pixelDataSize = width * height * 4;
 		uint8_t* pixelData = imageData + bmpHeader->size;
-
+		
 		// Convert BGRA -> RGBA and flip vertically
 		std::vector<uint8_t> rgbaData( pixelDataSize );
 		for ( int y = 0; y < height; ++y )
@@ -271,4 +270,4 @@ std::shared_ptr<Texture> TextureLoader::CreateFromMemory( const unsigned char* i
 
 	return nullptr;
 }
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

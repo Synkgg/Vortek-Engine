@@ -12,7 +12,11 @@
 #include <GL/glx.h>
 #endif
 
-namespace VORTEK_RENDERING
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
+namespace Vortek::Rendering
 {
 struct Setting
 {
@@ -261,7 +265,7 @@ void glDebugCallback( GLenum p_source, GLenum p_type, unsigned int p_id, GLenum 
 	switch ( p_severity )
 	{
 	case GL_DEBUG_SEVERITY_HIGH:
-		VORTEK_LOGGER::Logger::GetInstance().Error( ss.str() );
+		Vortek::Logger::Logger::GetInstance().Error( ss.str() );
 if(s_settings.breakOnError)
 {
 			#ifdef _WIN32
@@ -273,7 +277,7 @@ if(s_settings.breakOnError)
 		break;
 	case GL_DEBUG_SEVERITY_MEDIUM:
 	case GL_DEBUG_SEVERITY_LOW:
-		VORTEK_LOGGER::Logger::GetInstance().Warn( ss.str() );
+		Vortek::Logger::Logger::GetInstance().Warn( ss.str() );
 
 if(s_settings.breakOnWarning)
 {
@@ -285,11 +289,11 @@ if(s_settings.breakOnWarning)
 }
 		break;
 	case GL_DEBUG_SEVERITY_NOTIFICATION:
-		VORTEK_LOGGER::Logger::GetInstance().Log( ss.str() );
+		Vortek::Logger::Logger::GetInstance().Log( ss.str() );
 		break;
 	default:
 		break;
 	}
 	// clang-format on
 }
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

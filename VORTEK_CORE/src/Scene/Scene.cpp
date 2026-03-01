@@ -1,7 +1,7 @@
 #include "Core/Scene/Scene.h"
 #include "Core/Loaders/TilemapLoader.h"
 
-#include "VORTEKUtilities/VORTEKUtilities.h"
+#include "VortekUtilities/VortekUtilities.h"
 #include "VortekFilesystem/Serializers/JSONSerializer.h"
 
 #include "Core/CoreUtilities/ProjectInfo.h"
@@ -14,16 +14,16 @@
 
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
-#include <format>
+#include <fmt/format.h>
 #include <filesystem>
 #include <fstream>
 
 namespace fs = std::filesystem;
 
-using namespace VORTEK_FILESYSTEM;
-using namespace VORTEK_CORE::Loaders;
+using namespace Vortek::Filesystem;
+using namespace Vortek::Core::Loaders;
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 Scene::Scene()
 	: m_Registry{}
@@ -54,8 +54,9 @@ Scene::Scene( const std::string& sceneName, EMapType eType )
 	, m_eMapType{ eType }
 	, m_PlayerStart{ m_Registry, *this }
 {
-	auto& pProjectInfo = MAIN_REGISTRY().GetContext<VORTEK_CORE::ProjectInfoPtr>();
-	auto optScenesPath = pProjectInfo->TryGetFolderPath( VORTEK_CORE::EProjectFolderType::Scenes );
+	auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>();
+	auto optScenesPath = pProjectInfo->TryGetFolderPath( Vortek::Core::EProjectFolderType::Scenes );
+
 	VORTEK_ASSERT( optScenesPath && "Scenes folder path not set correctly." );
 
 	fs::path scenePath = *optScenesPath /= m_sSceneName;
@@ -94,12 +95,11 @@ Scene::Scene( const std::string& sceneName, EMapType eType )
 	VORTEK_ASSERT( sceneData.is_open() && "File should have been created and opened." );
 	sceneData.close();
 
-	SaveSceneData(true);
+	SaveSceneData( true );
 }
 
 bool Scene::LoadScene()
 {
-	VORTEK_LOG( "LOADED SCENE" );
 	if ( m_bSceneLoaded )
 	{
 		VORTEK_ERROR( "Scene [{}] has already been loaded", m_sSceneName );
@@ -159,20 +159,20 @@ int Scene::AddLayer( const std::string& sLayerName, bool bVisible )
 	}
 
 	auto& spriteLayer =
-		m_LayerParams.emplace_back( VORTEK_UTIL::SpriteLayerParams{ .sLayerName = sLayerName, .bVisible = bVisible } );
+		m_LayerParams.emplace_back( Vortek::Utilities::SpriteLayerParams{ .sLayerName = sLayerName, .bVisible = bVisible } );
 	spriteLayer.layer = m_LayerParams.size() - 1;
 
 	return static_cast<int>( m_LayerParams.size() );
 }
 
-int Scene::AddLayer( const VORTEK_UTIL::SpriteLayerParams& layerParam )
+int Scene::AddLayer( const Vortek::Utilities::SpriteLayerParams& layerParam )
 {
 	auto layerItr =
 		std::ranges::find_if( m_LayerParams, [ &layerParam ]( const auto& lp ) { return lp == layerParam; } );
 
 	VORTEK_ASSERT( layerItr == m_LayerParams.end() && "Layer already exists!" );
 
-	if ( layerItr != m_LayerParams.end() )
+	if (layerItr != m_LayerParams.end())
 	{
 		VORTEK_ERROR( "The layer [{]] already exists", layerParam.sLayerName );
 		return -1;
@@ -187,7 +187,7 @@ int Scene::AddLayer( const VORTEK_UTIL::SpriteLayerParams& layerParam )
 
 bool Scene::CheckLayerName( const std::string& sLayerName )
 {
-	return VORTEK_UTIL::CheckContainsValue( m_LayerParams, [ & ]( VORTEK_UTIL::SpriteLayerParams& spriteLayer ) {
+	return Vortek::Utilities::CheckContainsValue( m_LayerParams, [ & ]( Vortek::Utilities::SpriteLayerParams& spriteLayer ) {
 		return spriteLayer.sLayerName == sLayerName;
 	} );
 }
@@ -228,9 +228,9 @@ bool Scene::LoadSceneData()
 	if ( doc.HasParseError() || !doc.IsObject() )
 	{
 		VORTEK_ERROR( "Failed to load tilemap: File: [{}] is not valid JSON. - {} - {}",
-					  m_sSceneDataPath,
-					  rapidjson::GetParseError_En( doc.GetParseError() ),
-					  doc.GetErrorOffset() );
+					 m_sSceneDataPath,
+					 rapidjson::GetParseError_En( doc.GetParseError() ),
+					 doc.GetErrorOffset() );
 		return false;
 	}
 
@@ -282,11 +282,11 @@ bool Scene::LoadSceneData()
 		std::string sMapType = sceneData[ "mapType" ].GetString();
 		if ( sMapType == "grid" )
 		{
-			m_eMapType = VORTEK_CORE::EMapType::Grid;
+			m_eMapType = Vortek::Core::EMapType::Grid;
 		}
 		else if ( sMapType == "iso" )
 		{
-			m_eMapType = VORTEK_CORE::EMapType::IsoGrid;
+			m_eMapType = Vortek::Core::EMapType::IsoGrid;
 			SetCanvasOffset();
 		}
 	}
@@ -340,7 +340,7 @@ bool Scene::LoadSceneData()
 	return true;
 }
 
-bool Scene::SaveSceneData(bool bOverride)
+bool Scene::SaveSceneData( bool bOverride )
 {
 	/*
 	 * Scenes that have not been loaded do not need to be re-saved. They would have been
@@ -390,7 +390,7 @@ bool Scene::SaveSceneData(bool bOverride)
 		.AddKeyValuePair( "tileHeight", m_Canvas.tileHeight )
 		.EndObject() // Canvas
 		.AddKeyValuePair( "mapType",
-						  ( m_eMapType == VORTEK_CORE::EMapType::Grid ? std::string{ "grid" } : std::string{ "iso" } ) )
+						  ( m_eMapType == Vortek::Core::EMapType::Grid ? std::string{ "grid" } : std::string{ "iso" } ) )
 		.StartNewObject( "playerStart" )
 		.AddKeyValuePair( "enabled", m_bUsePlayerStart )
 		.AddKeyValuePair( "character", m_bUsePlayerStart ? m_PlayerStart.GetCharacterName() : std::string{ "default" } )
@@ -436,7 +436,7 @@ bool Scene::SaveSceneData(bool bOverride)
 
 void Scene::SetCanvasOffset()
 {
-	if ( m_eMapType == VORTEK_CORE::EMapType::Grid )
+	if ( m_eMapType == Vortek::Core::EMapType::Grid )
 	{
 		m_Canvas.offset = glm::vec2{ 0.f };
 		return;
@@ -490,4 +490,4 @@ void Scene::CreateLuaBind( sol::state& lua )
 							  &Canvas::tileHeight );
 }
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

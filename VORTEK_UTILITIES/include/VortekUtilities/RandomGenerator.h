@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VORTEK_UTIL
+namespace Vortek::Utilities
 {
 class RandomIntGenerator
 {
@@ -31,4 +31,4 @@ class RandomFloatGenerator
 	void Initialize();
 };
 
-} // namespace VORTEK_UTIL
+} // namespace Vortek::Utilities

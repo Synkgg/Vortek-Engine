@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 struct CircleColliderComponent
 {
@@ -17,4 +17,4 @@ struct CircleColliderComponent
 
 	static void CreateLuaCircleColliderBind( sol::state& lua );
 };
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

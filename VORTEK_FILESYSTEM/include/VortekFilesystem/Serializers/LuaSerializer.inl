@@ -1,13 +1,13 @@
 #include "LuaSerializer.h"
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 template <Streamable TValue>
 inline LuaSerializer& LuaSerializer::AddValue( const TValue& value, bool bNewLine, bool bFinalValue, bool bIndent,
 											   bool bQuote )
 {
 	SeparateValues( bNewLine );
-	Stream( bQuote ? AddQuotes( to_string( value ) ) : value );
+	Stream( bQuote ? AddQuotes(to_string(value)) : value );
 
 	if ( bIndent )
 		++m_NumIndents;
@@ -84,4 +84,4 @@ inline void LuaSerializer::Stream( const T& val )
 	}
 }
 
-} // namespace VORTEK_FILESYSTEM
+} // namespace Vortek::Filesystem

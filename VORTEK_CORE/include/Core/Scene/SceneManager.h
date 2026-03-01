@@ -1,11 +1,22 @@
 #pragma once
 #include <sol/sol.hpp>
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 enum class EMapType;
 class Scene;
+namespace ECS
+{
+class Registry;
+}
+
+struct SceneManagerData
+{
+	std::string sSceneName{};
+	std::string sDefaultMusic{};
+	// TODO: Add different stuff
+};
 
 class SceneManager
 {
@@ -23,7 +34,7 @@ class SceneManager
 	 * @param eType The type of the map associated with the scene.
 	 * @return true if the scene was successfully added; false if the name already exists.
 	 */
-	virtual bool AddScene( const std::string& sSceneName, VORTEK_CORE::EMapType eType );
+	virtual bool AddScene( const std::string& sSceneName, Vortek::Core::EMapType eType );
 	bool HasScene( const std::string& sSceneName );
 
 	/**
@@ -52,11 +63,11 @@ class SceneManager
 	inline void SetCurrentScene( const std::string& sSceneName ) { m_sCurrentScene = sSceneName; }
 	inline const std::string& GetCurrentSceneName() const { return m_sCurrentScene; }
 
-	static void CreateLuaBind( sol::state& lua, SceneManager& sceneManager );
+	static void CreateLuaBind( sol::state& lua, ECS::Registry& registry );
 
   protected:
 	std::map<std::string, std::shared_ptr<Scene>> m_mapScenes;
 	std::string m_sCurrentScene{};
 	std::string m_sCurrentTileset{};
 };
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

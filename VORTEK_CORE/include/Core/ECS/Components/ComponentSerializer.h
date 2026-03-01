@@ -3,18 +3,18 @@
 #include <rapidjson/document.h>
 #include <sol/sol.hpp>
 
-namespace VORTEK_FILESYSTEM
+namespace Vortek::Filesystem
 {
 class JSONSerializer;
 class LuaSerializer;
 }
 
 #define SERIALIZE_COMPONENT( serializer, component )                                                                   \
-	VORTEK_CORE::ECS::ComponentSerializer::Serialize( serializer, component )
+	Vortek::Core::ECS::ComponentSerializer::Serialize( serializer, component )
 
-#define DESERIALIZE_COMPONENT( table, compref ) VORTEK_CORE::ECS::ComponentSerializer::Deserialize( table, compref )
+#define DESERIALIZE_COMPONENT( table, compref ) Vortek::Core::ECS::ComponentSerializer::Deserialize( table, compref )
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 class ComponentSerializer
 {
@@ -29,16 +29,18 @@ class ComponentSerializer
 
   private:
 	// JSON serializer
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const TransformComponent& transform );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const SpriteComponent& sprite );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const AnimationComponent& animation );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const BoxColliderComponent& boxCollider );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const CircleColliderComponent& circleCollider );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const TextComponent& text );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const PhysicsComponent& physics );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const RigidBodyComponent& rigidBody );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const Identification& id );
-	static void SerializeComponent( VORTEK_FILESYSTEM::JSONSerializer& serializer, const UIComponent& id );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const TransformComponent& transform );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const SpriteComponent& sprite );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const AnimationComponent& animation );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
+									const BoxColliderComponent& boxCollider );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer,
+									const CircleColliderComponent& circleCollider );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const TextComponent& text );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const PhysicsComponent& physics );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const RigidBodyComponent& rigidBody );
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const Identification& id);
+	static void SerializeComponent( Vortek::Filesystem::JSONSerializer& serializer, const UIComponent& id);
 
 	static void DeserializeComponent( const rapidjson::Value& jsonValue, TransformComponent& transform );
 	static void DeserializeComponent( const rapidjson::Value& jsonValue, SpriteComponent& sprite );
@@ -48,22 +50,22 @@ class ComponentSerializer
 	static void DeserializeComponent( const rapidjson::Value& jsonValue, TextComponent& text );
 	static void DeserializeComponent( const rapidjson::Value& jsonValue, PhysicsComponent& physics );
 	static void DeserializeComponent( const rapidjson::Value& jsonValue, RigidBodyComponent& rigidBody );
-	static void DeserializeComponent( const rapidjson::Value& jsonValue, Identification& id );
-	static void DeserializeComponent( const rapidjson::Value& jsonValue, UIComponent& id );
+	static void DeserializeComponent( const rapidjson::Value& jsonValue, Identification& id);
+	static void DeserializeComponent( const rapidjson::Value& jsonValue, UIComponent& id);
 
 	// LUA serializer
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const TransformComponent& transform );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const SpriteComponent& sprite );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const AnimationComponent& animation );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const TransformComponent& transform );
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const SpriteComponent& sprite );
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const AnimationComponent& animation );
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 									const BoxColliderComponent& boxCollider );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer,
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer,
 									const CircleColliderComponent& circleCollider );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const TextComponent& text );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const PhysicsComponent& physics );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const RigidBodyComponent& rigidBody );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const Identification& id );
-	static void SerializeComponent( VORTEK_FILESYSTEM::LuaSerializer& serializer, const UIComponent& ui );
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const TextComponent& text );
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const PhysicsComponent& physics );
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const RigidBodyComponent& rigidBody );
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const Identification& id );
+	static void SerializeComponent( Vortek::Filesystem::LuaSerializer& serializer, const UIComponent& ui );
 
 	static void DeserializeComponent( const sol::table& table, TransformComponent& transform );
 	static void DeserializeComponent( const sol::table& table, SpriteComponent& sprite );
@@ -77,6 +79,6 @@ class ComponentSerializer
 	static void DeserializeComponent( const sol::table& table, UIComponent& ui );
 };
 
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS
 
 #include "ComponentSerializer.inl"

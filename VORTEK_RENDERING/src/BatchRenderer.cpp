@@ -1,7 +1,7 @@
 #include "Rendering/Core/BatchRenderer.h"
 #include <algorithm>
 
-namespace VORTEK_RENDERING
+namespace Vortek::Rendering
 {
 
 void SpriteBatchRenderer::Initialize()
@@ -14,7 +14,7 @@ void SpriteBatchRenderer::Initialize()
 void SpriteBatchRenderer::GenerateBatches()
 {
 	std::vector<Vertex> vertices;
-	vertices.resize( ( m_Glyphs.size() > MAX_SPRITES ? MAX_SPRITES : m_Glyphs.size() ) * NUM_SPRITE_VERTICES );
+	vertices.resize( (m_Glyphs.size() > MAX_SPRITES ? MAX_SPRITES : m_Glyphs.size()) * NUM_SPRITE_VERTICES );
 
 	GLuint prevTextureID{ 0 };
 
@@ -44,7 +44,7 @@ void SpriteBatchRenderer::GenerateBatches()
 		m_Offset += NUM_SPRITE_INDICES;
 		m_CurrentObject++;
 
-		if ( m_CurrentObject == MAX_SPRITES )
+		if (m_CurrentObject == MAX_SPRITES)
 		{
 			Flush( vertices );
 		}
@@ -174,4 +174,4 @@ void SpriteBatchRenderer::AddSpriteIso( const glm::vec4& spriteRect, const glm::
 	// clang-format on
 }
 
-} // namespace VORTEK_RENDERING
+} // namespace Vortek::Rendering

@@ -1,4 +1,4 @@
-#include "TileCmds.h"
+#include "editor/commands/cmds/TileCmds.h"
 #include "editor/scene/SceneObject.h"
 #include "Core/ECS/Registry.h"
 #include "Core/ECS/Entity.h"
@@ -7,10 +7,10 @@
 #include "Logger/Logger.h"
 #include "editor/utilities/EditorUtilities.h"
 
-using namespace VORTEK_CORE;
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 
 void RemoveTileLayerCmd::undo()
@@ -45,7 +45,7 @@ void RemoveTileLayerCmd::undo()
 	auto tileView = pRegistry->GetRegistry().view<TileComponent, SpriteComponent>();
 	for ( auto entity : tileView )
 	{
-		Entity ent{ *pRegistry, entity };
+		Entity ent{ pRegistry, entity };
 		if ( auto* pSprite = ent.TryGetComponent<SpriteComponent>() )
 		{
 			if ( pSprite->layer >= spriteLayerParams.layer )
@@ -58,7 +58,7 @@ void RemoveTileLayerCmd::undo()
 	// Add the tiles back into the registry
 	for ( const auto& tile : tilesRemoved )
 	{
-		Entity ent{ *pRegistry, "", "" };
+		Entity ent{ pRegistry, "", "" };
 		ent.AddComponent<TransformComponent>( tile.transform );
 		ent.AddComponent<SpriteComponent>( tile.sprite );
 		ent.AddComponent<TileComponent>( static_cast<std::uint32_t>( ent.GetEntity() ) );
@@ -118,11 +118,11 @@ void RemoveTileLayerCmd::redo()
 	auto view = pRegistry->GetRegistry().view<TileComponent, SpriteComponent>();
 	for ( auto entity : view )
 	{
-		Entity ent{ *pRegistry, entity };
+		Entity ent{ pRegistry, entity };
 		auto& sprite = ent.GetComponent<SpriteComponent>();
 		if ( sprite.layer == spriteLayerParams.layer )
 		{
-			ent.Kill();
+			ent.Destroy();
 		}
 		else if ( sprite.layer > spriteLayerParams.layer ) // Drop the layer down if greater.
 		{
@@ -188,7 +188,7 @@ void MoveTileLayerCmd::undo()
 	auto tileView = pRegistry->GetRegistry().view<TileComponent, SpriteComponent>();
 	for ( auto entity : tileView )
 	{
-		Entity ent{ *pRegistry, entity };
+		Entity ent{ pRegistry, entity };
 		if ( auto* sprite = ent.TryGetComponent<SpriteComponent>() )
 		{
 			if ( sprite->layer == to )
@@ -226,7 +226,7 @@ void MoveTileLayerCmd::redo()
 	auto tileView = pRegistry->GetRegistry().view<TileComponent, SpriteComponent>();
 	for ( auto entity : tileView )
 	{
-		Entity ent{ *pRegistry, entity };
+		Entity ent{ pRegistry, entity };
 		if ( auto* sprite = ent.TryGetComponent<SpriteComponent>() )
 		{
 			if ( sprite->layer == to )
@@ -252,7 +252,7 @@ void ChangeTileLayerNameCmd::undo()
 	}
 
 	auto& layerParams = pSceneObject->GetLayerParams();
-	auto layerItr = std::ranges::find( layerParams, sNewName, &VORTEK_UTIL::SpriteLayerParams::sLayerName );
+	auto layerItr = std::ranges::find( layerParams, sNewName, &Vortek::Utilities::SpriteLayerParams::sLayerName );
 	VORTEK_ASSERT( layerItr != layerParams.end() && "Failed to find layer." );
 	layerItr->sLayerName = sOldName;
 }
@@ -268,9 +268,9 @@ void ChangeTileLayerNameCmd::redo()
 	}
 
 	auto& layerParams = pSceneObject->GetLayerParams();
-	auto layerItr = std::ranges::find( layerParams, sOldName, &VORTEK_UTIL::SpriteLayerParams::sLayerName );
+	auto layerItr = std::ranges::find( layerParams, sOldName, &Vortek::Utilities::SpriteLayerParams::sLayerName );
 	VORTEK_ASSERT( layerItr != layerParams.end() && "Failed to find layer." );
 	layerItr->sLayerName = sNewName;
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

@@ -1,6 +1,6 @@
 #include "ComponentSerializer.h"
 
-namespace VORTEK_CORE::ECS
+namespace Vortek::Core::ECS
 {
 template <typename TComponent, typename TSerializer>
 inline void ComponentSerializer::Serialize( TSerializer& serializer, const TComponent& component )
@@ -14,4 +14,4 @@ inline void ComponentSerializer::Deserialize( const TTable& table, TComponent& c
 	DeserializeComponent( table, component );
 }
 
-} // namespace VORTEK_CORE::ECS
+} // namespace Vortek::Core::ECS

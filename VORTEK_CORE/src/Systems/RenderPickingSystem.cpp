@@ -9,13 +9,12 @@
 #include "Rendering/Core/PickingBatchRenderer.h"
 #include "Rendering/Essentials/Texture.h"
 #include "Rendering/Essentials/Shader.h"
-
 #include "Logger/Logger.h"
 
-using namespace VORTEK_RENDERING;
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Rendering;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 RenderPickingSystem::RenderPickingSystem()
 	: m_pBatchRenderer{ std::make_unique<PickingBatchRenderer>() }
@@ -26,7 +25,7 @@ RenderPickingSystem::~RenderPickingSystem()
 {
 }
 
-void RenderPickingSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_RENDERING::Camera2D& camera )
+void RenderPickingSystem::Update( Vortek::Core::ECS::Registry& registry, Vortek::Rendering::Camera2D& camera )
 {
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& assetManager = mainRegistry.GetAssetManager();
@@ -45,13 +44,13 @@ void RenderPickingSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_R
 	pickingShader->SetUniformMat4( "uProjection", cam_mat );
 
 	m_pBatchRenderer->Begin();
-	auto spriteView = registry.GetRegistry().view<SpriteComponent, TransformComponent>( entt::exclude<TileComponent> );
+	auto spriteView = registry.GetRegistry().view<SpriteComponent, TransformComponent>(entt::exclude<TileComponent>);
 	for ( auto entity : spriteView )
 	{
 		const auto& transform = spriteView.get<TransformComponent>( entity );
 		const auto& sprite = spriteView.get<SpriteComponent>( entity );
 
-		if ( !VORTEK_CORE::EntityInView( transform, sprite.width, sprite.height, camera ) )
+		if ( !Vortek::Core::EntityInView( transform, sprite.width, sprite.height, camera ) )
 			continue;
 
 		if ( sprite.sTextureName.empty() || sprite.bHidden )
@@ -67,7 +66,7 @@ void RenderPickingSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_R
 		glm::vec4 spriteRect{ transform.position.x, transform.position.y, sprite.width, sprite.height };
 
 		glm::vec4 uvRect{ sprite.uvs.u, sprite.uvs.v, sprite.uvs.uv_width, sprite.uvs.uv_height };
-		glm::mat4 model = VORTEK_CORE::RSTModel( transform, sprite.width, sprite.height );
+		glm::mat4 model = Vortek::Core::RSTModel( transform, sprite.width, sprite.height );
 
 		m_pBatchRenderer->AddSprite(
 			spriteRect, uvRect, pTexture->GetID(), sprite.layer, static_cast<uint32_t>( entity ), sprite.color, model );
@@ -78,4 +77,4 @@ void RenderPickingSystem::Update( VORTEK_CORE::ECS::Registry& registry, VORTEK_R
 
 	pickingShader->Disable();
 }
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

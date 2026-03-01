@@ -2,12 +2,12 @@
 #include "Core/ECS/Components/TransformComponent.h"
 #include <Logger/Logger.h>
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
-FollowCamera::FollowCamera( VORTEK_RENDERING::Camera2D& camera, const ECS::Entity& entity,
+FollowCamera::FollowCamera( Vortek::Rendering::Camera2D& camera, const ECS::Entity& entity,
 							const FollowCamParams& params )
 	: m_Camera{ camera }
 	, m_Params{ params }
@@ -97,7 +97,7 @@ void FollowCamera::CreateLuaFollowCamera( sol::state& lua, ECS::Registry& regist
 		"springback",
 		&FollowCamParams::springback );
 
-	auto& camera = registry.GetContext<std::shared_ptr<VORTEK_RENDERING::Camera2D>>();
+	auto& camera = registry.GetContext<std::shared_ptr<Vortek::Rendering::Camera2D>>();
 
 	lua.new_usertype<FollowCamera>( "FollowCamera",
 									sol::call_constructor,
@@ -116,4 +116,4 @@ void FollowCamera::CreateLuaFollowCamera( sol::state& lua, ECS::Registry& regist
 									&FollowCamera::GetParams );
 }
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core

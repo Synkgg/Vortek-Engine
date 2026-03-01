@@ -1,4 +1,4 @@
-#include "TilemapDisplay.h"
+#include "editor/displays/TilemapDisplay.h"
 #include "Core/ECS/MainRegistry.h"
 #include "Core/ECS/Components/AllComponents.h"
 #include "Core/Resources/AssetManager.h"
@@ -11,6 +11,7 @@
 
 #include "Core/CoreUtilities/CoreEngineData.h"
 #include "Core/CoreUtilities/Prefab.h"
+#include "Core/CoreUtilities/ProjectInfo.h"
 
 #include "Core/Events/EventDispatcher.h"
 #include "Core/Events/EngineEventTypes.h"
@@ -42,7 +43,8 @@
 #include "Windowing/Inputs/Mouse.h"
 #include "Windowing/Inputs/Keyboard.h"
 
-using namespace VORTEK_WINDOWING::Inputs;
+using namespace Vortek::Windowing::Inputs;
+
 
 #include "Logger/Logger.h"
 #include <imgui.h>
@@ -51,18 +53,18 @@ using namespace VORTEK_WINDOWING::Inputs;
 #include <signal.h>
 #endif
 
-using namespace VORTEK_CORE::ECS;
-using namespace VORTEK_CORE::Systems;
-using namespace VORTEK_RENDERING;
+using namespace Vortek::Core::ECS;
+using namespace Vortek::Core::Systems;
+using namespace Vortek::Rendering;
 
-namespace VORTEK_EDITOR
+namespace Vortek::Editor
 {
 void TilemapDisplay::RenderTilemap()
 {
 	auto pCurrentScene = SCENE_MANAGER().GetCurrentScene();
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& editorFramebuffers = mainRegistry.GetContext<std::shared_ptr<EditorFramebuffers>>();
-	auto& renderer = mainRegistry.GetContext<std::shared_ptr<VORTEK_RENDERING::Renderer>>();
+	auto& renderer = mainRegistry.GetContext<std::shared_ptr<Vortek::Rendering::Renderer>>();
 
 	auto& renderSystem = mainRegistry.GetContext<EditorRenderSystemPtr>();
 	auto& renderUISystem = mainRegistry.GetRenderUISystem();
@@ -99,9 +101,9 @@ void TilemapDisplay::RenderTilemap()
 				}
 				else
 				{
-					VORTEK_CORE::ECS::Entity checkedEntity{ pCurrentScene->GetRegistry(),
-															static_cast<entt::entity>( id ) };
-					if ( checkedEntity.HasComponent<VORTEK_CORE::ECS::TileComponent>() )
+					Vortek::Core::ECS::Entity checkedEntity{ pCurrentScene->GetRegistryPtr(),
+														   static_cast<entt::entity>( id ) };
+					if ( checkedEntity.HasComponent<Vortek::Core::ECS::TileComponent>() )
 					{
 						id = entt::null;
 					}
@@ -250,9 +252,9 @@ void TilemapDisplay::PanZoomCamera( const glm::vec2& mousePos )
 	startPosition = mousePos;
 }
 
-void TilemapDisplay::HandleKeyPressedEvent( const VORTEK_CORE::Events::KeyEvent& keyEvent )
+void TilemapDisplay::HandleKeyPressedEvent( const Vortek::Core::Events::KeyEvent& keyEvent )
 {
-	if ( !m_bWindowActive || keyEvent.eType == VORTEK_CORE::Events::EKeyEventType::Released )
+	if ( !m_bWindowActive || keyEvent.eType == Vortek::Core::Events::EKeyEventType::Released )
 		return;
 
 	// No need to change the tools if there is no scene loaded.
@@ -279,14 +281,14 @@ void TilemapDisplay::HandleKeyPressedEvent( const VORTEK_CORE::Events::KeyEvent&
 	else if ( keyEvent.key == VORTEK_KEY_Y )
 	{
 		// IsoGrid scenes are not currently supported for rect tool.
-		if ( pCurrentScene->GetMapType() == VORTEK_CORE::EMapType::Grid )
+		if ( pCurrentScene->GetMapType() == Vortek::Core::EMapType::Grid )
 		{
 			TOOL_MANAGER().SetToolActive( EToolType::RECT_FILL_TILE );
 		}
 	}
 }
 
-void TilemapDisplay::AddPrefabbedEntityToScene( const VORTEK_CORE::PrefabbedEntity& prefabbed )
+void TilemapDisplay::AddPrefabbedEntityToScene( const Vortek::Core::PrefabbedEntity& prefabbed )
 {
 	auto pCurrentScene = SCENE_MANAGER().GetCurrentSceneObject();
 	if ( !pCurrentScene )
@@ -300,7 +302,7 @@ void TilemapDisplay::AddPrefabbedEntityToScene( const VORTEK_CORE::PrefabbedEnti
 		++count;
 	}
 
-	VORTEK_CORE::ECS::Entity newEnt{ pCurrentScene->GetRegistry(), sTag, prefabbed.id->group };
+	Vortek::Core::ECS::Entity newEnt{ pCurrentScene->GetRegistryPtr(), sTag, prefabbed.id->group };
 
 	newEnt.AddComponent<TransformComponent>( prefabbed.transform );
 	if ( prefabbed.sprite )
@@ -341,7 +343,7 @@ void TilemapDisplay::DrawToolbar()
 	ImGui::Separator();
 
 	ImGui::PushStyleVar( ImGuiStyleVar_FrameBorderSize, 1.f );
-	ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, { 5.f, 0.f } );
+	ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, { 0.f, 0.f } );
 
 	auto& commandManager = COMMAND_MANAGER();
 	if ( commandManager.UndoEmpty() )
@@ -449,7 +451,7 @@ void TilemapDisplay::DrawToolbar()
 	bool bIsoScene{ false };
 	if ( auto pCurrentScene = SCENE_MANAGER().GetCurrentScene() )
 	{
-		bIsoScene = pCurrentScene->GetMapType() == VORTEK_CORE::EMapType::IsoGrid;
+		bIsoScene = pCurrentScene->GetMapType() == Vortek::Core::EMapType::IsoGrid;
 	}
 
 	if ( bIsoScene )
@@ -486,12 +488,12 @@ void TilemapDisplay::DrawToolbar()
 	{
 		const auto& gridCoords = pActiveTool->GetGridCoords();
 		ImGui::TextColored( ImVec4{ 0.7f, 1.f, 7.f, 1.f },
-							std::format( "Grid Coords [ x = {}, y = {} ]", gridCoords.x, gridCoords.y ).c_str() );
+							fmt::format( "Grid Coords [ x = {}, y = {} ]", gridCoords.x, gridCoords.y ).c_str() );
 		ImGui::SameLine( 0.f, 16.f );
 
 		const auto& worldCoords = pActiveTool->GetMouseWorldCoords();
 		ImGui::TextColored( ImVec4{ 0.7f, 0.7f, 1.f, 1.f },
-							std::format( "World Coords [ x = {}, y = {} ]", worldCoords.x, worldCoords.y ).c_str() );
+							fmt::format( "World Coords [ x = {}, y = {} ]", worldCoords.x, worldCoords.y ).c_str() );
 	}
 
 	ImGui::Separator();
@@ -499,10 +501,19 @@ void TilemapDisplay::DrawToolbar()
 }
 
 TilemapDisplay::TilemapDisplay()
-	: m_pTilemapCam{ std::make_unique<VORTEK_RENDERING::Camera2D>() }
+	: m_pTilemapCam{ std::make_unique<Vortek::Rendering::Camera2D>() }
 	, m_bWindowActive{ false }
 {
-	ADD_EVENT_HANDLER( VORTEK_CORE::Events::KeyEvent, &TilemapDisplay::HandleKeyPressedEvent, *this );
+	ADD_EVENT_HANDLER( Vortek::Core::Events::KeyEvent, &TilemapDisplay::HandleKeyPressedEvent, *this );
+
+	if (auto& pProjectInfo = MAIN_REGISTRY().GetContext<Vortek::Core::ProjectInfoPtr>())
+	{
+		if (!pProjectInfo->GetDefaultScene().empty() && SCENE_MANAGER().GetCurrentScene())
+		{
+			LoadNewScene();
+		}
+	}
+
 }
 
 TilemapDisplay::~TilemapDisplay()
@@ -636,6 +647,9 @@ void TilemapDisplay::Update()
 		else
 			COMMAND_MANAGER().Undo();
 	}
+
+	// We need to clear pending entities if they have been removed/deleted.
+	pCurrentScene->GetRegistry().ClearPendingEntities();
 }
 
-} // namespace VORTEK_EDITOR
+} // namespace Vortek::Editor

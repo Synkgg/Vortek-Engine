@@ -2,7 +2,7 @@
 #include <algorithm> // find_if
 #include <Logger/Logger.h>
 
-namespace VORTEK_PHYSICS
+namespace Vortek::Physics
 {
 bool ObjectData::AddContact( const ObjectData* objectData )
 {
@@ -77,4 +77,4 @@ bool operator==( const ObjectData& a, const ObjectData& b )
 		   a.entityID == b.entityID;
 }
 
-} // namespace VORTEK_PHYSICS
+} // namespace Vortek::Physics

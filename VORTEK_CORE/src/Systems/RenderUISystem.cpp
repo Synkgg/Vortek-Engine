@@ -16,20 +16,20 @@
 
 #include <Logger/Logger.h>
 
-using namespace VORTEK_CORE::ECS;
+using namespace Vortek::Core::ECS;
 using namespace VORTEK_RESOURCES;
 
-namespace VORTEK_CORE::Systems
+namespace Vortek::Core::Systems
 {
 
 RenderUISystem::RenderUISystem()
-	: m_pSpriteRenderer{ std::make_unique<VORTEK_RENDERING::SpriteBatchRenderer>() }
-	, m_pTextRenderer{ std::make_unique<VORTEK_RENDERING::TextBatchRenderer>() }
+	: m_pSpriteRenderer{ std::make_unique<Vortek::Rendering::SpriteBatchRenderer>() }
+	, m_pTextRenderer{ std::make_unique<Vortek::Rendering::TextBatchRenderer>() }
 	, m_pCamera2D{ nullptr }
 {
 	auto& coreEngine = CoreEngineData::GetInstance();
 
-	m_pCamera2D = std::make_unique<VORTEK_RENDERING::Camera2D>( coreEngine.WindowWidth(), coreEngine.WindowHeight() );
+	m_pCamera2D = std::make_unique<Vortek::Rendering::Camera2D>( coreEngine.WindowWidth(), coreEngine.WindowHeight() );
 
 	m_pCamera2D->Update();
 }
@@ -38,7 +38,7 @@ RenderUISystem::~RenderUISystem()
 {
 }
 
-void RenderUISystem::Update( VORTEK_CORE::ECS::Registry& registry )
+void RenderUISystem::Update( Vortek::Core::ECS::Registry& registry )
 {
 	auto& mainRegistry = MAIN_REGISTRY();
 	auto& assetManager = mainRegistry.GetAssetManager();
@@ -77,7 +77,7 @@ void RenderUISystem::Update( VORTEK_CORE::ECS::Registry& registry )
 		glm::vec4 spriteRect{ transform.position.x, transform.position.y, sprite.width, sprite.height };
 		glm::vec4 uvRect{ sprite.uvs.u, sprite.uvs.v, sprite.uvs.uv_width, sprite.uvs.uv_height };
 
-		glm::mat4 model = VORTEK_CORE::RSTModel( transform, sprite.width, sprite.height );
+		glm::mat4 model = Vortek::Core::RSTModel( transform, sprite.width, sprite.height );
 
 		m_pSpriteRenderer->AddSprite( spriteRect, uvRect, pTexture->GetID(), sprite.layer, model, sprite.color );
 	}
@@ -122,12 +122,12 @@ void RenderUISystem::Update( VORTEK_CORE::ECS::Registry& registry )
 
 		if ( transform.bDirty || text.bDirty )
 		{
-			const auto [ textWidth, textHeight ] = VORTEK_CORE::GetTextBlockSize( text, transform, assetManager );
+			const auto [ textWidth, textHeight ] = Vortek::Core::GetTextBlockSize( text, transform, assetManager );
 			text.textBoxWidth = textWidth;
 			text.textBoxHeight = textHeight;
 		}
 
-		glm::mat4 model = VORTEK_CORE::RSTModel( transform, text.textBoxWidth, text.textBoxHeight );
+		glm::mat4 model = Vortek::Core::RSTModel( transform, text.textBoxWidth, text.textBoxHeight );
 
 		m_pTextRenderer->AddText(
 			text.sTextStr, pFont, transform.position, text.padding, text.wrap, text.color, model );
@@ -148,4 +148,4 @@ void RenderUISystem::CreateRenderUISystemLuaBind( sol::state& lua )
 									  [ & ]( RenderUISystem& system, Registry& reg ) { system.Update( reg ); } );
 }
 
-} // namespace VORTEK_CORE::Systems
+} // namespace Vortek::Core::Systems

@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/ECS/Components/AllComponents.h"
 
-namespace VORTEK_CORE
+namespace Vortek::Core
 {
 
 namespace ECS
@@ -35,16 +35,16 @@ struct PrefabbedRelationships
 
 struct PrefabbedEntity
 {
-	VORTEK_CORE::ECS::TransformComponent transform{};
-	std::optional<VORTEK_CORE::ECS::AnimationComponent> animation{ std::nullopt };
-	std::optional<VORTEK_CORE::ECS::SpriteComponent> sprite{ std::nullopt };
-	std::optional<VORTEK_CORE::ECS::BoxColliderComponent> boxCollider{ std::nullopt };
-	std::optional<VORTEK_CORE::ECS::CircleColliderComponent> circleCollider{ std::nullopt };
-	std::optional<VORTEK_CORE::ECS::PhysicsComponent> physics{ std::nullopt };
-	std::optional<VORTEK_CORE::ECS::RigidBodyComponent> rigidBody{ std::nullopt };
-	std::optional<VORTEK_CORE::ECS::Identification> id{ std::nullopt };
-	std::optional<VORTEK_CORE::ECS::TextComponent> textComp{ std::nullopt };
-	std::optional<VORTEK_CORE::ECS::UIComponent> uiComp{ std::nullopt };
+	Vortek::Core::ECS::TransformComponent transform{};
+	std::optional<Vortek::Core::ECS::AnimationComponent> animation{ std::nullopt };
+	std::optional<Vortek::Core::ECS::SpriteComponent> sprite{ std::nullopt };
+	std::optional<Vortek::Core::ECS::BoxColliderComponent> boxCollider{ std::nullopt };
+	std::optional<Vortek::Core::ECS::CircleColliderComponent> circleCollider{ std::nullopt };
+	std::optional<Vortek::Core::ECS::PhysicsComponent> physics{ std::nullopt };
+	std::optional<Vortek::Core::ECS::RigidBodyComponent> rigidBody{ std::nullopt };
+	std::optional<Vortek::Core::ECS::Identification> id{ std::nullopt };
+	std::optional<Vortek::Core::ECS::TextComponent> textComp{ std::nullopt };
+	std::optional<Vortek::Core::ECS::UIComponent> uiComp{ std::nullopt };
 	std::optional<PrefabbedRelationships> relationships{ std::nullopt };
 };
 
@@ -81,11 +81,11 @@ class PrefabCreator
 {
   public:
 	PrefabCreator() = delete;
-	static std::shared_ptr<Prefab> CreatePrefab( EPrefabType eType, VORTEK_CORE::ECS::Entity& entityToPrefab );
+	static std::shared_ptr<Prefab> CreatePrefab( EPrefabType eType, Vortek::Core::ECS::Entity& entityToPrefab );
 	static std::shared_ptr<Prefab> CreatePrefab( const std::string& sPrefabPath );
-	static std::shared_ptr<VORTEK_CORE::ECS::Entity> AddPrefabToScene( const Prefab& prefab,
-																	   VORTEK_CORE::ECS::Registry& registry );
+	static std::shared_ptr<Vortek::Core::ECS::Entity> AddPrefabToScene( const Prefab& prefab,
+																	  Vortek::Core::ECS::Registry& registry );
 	static bool DeletePrefab( Prefab& prefabToDelete );
 };
 
-} // namespace VORTEK_CORE
+} // namespace Vortek::Core
